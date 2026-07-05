@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlockCast — plan your sport around the sky</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{
+    --bg:#f4f6f9; --surface:#ffffff; --surface2:#f8fafc;
+    --ink:#0f172a; --ink2:#475569; --ink3:#94a3b8;
+    --line:#e2e8f0; --accent:#2563eb; --accent-soft:#dbeafe;
+    --green:#16a34a; --green-bg:#dcfce7;
+    --amber:#d97706; --amber-bg:#fef3c7;
+    --red:#dc2626;   --red-bg:#fee2e2;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.07);
+    font-size:15px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+    background:var(--bg); color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    background:var(--surface); border-bottom:1px solid var(--line);
+    padding:14px 28px; display:flex; align-items:center; gap:14px;
+    position:sticky; top:0; z-index:50;
+  }
+  .logo{
+    width:38px;height:38px;border-radius:10px;
+    background:linear-gradient(135deg,#2563eb,#0ea5e9);
+    display:grid;place-items:center;color:#fff;font-weight:800;font-size:17px;
+    letter-spacing:-.5px; flex-shrink:0;
+  }
+  header h1{font-size:19px; letter-spacing:-.3px;}
+  header .tagline{color:var(--ink3); font-size:13px; margin-top:1px;}
+  .loc-chip{
+    margin-left:auto; display:flex; align-items:center; gap:8px;
+    background:var(--surface2); border:1px solid var(--line); border-radius:999px;
+    padding:7px 14px; font-size:13.5px; color:var(--ink2); cursor:pointer;
+    transition:border-color .15s;
+  }
+  .loc-chip:hover{border-color:var(--accent);}
+  .loc-chip b{color:var(--ink);}
+
+  main{max-width:1180px; margin:0 auto; padding:22px 28px 80px;}
+
+  /* ---------- control bar ---------- */
+  .controls{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:16px 18px;
+    display:flex; flex-wrap:wrap; gap:18px; align-items:flex-end;
+  }
+  .field{display:flex; flex-direction:column; gap:6px;}
+  .field label{font-size:12px; font-weight:600; color:var(--ink2); text-transform:uppercase; letter-spacing:.5px;}
+  select, input[type=text]{
+    font:inherit; padding:9px 12px; border:1px solid var(--line); border-radius:10px;
+    background:var(--surface2); color:var(--ink); min-width:150px; cursor:pointer;
+  }
+  select:focus, input:focus{outline:2px solid var(--accent-soft); border-color:var(--accent);}
+  .seg{display:flex; background:var(--surface2); border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  .seg button{
+    font:inherit; font-size:13.5px; padding:9px 14px; border:none; background:transparent;
+    color:var(--ink2); cursor:pointer; transition:.12s;
+  }
+  .seg button.on{background:var(--accent); color:#fff; font-weight:600;}
+  .btn-ghost{
+    font:inherit; font-size:13.5px; padding:9px 14px; border:1px solid var(--line);
+    border-radius:10px; background:var(--surface); color:var(--ink2); cursor:pointer;
+  }
+  .btn-ghost:hover{border-color:var(--accent); color:var(--accent);}
+  .btn{
+    font:inherit; font-size:14px; font-weight:600; padding:10px 18px; border:none;
+    border-radius:10px; background:var(--accent); color:#fff; cursor:pointer;
+  }
+  .btn:hover{filter:brightness(1.08);}
+  .btn:disabled{opacity:.45; cursor:default;}
+
+  /* ---------- tuning panel ---------- */
+  #tunePanel{
+    display:none; margin-top:14px; background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--radius); box-shadow:var(--shadow); padding:18px 20px;
+  }
+  #tunePanel.open{display:block;}
+  #tunePanel h3{font-size:14px; margin-bottom:4px;}
+  #tunePanel .hint{font-size:13px; color:var(--ink3); margin-bottom:14px;}
+  .sliders{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px 26px;}
+  .srow label{font-size:13px; font-weight:600; display:flex; justify-content:space-between; margin-bottom:5px;}
+  .srow label span{color:var(--accent); font-variant-numeric:tabular-nums;}
+  .srow small{display:block; color:var(--ink3); font-size:11.5px; margin-top:3px;}
+  input[type=range]{width:100%; accent-color:var(--accent);}
+  .tnum{
+    width:58px; padding:3px 6px; border:1px solid var(--line); border-radius:6px;
+    background:var(--surface); font:inherit; font-size:12px; color:var(--ink);
+  }
+
+  /* ---------- heat map ---------- */
+  .board{
+    margin-top:20px; background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; overflow-x:auto;
+  }
+  .board-head{display:flex; align-items:baseline; gap:14px; margin-bottom:14px; flex-wrap:wrap;}
+  .board-head h2{font-size:16px;}
+  .legend{display:flex; gap:14px; margin-left:auto; font-size:12.5px; color:var(--ink2); align-items:center;}
+  .dot{width:12px;height:12px;border-radius:4px;display:inline-block;margin-right:5px;vertical-align:-1px;}
+  #grid{display:grid; gap:4px; min-width:540px;}
+  .gh{
+    text-align:center; font-size:12.5px; color:var(--ink2); padding-bottom:6px;
+  }
+  .gh b{display:block; font-size:13.5px; color:var(--ink);}
+  .gh .ico{font-size:19px; display:block; margin:2px 0;}
+  .gh .mm{font-variant-numeric:tabular-nums;}
+  .tlabel{
+    font-size:11.5px; color:var(--ink3); display:flex; align-items:center; justify-content:flex-end;
+    padding-right:8px; font-variant-numeric:tabular-nums; white-space:nowrap;
+  }
+  .cell{
+    border-radius:9px; min-height:44px; cursor:pointer; position:relative;
+    border:2px solid transparent; transition:transform .08s, border-color .1s;
+    display:grid; place-items:center; font-size:11px; font-weight:700;
+  }
+  .cell:hover{transform:scale(1.05); z-index:2;}
+  .cell.sel{border-color:var(--ink); box-shadow:0 0 0 2px #fff inset;}
+  .cell.past{opacity:.28; cursor:default; pointer-events:none;}
+  .cell .pin{position:absolute; top:2px; right:4px; font-size:10px;}
+  .r-g{background:var(--green-bg); color:var(--green);}
+  .r-y{background:var(--amber-bg); color:var(--amber);}
+  .r-r{background:var(--red-bg); color:var(--red);}
+
+  /* tooltip */
+  #tip{
+    position:fixed; z-index:99; pointer-events:none; display:none;
+    background:var(--ink); color:#fff; border-radius:10px; padding:10px 13px;
+    font-size:12.5px; line-height:1.55; box-shadow:0 10px 30px rgba(0,0,0,.25); max-width:250px;
+  }
+  #tip b{font-size:13px;}
+  #tip .trisk{font-weight:700;}
+
+  /* ---------- detail + planner ---------- */
+  .lower{display:grid; grid-template-columns:1.15fr 1fr; gap:20px; margin-top:20px;}
+  @media(max-width:900px){.lower{grid-template-columns:1fr;} main{padding:16px 14px 60px;}}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:20px;
+  }
+  .card h2{font-size:16px; margin-bottom:12px;}
+  .empty{color:var(--ink3); font-size:14px; padding:18px 0;}
+  .detail-top{display:flex; align-items:center; gap:16px; margin-bottom:14px;}
+  .gauge{
+    width:64px;height:64px;border-radius:50%;display:grid;place-items:center;
+    font-weight:800;font-size:16px; flex-shrink:0;
+  }
+  .detail-top .when{font-weight:700; font-size:15px;}
+  .detail-top .verdict{font-size:13.5px; color:var(--ink2); margin-top:2px;}
+  .fbars{display:flex; flex-direction:column; gap:9px; margin:14px 0 18px;}
+  .fbar{display:grid; grid-template-columns:88px 1fr 64px; gap:10px; align-items:center; font-size:13px;}
+  .fbar .track{height:8px; border-radius:99px; background:var(--surface2); overflow:hidden;}
+  .fbar .fill{height:100%; border-radius:99px;}
+  .fbar .val{color:var(--ink2); text-align:right; font-variant-numeric:tabular-nums; font-size:12.5px;}
+  .detail-actions{display:flex; gap:10px; flex-wrap:wrap;}
+
+  .plan-item{
+    display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line);
+  }
+  .plan-item:last-child{border-bottom:none;}
+  .plan-item .p-ico{font-size:22px;}
+  .plan-item .p-main{flex:1; min-width:0;}
+  .plan-item .p-title{font-weight:600; font-size:14px;}
+  .plan-item .p-sub{font-size:12.5px; color:var(--ink3); margin-top:1px;}
+  .chip{font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:99px; white-space:nowrap;}
+  .c-g{background:var(--green-bg); color:var(--green);}
+  .c-y{background:var(--amber-bg); color:var(--amber);}
+  .c-r{background:var(--red-bg); color:var(--red);}
+  .p-del{background:none;border:none;color:var(--ink3);cursor:pointer;font-size:16px;padding:4px;}
+  .p-del:hover{color:var(--red);}
+  .planner-foot{margin-top:14px; display:flex; gap:10px;}
+
+  /* ---------- location modal ---------- */
+  #locModal{
+    display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:100;
+    align-items:flex-start; justify-content:center; padding-top:7vh;
+  }
+  #locModal.open{display:flex;}
+  .modal-box{
+    background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow);
+    width:min(540px, 94vw); padding:20px; max-height:86vh; overflow-y:auto;
+  }
+  .map-hint{font-size:12.5px; color:var(--ink3); margin-top:14px;}
+  #pickMap{height:280px; border-radius:10px; margin-top:8px; border:1px solid var(--line);}
+  #pickBar{display:none; gap:8px; margin-top:10px; align-items:center;}
+  #pickBar.show{display:flex;}
+  #pickBar input{flex:1;}
+  #pickBar .coords{font-size:12px; color:var(--ink3); white-space:nowrap; font-variant-numeric:tabular-nums;}
+  .modal-box h3{font-size:15px; margin-bottom:10px;}
+  .modal-box input{width:100%; min-width:0;}
+  #locResults{margin-top:10px; max-height:240px; overflow-y:auto;}
+  .loc-res{padding:10px 12px; border-radius:9px; cursor:pointer; font-size:14px;}
+  .loc-res:hover{background:var(--accent-soft);}
+  .loc-res small{color:var(--ink3); display:block;}
+
+  #status{font-size:13px; color:var(--ink3); margin-top:10px;}
+  footer{
+    text-align:center; color:var(--ink3); font-size:12.5px; padding:26px;
+    border-top:1px solid var(--line); margin-top:30px; background:var(--surface);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">BC</div>
+  <div>
+    <h1>BlockCast</h1>
+    <div class="tagline">Plan your sport around the sky</div>
+  </div>
+  <div class="loc-chip" id="locChip" title="Change location">📍 <b id="locName">Locating…</b> <span style="color:var(--ink3)">▾</span></div>
+</header>
+
+<main>
+  <!-- Controls -->
+  <div class="controls">
+    <div class="field">
+      <label for="activity">Activity</label>
+      <select id="activity"></select>
+    </div>
+    <div class="field">
+      <label>Block length</label>
+      <div class="seg" id="blockSeg">
+        <button data-v="2">2 h</button>
+        <button data-v="3">3 h</button>
+        <button data-v="4" class="on">4 h</button>
+        <button data-v="6">6 h</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Risk tolerance</label>
+      <div class="seg" id="tolSeg">
+        <button data-v="cautious">Cautious</button>
+        <button data-v="balanced" class="on">Balanced</button>
+        <button data-v="tolerant">Tolerant</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Hours shown</label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <select id="hFrom" style="min-width:80px"></select>
+        <span style="color:var(--ink3)">→</span>
+        <select id="hTo" style="min-width:80px"></select>
+      </div>
+    </div>
+    <div class="field" style="margin-left:auto">
+      <label>&nbsp;</label>
+      <button class="btn-ghost" id="tuneBtn">⚙ Tune criteria</button>
+    </div>
+  </div>
+
+  <!-- Criteria tuning -->
+  <div id="tunePanel">
+    <h3>Criteria for <span id="tuneActName"></span></h3>
+    <div class="hint">How much should each factor matter? 0 = ignore, 10 = critical. Presets fill these in — adjust to make it yours.</div>
+    <div class="sliders">
+      <div class="srow">
+        <label>🌧 Rain <span id="wRainV"></span></label>
+        <input type="range" id="wRain" min="0" max="10" step="1">
+        <small>Chance & amount of precipitation</small>
+      </div>
+      <div class="srow">
+        <label>💨 Wind <span id="wWindV"></span></label>
+        <input type="range" id="wWind" min="0" max="10" step="1">
+        <small>Sustained wind & gusts</small>
+      </div>
+      <div class="srow">
+        <label>🥶 Cold <span id="wColdV"></span></label>
+        <input type="range" id="wCold" min="0" max="10" step="1">
+        <small>Too cold below <input type="number" id="tMinIn" class="tnum"> °C</small>
+      </div>
+      <div class="srow">
+        <label>🥵 Heat <span id="wHeatV"></span></label>
+        <input type="range" id="wHeat" min="0" max="10" step="1">
+        <small>Too hot above <input type="number" id="tMaxIn" class="tnum"> °C</small>
+      </div>
+      <div class="srow">
+        <label>☀️ UV <span id="wUvV"></span></label>
+        <input type="range" id="wUv" min="0" max="10" step="1">
+        <small>Sun-exposure index</small>
+      </div>
+      <div class="srow">
+        <label>❄️ Snow base <span id="wSnowV"></span></label>
+        <input type="range" id="wSnow" min="0" max="10" step="1">
+        <small>Risk when snow cover is too thin</small>
+      </div>
+      <div class="srow">
+        <label>🌨 Fresh snow <span id="wFreshV"></span></label>
+        <input type="range" id="wFresh" min="0" max="10" step="1">
+        <small>Wants fresh powder from the last 48 h</small>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <button class="btn-ghost" id="resetTune">Reset to preset defaults</button>
+    </div>
+  </div>
+
+  <!-- Heat map -->
+  <div class="board">
+    <div class="board-head">
+      <h2 id="boardTitle">Your week at a glance</h2>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--green)"></span>Good to go</span>
+        <span><span class="dot" style="background:var(--amber)"></span>Some risk</span>
+        <span><span class="dot" style="background:var(--red)"></span>High risk</span>
+      </div>
+    </div>
+    <div id="grid"><div class="empty">Loading live forecast…</div></div>
+    <div id="status"></div>
+  </div>
+
+  <!-- Detail + planner -->
+  <div class="lower">
+    <div class="card" id="detailCard">
+      <h2>Block detail</h2>
+      <div class="empty" id="detailEmpty">Click a block in the heat map to inspect it and add it to your planner.</div>
+      <div id="detailBody" style="display:none"></div>
+    </div>
+    <div class="card">
+      <h2>My planner</h2>
+      <div id="planList"><div class="empty">No sessions planned yet. Pick a green block!</div></div>
+      <div class="planner-foot">
+        <button class="btn" id="exportAll" disabled>⬇ Export all to calendar (.ics)</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  BlockCast prototype · Live data from <a href="https://open-meteo.com" style="color:var(--accent)">Open-Meteo</a> · Forecast refreshes on every visit — planned sessions are re-checked automatically.
+</footer>
+
+<div id="tip"></div>
+
+<!-- Location modal -->
+<div id="locModal">
+  <div class="modal-box">
+    <h3>Set your location</h3>
+    <input type="text" id="locSearch" placeholder="Search a city… e.g. Geneva, Cape Town, Auckland" autocomplete="off">
+    <div id="locResults"></div>
+    <div class="map-hint">…or click the map to pick a precise spot — a trail head, a lake, a mountain. Drag the pin to fine-tune.</div>
+    <div id="pickMap"></div>
+    <div id="pickBar">
+      <input type="text" id="pickName" placeholder="Name this spot" autocomplete="off">
+      <span class="coords" id="pickCoords"></span>
+      <button class="btn" id="usePick">Use this spot</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* =========================================================
+   BlockCast prototype — single-file, live Open-Meteo data
+   ========================================================= */
+
+// ---------- Activity presets ----------
+// weights 0–10: rain, wind, cold, heat, uv. tMin/tMax = comfort band °C.
+// windIdeal (sailing): too little wind is ALSO a risk.
+const ACTIVITIES = {
+  tennis:  {label:"🎾 Tennis",   w:{rain:10, wind:6, cold:4, heat:5, uv:3, snow:0, fresh:0}, tMin:10, tMax:30},
+  cycling: {label:"🚴 Cycling",  w:{rain:8,  wind:8, cold:6, heat:5, uv:4, snow:0, fresh:0}, tMin:5,  tMax:32},
+  jogging: {label:"🏃 Jogging",  w:{rain:5,  wind:3, cold:4, heat:8, uv:5, snow:0, fresh:0}, tMin:0,  tMax:26},
+  fishing: {label:"🎣 Fishing",  w:{rain:2,  wind:9, cold:5, heat:3, uv:4, snow:0, fresh:0}, tMin:2,  tMax:32},
+  golf:    {label:"⛳ Golf",     w:{rain:9,  wind:6, cold:5, heat:4, uv:4, snow:0, fresh:0}, tMin:8,  tMax:31},
+  hiking:  {label:"🥾 Hiking",   w:{rain:6,  wind:5, cold:6, heat:6, uv:6, snow:0, fresh:0}, tMin:2,  tMax:28},
+  sailing: {label:"⛵ Sailing",  w:{rain:3,  wind:8, cold:5, heat:2, uv:5, snow:0, fresh:0}, tMin:5,  tMax:33, windIdeal:[9,32]},
+  picnic:  {label:"🧺 Picnic / BBQ", w:{rain:9, wind:5, cold:6, heat:4, uv:3, snow:0, fresh:0}, tMin:15, tMax:32},
+  skiing:  {label:"⛷️ Skiing",   w:{rain:7, wind:6, cold:6, heat:6, uv:5, snow:9, fresh:3}, tMin:-18, tMax:6, snowBase:0.20},
+  snowmob: {label:"🛷 Snowmobiling", w:{rain:6, wind:5, cold:5, heat:7, uv:3, snow:10, fresh:2}, tMin:-25, tMax:4, snowBase:0.15},
+};
+const TOL_MULT = {cautious:1.3, balanced:1.0, tolerant:0.68};
+
+// ---------- State ----------
+const S = {
+  activity:"tennis",
+  blockLen:4,
+  tolerance:"balanced",
+  hFrom:6, hTo:20,            // visible hours of the day
+  tMin:null, tMax:null,       // comfort band °C (user-adjustable)
+  weights:null,               // live copy (may be user-tuned)
+  loc:{name:"Québec", lat:46.8131, lon:-71.2075},
+  data:null,                  // open-meteo response
+  selected:null,              // {dayISO, startHour}
+  planner:[],
+};
+
+// persistence
+function saveState(){
+  localStorage.setItem("blockcast.settings", JSON.stringify({
+    activity:S.activity, blockLen:S.blockLen, tolerance:S.tolerance,
+    weights:S.weights, loc:S.loc, hFrom:S.hFrom, hTo:S.hTo, tMin:S.tMin, tMax:S.tMax
+  }));
+  localStorage.setItem("blockcast.planner", JSON.stringify(S.planner));
+}
+function loadState(){
+  try{
+    const s = JSON.parse(localStorage.getItem("blockcast.settings"));
+    if(s){ Object.assign(S, {activity:s.activity??S.activity, blockLen:s.blockLen??4,
+      tolerance:s.tolerance??"balanced", weights:s.weights??null, loc:s.loc??S.loc,
+      hFrom:s.hFrom??6, hTo:s.hTo??20, tMin:s.tMin??null, tMax:s.tMax??null}); }
+    S.planner = JSON.parse(localStorage.getItem("blockcast.planner")) ?? [];
+  }catch(e){/* fresh start */}
+  if(!ACTIVITIES[S.activity]) S.activity = "tennis";
+  const act = ACTIVITIES[S.activity];
+  S.weights = {...act.w, ...(S.weights ?? {})};   // merge so new factors (snow, fresh) get defaults
+  S.tMin ??= act.tMin; S.tMax ??= act.tMax;
+}
+
+// ---------- Scoring ----------
+const ramp = (v, lo, hi) => v<=lo ? 0 : v>=hi ? 1 : (v-lo)/(hi-lo);
+
+// Aggregate hourly slices for one block, return factor severities (0–1 each)
+function blockFactors(hours, fresh48 = 0){
+  const max = k => Math.max(...hours.map(h=>h[k]));
+  const sum = k => hours.reduce((a,h)=>a+h[k],0);
+  const avg = k => sum(k)/hours.length;
+  const act = ACTIVITIES[S.activity];
+  const f = {};
+  f.rainProb = max("pprob"); f.rainSum = +sum("precip").toFixed(1);
+  f.wind = Math.round(max("wind")); f.gust = Math.round(max("gust"));
+  f.temp = +avg("temp").toFixed(1); f.uv = +max("uv").toFixed(1);
+  f.cloud = Math.round(avg("cloud"));
+  f.depth = Math.round(max("sdep")*100);   // snow cover on the ground, cm
+  f.fresh48 = fresh48;                     // fresh snowfall over the previous 48 h, cm
+
+  const baseCm = (act.snowBase ?? 0) * 100;
+  f.sev = {
+    rain: Math.max(ramp(f.rainProb,30,75), ramp(f.rainSum,0.4,4)),
+    wind: Math.max(ramp(f.wind,20,45), ramp(f.gust,38,68)),
+    cold: ramp(S.tMin - f.temp, 0, 8),
+    heat: ramp(f.temp - S.tMax, 0, 8),
+    uv:   ramp(f.uv, 6, 9.5),
+    snow: baseCm ? ramp(baseCm - f.depth, 0, baseCm) : 0,
+    fresh: 1 - ramp(f.fresh48, 0, 15),
+  };
+  // sailing-style: not enough wind is also bad
+  if(act.windIdeal){
+    const [lo,hi] = act.windIdeal;
+    f.sev.wind = Math.max(ramp(f.wind,hi,hi+18), ramp(lo - f.wind, 0, lo));
+  }
+  return f;
+}
+
+// One number 0–100. Worst weighted factor dominates; others add a little.
+function riskScore(f){
+  const tol = TOL_MULT[S.tolerance];
+  const contribs = Object.entries(f.sev).map(([k,sev]) =>
+    Math.min(1, sev * tol) * (S.weights[k]/10));
+  const worst = Math.max(...contribs);
+  const others = contribs.reduce((a,c)=>a+c,0) - worst;
+  return Math.round(Math.min(1, worst + 0.18*others) * 100);
+}
+const riskBand  = s => s<25 ? "g" : s<55 ? "y" : "r";
+const riskWord  = s => s<25 ? "Good to go" : s<55 ? "Some risk — check details" : "High risk";
+const riskColor = s => s<25 ? "var(--green)" : s<55 ? "var(--amber)" : "var(--red)";
+
+// ---------- Weather fetch ----------
+async function fetchWeather(){
+  setStatus("Fetching live forecast for " + S.loc.name + "…");
+  const u = new URL("https://api.open-meteo.com/v1/forecast");
+  u.search = new URLSearchParams({
+    latitude:S.loc.lat, longitude:S.loc.lon, timezone:"auto", forecast_days:"7",
+    past_days:"2",   // needed to compute fresh snow over the last 48 h
+    hourly:"temperature_2m,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,cloud_cover,uv_index,snowfall,snow_depth",
+    daily:"weather_code,temperature_2m_max,temperature_2m_min",
+  });
+  const res = await fetch(u);
+  if(!res.ok) throw new Error("Weather API error " + res.status);
+  const j = await res.json();
+
+  // reshape hourly into per-day, per-hour records
+  const H = j.hourly, days = {}, timeIdx = new Map();
+  for(let i=0;i<H.time.length;i++){
+    timeIdx.set(H.time[i], i);
+    const [d, t] = H.time[i].split("T");
+    (days[d] ??= [])[+t.slice(0,2)] = {
+      temp:H.temperature_2m[i] ?? 0,
+      pprob:H.precipitation_probability[i] ?? 0,
+      precip:H.precipitation[i] ?? 0,
+      wind:H.wind_speed_10m[i] ?? 0,
+      gust:H.wind_gusts_10m[i] ?? 0,
+      cloud:H.cloud_cover[i] ?? 0,
+      uv:H.uv_index[i] ?? 0,
+      sdep:H.snow_depth[i] ?? 0,
+    };
+  }
+  S.data = {days, daily:j.daily, tz:j.timezone, timeIdx, snowfall:H.snowfall, pastDays:2};
+  setStatus("Live forecast · " + S.loc.name + " · updated " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}));
+}
+
+const WMO_ICON = c =>
+  c===0?"☀️":c<=2?"🌤":c===3?"☁️":c<=48?"🌫":c<=57?"🌦":c<=67?"🌧":c<=77?"🌨":c<=82?"🌧":c<=86?"🌨":"⛈";
+
+// ---------- Heat map render ----------
+function blocksOfDay(){
+  const out = [];
+  for(let h=S.hFrom; h<S.hTo; h+=S.blockLen) out.push(h);
+  return out;
+}
+function blockEnd(h0){ return Math.min(h0 + S.blockLen, S.hTo); }
+function getBlock(dayISO, startHour){
+  return getBlockLen(dayISO, startHour, Math.max(1, blockEnd(startHour) - startHour));
+}
+function fmtHour(h){ return String(h).padStart(2,"0") + ":00"; }
+function fmtEnd(h){ return h >= 24 ? "24:00" : fmtHour(h); }
+
+function renderGrid(){
+  if(!S.data) return;
+  const grid = document.getElementById("grid");
+  const dayKeys = Object.keys(S.data.days).slice(S.data.pastDays, S.data.pastDays + 7);
+  const starts = blocksOfDay();
+  const now = new Date();
+  const todayISO = now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
+
+  grid.style.gridTemplateColumns = `72px repeat(${dayKeys.length}, minmax(0,1fr))`;
+  grid.innerHTML = "";
+
+  // header row
+  grid.appendChild(el("div",""));
+  dayKeys.forEach((d,i)=>{
+    const di = i + S.data.pastDays;
+    const dt = new Date(d+"T12:00");
+    const h = el("div","gh");
+    h.innerHTML = `<b>${d===todayISO?"Today":dt.toLocaleDateString([], {weekday:"short"})}</b>
+      <span class="ico">${WMO_ICON(S.data.daily.weather_code[di])}</span>
+      ${dt.toLocaleDateString([], {day:"numeric", month:"short"})}<br>
+      <span class="mm">${Math.round(S.data.daily.temperature_2m_min[di])}° / ${Math.round(S.data.daily.temperature_2m_max[di])}°</span>`;
+    grid.appendChild(h);
+  });
+
+  // block rows
+  starts.forEach(h0=>{
+    const end = blockEnd(h0);
+    const lbl = el("div","tlabel");
+    lbl.textContent = fmtHour(h0) + " – " + fmtEnd(end);
+    grid.appendChild(lbl);
+
+    dayKeys.forEach(d=>{
+      const b = getBlock(d, h0);
+      const c = el("div","cell");
+      if(!b){ c.classList.add("past"); grid.appendChild(c); return; }
+      const isPast = (d===todayISO && end <= now.getHours()) || d < todayISO;
+      c.classList.add("r"+"-"+riskBand(b.score));
+      if(isPast) c.classList.add("past");
+      c.textContent = b.score;
+      if(S.selected && S.selected.day===d && S.selected.h===h0) c.classList.add("sel");
+      if(S.planner.some(p=>p.day===d && p.h===h0 && p.activity===S.activity)) c.innerHTML += `<span class="pin">📌</span>`;
+
+      c.addEventListener("click", ()=>{ S.selected={day:d,h:h0}; renderGrid(); renderDetail(); });
+      c.addEventListener("mousemove", e=>showTip(e,d,h0,b));
+      c.addEventListener("mouseleave", hideTip);
+      grid.appendChild(c);
+    });
+  });
+
+  document.getElementById("boardTitle").textContent =
+    `${ACTIVITIES[S.activity].label.replace(/^\S+\s/,"")} — your week at a glance`;
+}
+
+function el(tag,cls){ const e=document.createElement(tag); if(cls)e.className=cls; return e; }
+
+// tooltip
+const tip = document.getElementById("tip");
+function showTip(e,d,h0,b){
+  const dt = new Date(d+"T12:00");
+  tip.innerHTML = `<b>${dt.toLocaleDateString([], {weekday:"long", day:"numeric", month:"short"})},
+    ${fmtHour(h0)}–${fmtEnd(blockEnd(h0))}</b><br>
+    <span class="trisk" style="color:${b.score<25?"#4ade80":b.score<55?"#fbbf24":"#f87171"}">
+    Risk ${b.score} · ${riskWord(b.score)}</span><br>
+    🌧 ${b.f.rainProb}% chance · ${b.f.rainSum} mm<br>
+    💨 ${b.f.wind} km/h (gusts ${b.f.gust})<br>
+    ${(S.weights.snow>0 || S.weights.fresh>0) ? `❄️ ${b.f.depth} cm base · ${b.f.fresh48} cm fresh/48 h<br>` : ""}
+    🌡 ${b.f.temp}°C · ☀️ UV ${b.f.uv}`;
+  tip.style.display="block";
+  const x = Math.min(e.clientX+16, innerWidth-270), y = Math.min(e.clientY+16, innerHeight-160);
+  tip.style.left=x+"px"; tip.style.top=y+"px";
+}
+function hideTip(){ tip.style.display="none"; }
+
+// ---------- Detail panel ----------
+function renderDetail(){
+  const body = document.getElementById("detailBody");
+  const empty = document.getElementById("detailEmpty");
+  if(!S.selected || !S.data){ body.style.display="none"; empty.style.display="block"; return; }
+  const {day,h} = S.selected;
+  const b = getBlock(day,h);
+  if(!b){ body.style.display="none"; empty.style.display="block"; return; }
+  empty.style.display="none"; body.style.display="block";
+
+  const dt = new Date(day+"T12:00");
+  const end = blockEnd(h);
+  const defs = [
+    {k:"rain",  n:"🌧 Rain",  val:`${b.f.rainProb}% · ${b.f.rainSum} mm`},
+    {k:"wind",  n:"💨 Wind",  val:`${b.f.wind} / ${b.f.gust} km/h`},
+    {k:"cold",  n:"🥶 Cold",  val:`${b.f.temp} °C`},
+    {k:"heat",  n:"🥵 Heat",  val:`${b.f.temp} °C`},
+    {k:"uv",    n:"☀️ UV",    val:`index ${b.f.uv}`},
+    {k:"snow",  n:"❄️ Snow",  val:`${b.f.depth} cm base`},
+    {k:"fresh", n:"🌨 Fresh", val:`${b.f.fresh48} cm / 48 h`},
+  ];
+  const factRows = defs
+    .filter(x => (x.k!=="snow" && x.k!=="fresh") || S.weights[x.k] > 0)
+    .map(({k,n,val})=>{
+    const eff = Math.min(1, b.f.sev[k]*TOL_MULT[S.tolerance]) * (S.weights[k]/10);
+    const col = eff<0.25?"var(--green)":eff<0.55?"var(--amber)":"var(--red)";
+    return `<div class="fbar"><span>${n}</span>
+      <div class="track"><div class="fill" style="width:${Math.round(eff*100)}%;background:${col}"></div></div>
+      <span class="val">${val}</span></div>`;
+  }).join("");
+
+  const already = S.planner.some(p=>p.day===day && p.h===h && p.activity===S.activity);
+  body.innerHTML = `
+    <div class="detail-top">
+      <div class="gauge" style="background:${b.score<25?"var(--green-bg)":b.score<55?"var(--amber-bg)":"var(--red-bg)"};color:${riskColor(b.score)}">${b.score}</div>
+      <div>
+        <div class="when">${ACTIVITIES[S.activity].label} · ${dt.toLocaleDateString([], {weekday:"long", day:"numeric", month:"long"})}</div>
+        <div class="verdict">${fmtHour(h)} – ${fmtEnd(end)} · ${riskWord(b.score)}</div>
+      </div>
+    </div>
+    <div class="fbars">${factRows}</div>
+    <div class="detail-actions">
+      <button class="btn" id="addPlan" ${already?"disabled":""}>${already?"✓ In planner":"➕ Add to my planner"}</button>
+      <button class="btn-ghost" id="dlIcs">⬇ Calendar file (.ics)</button>
+    </div>`;
+
+  document.getElementById("addPlan").onclick = ()=>{
+    S.planner.push({id:Date.now(), activity:S.activity, day, h, len:end-h, loc:S.loc.name});
+    saveState(); renderPlanner(); renderGrid(); renderDetail();
+  };
+  document.getElementById("dlIcs").onclick = ()=> downloadICS([{activity:S.activity, day, h, len:end-h, loc:S.loc.name}]);
+}
+
+// ---------- Planner ----------
+function renderPlanner(){
+  const list = document.getElementById("planList");
+  const exp = document.getElementById("exportAll");
+  // prune past sessions
+  const now = new Date();
+  S.planner = S.planner.filter(p => new Date(`${p.day}T${String(p.h).padStart(2,"0")}:00`) > new Date(now - 864e5));
+  exp.disabled = !S.planner.length;
+  if(!S.planner.length){ list.innerHTML = `<div class="empty">No sessions planned yet. Pick a green block!</div>`; return; }
+
+  S.planner.sort((a,b)=> (a.day+a.h) < (b.day+b.h) ? -1 : 1);
+  list.innerHTML = S.planner.map(p=>{
+    const act = ACTIVITIES[p.activity] ?? {label:"❓ "+p.activity};
+    const dt = new Date(p.day+"T12:00");
+    // live re-check against fresh forecast (this is the "weather update")
+    let chip = `<span class="chip" style="background:var(--surface2);color:var(--ink3)">no data</span>`;
+    // score with the item's own activity preset (weights + comfort band)
+    const saveAct = S.activity, wSave = S.weights, tSave = [S.tMin, S.tMax];
+    if(p.activity in ACTIVITIES){
+      S.activity = p.activity;
+      S.weights = {...ACTIVITIES[p.activity].w};
+      S.tMin = ACTIVITIES[p.activity].tMin; S.tMax = ACTIVITIES[p.activity].tMax;
+    }
+    const b = S.data ? getBlockLen(p.day, p.h, p.len) : null;
+    S.activity = saveAct; S.weights = wSave; [S.tMin, S.tMax] = tSave;
+    if(b) chip = `<span class="chip c-${riskBand(b.score)}">${riskWord(b.score)} · ${b.score}</span>`;
+    return `<div class="plan-item">
+      <span class="p-ico">${act.label.split(" ")[0]}</span>
+      <div class="p-main">
+        <div class="p-title">${act.label.replace(/^\S+\s/,"")}</div>
+        <div class="p-sub">${dt.toLocaleDateString([], {weekday:"short", day:"numeric", month:"short"})} ·
+          ${fmtHour(p.h)}–${fmtHour((p.h+p.len)%24||24)} · ${p.loc}</div>
+      </div>
+      ${chip}
+      <button class="p-del" data-id="${p.id}" title="Remove">✕</button>
+    </div>`;
+  }).join("");
+
+  list.querySelectorAll(".p-del").forEach(btn=> btn.onclick = ()=>{
+    S.planner = S.planner.filter(p=>p.id !== +btn.dataset.id);
+    saveState(); renderPlanner(); renderGrid();
+  });
+  exp.onclick = ()=> downloadICS(S.planner);
+}
+// like getBlock but with an explicit length (planner items keep their own)
+function getBlockLen(dayISO, startHour, len){
+  const day = S.data.days[dayISO]; if(!day) return null;
+  const hours=[]; for(let h=startHour; h<startHour+len && h<24; h++) if(day[h]) hours.push(day[h]);
+  if(!hours.length) return null;
+  // fresh snowfall accumulated over the 48 h before the block starts
+  let fresh = 0;
+  const idx = S.data.timeIdx.get(`${dayISO}T${String(startHour).padStart(2,"0")}:00`);
+  if(idx !== undefined) for(let j=Math.max(0, idx-48); j<idx; j++) fresh += S.data.snowfall[j] ?? 0;
+  const f = blockFactors(hours, +fresh.toFixed(1));
+  return {f, score:riskScore(f)};
+}
+
+// ---------- ICS export ----------
+function downloadICS(items){
+  const pad = n => String(n).padStart(2,"0");
+  const stamp = new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z";
+  const events = items.map(p=>{
+    const act = ACTIVITIES[p.activity] ?? {label:p.activity};
+    const d = p.day.replace(/-/g,"");
+    const b = S.data ? getBlockLen(p.day, p.h, p.len) : null;
+    const desc = b ? `Forecast: risk ${b.score}/100 (${riskWord(b.score)}). Rain ${b.f.rainProb}%/${b.f.rainSum}mm, wind ${b.f.wind}km/h (gusts ${b.f.gust}), ${b.f.temp}C, UV ${b.f.uv}. — BlockCast` : "Planned with BlockCast";
+    return ["BEGIN:VEVENT",
+      `UID:${p.id ?? Date.now()}-${d}${pad(p.h)}@blockcast`,
+      `DTSTAMP:${stamp}`,
+      `DTSTART:${d}T${pad(p.h)}0000`,
+      `DTEND:${d}T${(p.h+p.len)>=24 ? "235959" : pad(p.h+p.len)+"0000"}`,
+      `SUMMARY:${act.label.replace(/^\S+\s/,"")} — BlockCast`,
+      `LOCATION:${p.loc ?? ""}`,
+      `DESCRIPTION:${desc}`,
+      "END:VEVENT"].join("\r\n");
+  }).join("\r\n");
+  const ics = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//BlockCast//EN",events,"END:VCALENDAR"].join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([ics], {type:"text/calendar"}));
+  a.download = "blockcast-sessions.ics";
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+// ---------- Location ----------
+const modal = document.getElementById("locModal");
+document.getElementById("locChip").onclick = ()=>{ modal.classList.add("open"); initPickMap(); document.getElementById("locSearch").focus(); };
+modal.onclick = e => { if(e.target===modal) modal.classList.remove("open"); };
+
+// --- map picker (precise spots: trails, lakes, mountains) ---
+let pickMap = null, pickMarker = null, pick = null, pickToken = 0, pickNameEdited = false;
+const pickBar = document.getElementById("pickBar");
+const pickNameIn = document.getElementById("pickName");
+pickNameIn.addEventListener("input", ()=>{ pickNameEdited = true; });
+
+function initPickMap(){
+  if(!window.L){ document.getElementById("pickMap").innerHTML =
+    `<div class="empty" style="padding:14px">Map unavailable (couldn’t load Leaflet) — use the search above.</div>`; return; }
+  if(pickMap){
+    // modal was display:none when Leaflet last measured itself — recompute, then recenter
+    setTimeout(()=>{ pickMap.invalidateSize(); pickMap.setView([S.loc.lat, S.loc.lon]); }, 0);
+    return;
+  }
+  pickMap = L.map("pickMap").setView([S.loc.lat, S.loc.lon], 9);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {maxZoom:17, attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(pickMap);
+  setTimeout(()=> pickMap.invalidateSize(), 0);
+  pickMap.on("click", e=> setPick(e.latlng.lat, e.latlng.lng));
+}
+
+async function setPick(lat, lon){
+  lat = +lat.toFixed(4); lon = +lon.toFixed(4);
+  pick = {lat, lon};
+  if(pickMarker) pickMarker.setLatLng([lat, lon]);
+  else{
+    pickMarker = L.marker([lat, lon], {draggable:true}).addTo(pickMap);
+    pickMarker.on("dragend", ()=>{ const p = pickMarker.getLatLng(); setPick(p.lat, p.lng); });
+  }
+  pickBar.classList.add("show");
+  document.getElementById("pickCoords").textContent = `${lat}, ${lon}`;
+  pickNameEdited = false;
+  pickNameIn.value = "";
+  pickNameIn.placeholder = "Naming spot…";
+  // best-effort reverse geocode; the field stays editable ("Mont-Valin trail head"…)
+  const token = ++pickToken;
+  let name = "";
+  try{
+    const r = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+    const j = await r.json();
+    name = j.locality || j.city || j.principalSubdivision || "";
+  }catch(e){/* offline reverse geocode is optional */}
+  if(token !== pickToken || pickNameEdited) return;  // newer pick, or user typed a name
+  pickNameIn.placeholder = "Name this spot";
+  pickNameIn.value = name || `${lat}, ${lon}`;
+}
+
+document.getElementById("usePick").onclick = async ()=>{
+  if(!pick) return;
+  S.loc = {name: pickNameIn.value.trim() || `${pick.lat}, ${pick.lon}`, lat:pick.lat, lon:pick.lon};
+  modal.classList.remove("open");
+  document.getElementById("locName").textContent = S.loc.name;
+  saveState();
+  await refresh();
+};
+
+let searchTimer;
+document.getElementById("locSearch").addEventListener("input", e=>{
+  clearTimeout(searchTimer);
+  const q = e.target.value.trim();
+  if(q.length<2) return;
+  searchTimer = setTimeout(async ()=>{
+    const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=en`);
+    const j = await r.json();
+    const box = document.getElementById("locResults");
+    box.innerHTML = (j.results ?? []).map(x=>
+      `<div class="loc-res" data-lat="${x.latitude}" data-lon="${x.longitude}" data-name="${x.name}">
+        ${x.name}<small>${[x.admin1, x.country].filter(Boolean).join(", ")}</small></div>`).join("")
+      || `<div class="empty">No matches.</div>`;
+    box.querySelectorAll(".loc-res").forEach(d => d.onclick = async ()=>{
+      S.loc = {name:d.dataset.name, lat:+d.dataset.lat, lon:+d.dataset.lon};
+      modal.classList.remove("open");
+      document.getElementById("locName").textContent = S.loc.name;
+      saveState();
+      await refresh();
+    });
+  }, 300);
+});
+
+// ---------- Controls wiring ----------
+function wireSeg(id, key, cast){
+  const seg = document.getElementById(id);
+  seg.querySelectorAll("button").forEach(b=>{
+    if(String(S[key])===b.dataset.v) { seg.querySelectorAll("button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); }
+    b.onclick = ()=>{
+      seg.querySelectorAll("button").forEach(x=>x.classList.remove("on"));
+      b.classList.add("on");
+      S[key] = cast ? cast(b.dataset.v) : b.dataset.v;
+      saveState(); renderGrid(); renderDetail(); renderPlanner();
+    };
+  });
+}
+
+function fillActivitySelect(){
+  const sel = document.getElementById("activity");
+  sel.innerHTML = Object.entries(ACTIVITIES).map(([k,a])=>`<option value="${k}">${a.label}</option>`).join("");
+  sel.value = S.activity;
+  sel.onchange = ()=>{
+    S.activity = sel.value;
+    const act = ACTIVITIES[S.activity];
+    S.weights = {...act.w};
+    S.tMin = act.tMin; S.tMax = act.tMax;
+    saveState(); syncTune(); renderGrid(); renderDetail();
+  };
+}
+
+const SLIDERS = ["rain","wind","cold","heat","uv","snow","fresh"];
+function syncTune(){
+  const act = ACTIVITIES[S.activity];
+  document.getElementById("tuneActName").textContent = act.label;
+  document.getElementById("tMinIn").value = S.tMin;
+  document.getElementById("tMaxIn").value = S.tMax;
+  SLIDERS.forEach(k=>{
+    const idk = k[0].toUpperCase()+k.slice(1);
+    const r = document.getElementById("w"+idk);
+    r.value = S.weights[k];
+    document.getElementById("w"+idk+"V").textContent = S.weights[k];
+  });
+}
+function wireTune(){
+  document.getElementById("tuneBtn").onclick = ()=> document.getElementById("tunePanel").classList.toggle("open");
+  SLIDERS.forEach(k=>{
+    const idk = k[0].toUpperCase()+k.slice(1);
+    document.getElementById("w"+idk).oninput = e=>{
+      S.weights[k] = +e.target.value;
+      document.getElementById("w"+idk+"V").textContent = e.target.value;
+      saveState(); renderGrid(); renderDetail();
+    };
+  });
+  document.getElementById("tMinIn").onchange = e=>{ S.tMin = +e.target.value; saveState(); renderGrid(); renderDetail(); };
+  document.getElementById("tMaxIn").onchange = e=>{ S.tMax = +e.target.value; saveState(); renderGrid(); renderDetail(); };
+  document.getElementById("resetTune").onclick = ()=>{
+    const act = ACTIVITIES[S.activity];
+    S.weights = {...act.w};
+    S.tMin = act.tMin; S.tMax = act.tMax;
+    saveState(); syncTune(); renderGrid(); renderDetail();
+  };
+}
+
+function wireHours(){
+  const from = document.getElementById("hFrom"), to = document.getElementById("hTo");
+  from.innerHTML = Array.from({length:23}, (_,h)=>`<option value="${h}">${fmtHour(h)}</option>`).join("");
+  to.innerHTML   = Array.from({length:23}, (_,i)=>i+2).map(h=>`<option value="${h}">${fmtEnd(h)}</option>`).join("");
+  from.value = S.hFrom; to.value = S.hTo;
+  const apply = ()=>{
+    S.hFrom = +from.value; S.hTo = +to.value;
+    if(S.hTo <= S.hFrom){ S.hTo = Math.min(24, S.hFrom + S.blockLen); to.value = S.hTo; }
+    saveState(); renderGrid(); renderDetail();
+  };
+  from.onchange = apply; to.onchange = apply;
+}
+
+function setStatus(t){ document.getElementById("status").textContent = t; }
+
+// ---------- Boot ----------
+async function refresh(){
+  try{
+    await fetchWeather();
+    renderGrid(); renderDetail(); renderPlanner();
+  }catch(err){
+    setStatus("⚠ Could not load forecast: " + err.message + " — check your connection and reload.");
+  }
+}
+
+(async function init(){
+  loadState();
+  fillActivitySelect();
+  wireSeg("blockSeg","blockLen", v=>+v);
+  wireSeg("tolSeg","tolerance");
+  wireHours();
+  wireTune(); syncTune();
+  document.getElementById("locName").textContent = S.loc.name;
+
+  // try browser geolocation once (only if user never picked a place)
+  if(!localStorage.getItem("blockcast.settings") && navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      S.loc = {name:"My location", lat:+pos.coords.latitude.toFixed(3), lon:+pos.coords.longitude.toFixed(3)};
+      document.getElementById("locName").textContent = S.loc.name;
+      saveState(); await refresh();
+    }, ()=>{}, {timeout:4000});
+  }
+  await refresh();
+})();
+</script>
+</body>
+</html>
