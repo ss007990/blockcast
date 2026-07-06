@@ -290,6 +290,16 @@
         <input type="range" id="wRain" min="0" max="10" step="1">
         <small>Chance & amount of precipitation</small>
       </div>
+      <div class="srow snow-only">
+        <label>❄️ Snow base <span id="wSnowV"></span></label>
+        <input type="range" id="wSnow" min="0" max="10" step="1">
+        <small>Risk when snow cover is too thin</small>
+      </div>
+      <div class="srow snow-only">
+        <label>🌨 Fresh snow <span id="wFreshV"></span></label>
+        <input type="range" id="wFresh" min="0" max="10" step="1">
+        <small>Wants fresh powder from the last 48 h</small>
+      </div>
       <div class="srow">
         <label>💨 Wind <span id="wWindV"></span></label>
         <input type="range" id="wWind" min="0" max="10" step="1">
@@ -309,16 +319,6 @@
         <label>☀️ UV <span id="wUvV"></span></label>
         <input type="range" id="wUv" min="0" max="10" step="1">
         <small>Sun-exposure index</small>
-      </div>
-      <div class="srow">
-        <label>❄️ Snow base <span id="wSnowV"></span></label>
-        <input type="range" id="wSnow" min="0" max="10" step="1">
-        <small>Risk when snow cover is too thin</small>
-      </div>
-      <div class="srow">
-        <label>🌨 Fresh snow <span id="wFreshV"></span></label>
-        <input type="range" id="wFresh" min="0" max="10" step="1">
-        <small>Wants fresh powder from the last 48 h</small>
       </div>
     </div>
     <div style="margin-top:14px">
@@ -601,7 +601,7 @@ function showTip(e,d,h0,b){
     Risk ${b.score} · ${riskWord(b.score)}</span><br>
     🌧 ${b.f.rainProb}% chance · ${b.f.rainSum} mm<br>
     💨 ${b.f.wind} km/h (gusts ${b.f.gust})<br>
-    ${(S.weights.snow>0 || S.weights.fresh>0) ? `❄️ ${b.f.depth} cm base · ${b.f.fresh48} cm fresh/48 h<br>` : ""}
+    ${ACTIVITIES[S.activity].snowBase ? `❄️ ${b.f.depth} cm base · ${b.f.fresh48} cm fresh/48 h<br>` : ""}
     🌡 ${b.f.temp}°C · ☀️ UV ${b.f.uv}`;
   tip.style.display="block";
   const x = Math.min(e.clientX+16, innerWidth-270), y = Math.min(e.clientY+16, innerHeight-160);
@@ -627,16 +627,17 @@ function renderDetail(){
   const tempVal = b.f.temp < S.tMin ? `${b.f.temp} °C · min ${S.tMin}°`
                 : b.f.temp > S.tMax ? `${b.f.temp} °C · max ${S.tMax}°`
                 : `${b.f.temp} °C`;
+  const isWinter = !!ACTIVITIES[S.activity].snowBase;
   const defs = [
     {k:"rain",  n:"🌧 Rain",  val:`${b.f.rainProb}% · ${b.f.rainSum} mm`},
+    {k:"snow",  n:"❄️ Snow",  val:`${b.f.depth} cm base`},
+    {k:"fresh", n:"🌨 Fresh", val:`${b.f.fresh48} cm / 48 h`},
     {k:"wind",  n:"💨 Wind",  val:`${b.f.wind} / ${b.f.gust} km/h`},
     {n:"🌡 Temp", val:tempVal, eff:Math.max(effOf("cold"), effOf("heat"))},
     {k:"uv",    n:"☀️ UV",    val:`index ${b.f.uv}`},
-    {k:"snow",  n:"❄️ Snow",  val:`${b.f.depth} cm base`},
-    {k:"fresh", n:"🌨 Fresh", val:`${b.f.fresh48} cm / 48 h`},
   ];
   const factRows = defs
-    .filter(x => (x.k!=="snow" && x.k!=="fresh") || S.weights[x.k] > 0)
+    .filter(x => (x.k!=="snow" && x.k!=="fresh") || isWinter)
     .map(({k,n,val,eff})=>{
     eff = eff ?? effOf(k);
     const col = eff<0.25?"var(--green)":eff<0.55?"var(--amber)":"var(--red)";
@@ -867,6 +868,8 @@ function syncTune(){
   document.getElementById("tuneActName").textContent = act.label;
   document.getElementById("tMinIn").value = S.tMin;
   document.getElementById("tMaxIn").value = S.tMax;
+  // snow criteria only make sense for winter sports (those with a snowBase)
+  document.querySelectorAll(".snow-only").forEach(el => el.style.display = act.snowBase ? "" : "none");
   SLIDERS.forEach(k=>{
     const idk = k[0].toUpperCase()+k.slice(1);
     const r = document.getElementById("w"+idk);
