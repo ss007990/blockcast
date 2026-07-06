@@ -56,6 +56,22 @@
   }
   .loc-chip:hover{border-color:var(--accent);}
   .loc-chip b{color:var(--ink);}
+  .lang-chip{
+    background:var(--surface2); border:1px solid var(--line); border-radius:999px;
+    padding:7px 13px; font:inherit; font-size:12.5px; font-weight:700; color:var(--ink2);
+    cursor:pointer; flex-shrink:0;
+  }
+  .lang-chip:hover{border-color:var(--accent); color:var(--accent);}
+  #intro{
+    display:none; align-items:center; gap:12px; background:var(--accent-soft);
+    color:#1e3a8a; font-size:13.5px; padding:10px 28px; line-height:1.5;
+  }
+  #intro.show{display:flex;}
+  #intro button{
+    margin-left:auto; background:none; border:none; color:#1e3a8a; opacity:.6;
+    font-size:15px; cursor:pointer; padding:4px; flex-shrink:0;
+  }
+  #intro button:hover{opacity:1;}
 
   main{max-width:1180px; margin:0 auto; padding:22px 28px 80px;}
 
@@ -237,20 +253,26 @@
   </div>
   <div>
     <h1>BlockCast</h1>
-    <div class="tagline">Plan your sport around the sky</div>
+    <div class="tagline" data-i18n="tagline">Plan your sport around the sky</div>
   </div>
   <div class="loc-chip" id="locChip" title="Change location">📍 <b id="locName">Locating…</b> <span style="color:var(--ink3)">▾</span></div>
+  <button class="lang-chip" id="langBtn" title="Français / English">FR</button>
 </header>
+
+<div id="intro">
+  <span id="introTxt"></span>
+  <button id="introClose" title="✕">✕</button>
+</div>
 
 <main>
   <!-- Controls -->
   <div class="controls">
     <div class="field">
-      <label for="activity">Activity</label>
+      <label for="activity" data-i18n="activity">Activity</label>
       <select id="activity"></select>
     </div>
     <div class="field">
-      <label>Block length</label>
+      <label data-i18n="blockLen">Block length</label>
       <div class="seg" id="blockSeg">
         <button data-v="2">2 h</button>
         <button data-v="3">3 h</button>
@@ -259,15 +281,15 @@
       </div>
     </div>
     <div class="field">
-      <label>Risk tolerance</label>
+      <label data-i18n="riskTol">Risk tolerance</label>
       <div class="seg" id="tolSeg">
-        <button data-v="cautious">Cautious</button>
-        <button data-v="balanced" class="on">Balanced</button>
-        <button data-v="tolerant">Tolerant</button>
+        <button data-v="cautious" data-i18n="cautious">Cautious</button>
+        <button data-v="balanced" class="on" data-i18n="balanced">Balanced</button>
+        <button data-v="tolerant" data-i18n="tolerant">Tolerant</button>
       </div>
     </div>
     <div class="field">
-      <label>Hours shown</label>
+      <label data-i18n="hours">Hours shown</label>
       <div style="display:flex;gap:6px;align-items:center">
         <select id="hFrom" style="min-width:80px"></select>
         <span style="color:var(--ink3)">→</span>
@@ -276,53 +298,53 @@
     </div>
     <div class="field" style="margin-left:auto">
       <label>&nbsp;</label>
-      <button class="btn-ghost" id="tuneBtn">⚙ Tune criteria</button>
+      <button class="btn-ghost" id="tuneBtn" data-i18n="tuneBtn">⚙ Tune criteria</button>
     </div>
   </div>
 
   <!-- Criteria tuning -->
   <div id="tunePanel">
-    <h3>Criteria for <span id="tuneActName"></span></h3>
-    <div class="hint">How much should each factor matter? 0 = ignore, 10 = critical. Presets fill these in — adjust to make it yours.</div>
+    <h3><span data-i18n="critFor">Criteria for</span> <span id="tuneActName"></span></h3>
+    <div class="hint" data-i18n="critHint">How much should each factor matter? 0 = ignore, 10 = critical. Presets fill these in — adjust to make it yours.</div>
     <div class="sliders">
       <div class="srow">
-        <label>🌧 Rain <span id="wRainV"></span></label>
+        <label><span data-i18n="fRain">🌧 Rain</span> <span id="wRainV"></span></label>
         <input type="range" id="wRain" min="0" max="10" step="1">
-        <small>Chance & amount of precipitation</small>
+        <small data-i18n="fRainS">Chance & amount of precipitation</small>
       </div>
       <div class="srow snow-only">
-        <label>❄️ Snow base <span id="wSnowV"></span></label>
+        <label><span data-i18n="fSnow">❄️ Snow base</span> <span id="wSnowV"></span></label>
         <input type="range" id="wSnow" min="0" max="10" step="1">
-        <small>Risk when snow cover is too thin</small>
+        <small data-i18n="fSnowS">Risk when snow cover is too thin</small>
       </div>
       <div class="srow snow-only">
-        <label>🌨 Fresh snow <span id="wFreshV"></span></label>
+        <label><span data-i18n="fFresh">🌨 Fresh snow</span> <span id="wFreshV"></span></label>
         <input type="range" id="wFresh" min="0" max="10" step="1">
-        <small>Wants fresh powder from the last 48 h</small>
+        <small data-i18n="fFreshS">Wants fresh powder from the last 48 h</small>
       </div>
       <div class="srow">
-        <label>💨 Wind <span id="wWindV"></span></label>
+        <label><span data-i18n="fWind">💨 Wind</span> <span id="wWindV"></span></label>
         <input type="range" id="wWind" min="0" max="10" step="1">
-        <small>Sustained wind & gusts</small>
+        <small data-i18n="fWindS">Sustained wind & gusts</small>
       </div>
       <div class="srow">
-        <label>🥶 Cold <span id="wColdV"></span></label>
+        <label><span data-i18n="fCold">🥶 Cold</span> <span id="wColdV"></span></label>
         <input type="range" id="wCold" min="0" max="10" step="1">
-        <small>Too cold below <input type="number" id="tMinIn" class="tnum"> °C</small>
+        <small><span data-i18n="fColdS">Too cold below</span> <input type="number" id="tMinIn" class="tnum"> °C</small>
       </div>
       <div class="srow">
-        <label>🥵 Heat <span id="wHeatV"></span></label>
+        <label><span data-i18n="fHeat">🥵 Heat</span> <span id="wHeatV"></span></label>
         <input type="range" id="wHeat" min="0" max="10" step="1">
-        <small>Too hot above <input type="number" id="tMaxIn" class="tnum"> °C</small>
+        <small><span data-i18n="fHeatS">Too hot above</span> <input type="number" id="tMaxIn" class="tnum"> °C</small>
       </div>
       <div class="srow">
-        <label>☀️ UV <span id="wUvV"></span></label>
+        <label><span data-i18n="fUv">☀️ UV</span> <span id="wUvV"></span></label>
         <input type="range" id="wUv" min="0" max="10" step="1">
-        <small>Sun-exposure index</small>
+        <small data-i18n="fUvS">Sun-exposure index</small>
       </div>
     </div>
     <div style="margin-top:14px">
-      <button class="btn-ghost" id="resetTune">Reset to preset defaults</button>
+      <button class="btn-ghost" id="resetTune" data-i18n="reset">Reset to preset defaults</button>
     </div>
   </div>
 
@@ -331,34 +353,34 @@
     <div class="board-head">
       <h2 id="boardTitle">Your week at a glance</h2>
       <div class="legend">
-        <span><span class="dot" style="background:var(--green)"></span>Good to go</span>
-        <span><span class="dot" style="background:var(--amber)"></span>Some risk</span>
-        <span><span class="dot" style="background:var(--red)"></span>High risk</span>
+        <span><span class="dot" style="background:var(--green)"></span><span data-i18n="legendG">Good to go</span></span>
+        <span><span class="dot" style="background:var(--amber)"></span><span data-i18n="legendY">Some risk</span></span>
+        <span><span class="dot" style="background:var(--red)"></span><span data-i18n="legendR">High risk</span></span>
       </div>
     </div>
-    <div id="grid"><div class="empty">Loading live forecast…</div></div>
+    <div id="grid"><div class="empty" data-i18n="loading">Loading live forecast…</div></div>
     <div id="status"></div>
   </div>
 
   <!-- Detail + planner -->
   <div class="lower">
     <div class="card" id="detailCard">
-      <h2>Block detail</h2>
-      <div class="empty" id="detailEmpty">Click a block in the heat map to inspect it and add it to your planner.</div>
+      <h2 data-i18n="blockDetail">Block detail</h2>
+      <div class="empty" id="detailEmpty" data-i18n="detailEmpty">Click a block in the heat map to inspect it and add it to your planner.</div>
       <div id="detailBody" style="display:none"></div>
     </div>
     <div class="card">
-      <h2>My planner</h2>
-      <div id="planList"><div class="empty">No sessions planned yet. Pick a green block!</div></div>
+      <h2 data-i18n="planner">My planner</h2>
+      <div id="planList"><div class="empty" data-i18n="plannerEmpty">No sessions planned yet. Pick a green block!</div></div>
       <div class="planner-foot">
-        <button class="btn" id="exportAll" disabled>⬇ Export all to calendar (.ics)</button>
+        <button class="btn" id="exportAll" disabled data-i18n="exportAll">⬇ Export all to calendar (.ics)</button>
       </div>
     </div>
   </div>
 </main>
 
-<footer>
-  BlockCast prototype · Live data from <a href="https://open-meteo.com" style="color:var(--accent)">Open-Meteo</a> · Forecast refreshes on every visit — planned sessions are re-checked automatically.
+<footer id="footerTxt">
+  BlockCast · Live data from <a href="https://open-meteo.com" style="color:var(--accent)">Open-Meteo</a> · Forecast refreshes on every visit — planned sessions are re-checked automatically.
 </footer>
 
 <div id="tip"></div>
@@ -366,15 +388,15 @@
 <!-- Location modal -->
 <div id="locModal">
   <div class="modal-box">
-    <h3>Set your location</h3>
-    <input type="text" id="locSearch" placeholder="Search a city… e.g. Geneva, Cape Town, Auckland" autocomplete="off">
+    <h3 data-i18n="setLoc">Set your location</h3>
+    <input type="text" id="locSearch" placeholder="Search a city… e.g. Geneva, Cape Town, Auckland" autocomplete="off" data-i18n-ph="searchPh">
     <div id="locResults"></div>
-    <div class="map-hint">…or click the map to pick a precise spot — a trail head, a lake, a mountain. Drag the pin to fine-tune.</div>
+    <div class="map-hint" data-i18n="mapHint">…or click the map to pick a precise spot — a trail head, a lake, a mountain. Drag the pin to fine-tune.</div>
     <div id="pickMap"></div>
     <div id="pickBar">
-      <input type="text" id="pickName" placeholder="Name this spot" autocomplete="off">
+      <input type="text" id="pickName" placeholder="Name this spot" autocomplete="off" data-i18n-ph="namePh">
       <span class="coords" id="pickCoords"></span>
-      <button class="btn" id="usePick">Use this spot</button>
+      <button class="btn" id="usePick" data-i18n="useSpot">Use this spot</button>
     </div>
   </div>
 </div>
@@ -402,9 +424,95 @@ const ACTIVITIES = {
 };
 const TOL_MULT = {cautious:1.3, balanced:1.0, tolerant:0.68};
 
+// ---------- Languages ----------
+const LANGS = {
+  en: {
+    tagline:"Plan your sport around the sky",
+    activity:"Activity", blockLen:"Block length", riskTol:"Risk tolerance", hours:"Hours shown",
+    tuneBtn:"⚙ Tune criteria", cautious:"Cautious", balanced:"Balanced", tolerant:"Tolerant",
+    critFor:"Criteria for",
+    critHint:"How much should each factor matter? 0 = ignore, 10 = critical. Presets fill these in — adjust to make it yours.",
+    fRain:"🌧 Rain", fRainS:"Chance & amount of precipitation",
+    fSnow:"❄️ Snow base", fSnowS:"Risk when snow cover is too thin",
+    fFresh:"🌨 Fresh snow", fFreshS:"Wants fresh powder from the last 48 h",
+    fWind:"💨 Wind", fWindS:"Sustained wind & gusts",
+    fCold:"🥶 Cold", fColdS:"Too cold below",
+    fHeat:"🥵 Heat", fHeatS:"Too hot above",
+    fUv:"☀️ UV", fUvS:"Sun-exposure index",
+    reset:"Reset to preset defaults",
+    legendG:"Good to go", legendY:"Some risk", legendR:"High risk",
+    loading:"Loading live forecast…", weekGlance:"— your week at a glance", today:"Today",
+    riskWordG:"Good to go", riskWordY:"Some risk — check details", riskWordR:"High risk",
+    blockDetail:"Block detail",
+    detailEmpty:"Click a block in the heat map to inspect it and add it to your planner.",
+    planner:"My planner", plannerEmpty:"No sessions planned yet. Pick a green block!",
+    exportAll:"⬇ Export all to calendar (.ics)",
+    inPlanner:"✓ In planner", addPlanner:"➕ Add to my planner", icsBtn:"⬇ Calendar file (.ics)",
+    remove:"Remove", noData:"no data",
+    dRain:"🌧 Rain", dSnow:"❄️ Snow", dFresh:"🌨 Fresh", dWind:"💨 Wind", dTemp:"🌡 Temp", dUv:"☀️ UV",
+    uvIdx:"index", base:"base", fresh48h:"fresh/48 h", gusts:"gusts", chance:"chance", tipRisk:"Risk",
+    statusFetching:"Fetching live forecast for", statusLive:"Live forecast", statusUpdated:"updated",
+    loadErr:"⚠ Could not load forecast:", checkConn:"— check your connection and reload.",
+    setLoc:"Set your location",
+    searchPh:"Search a city… e.g. Geneva, Cape Town, Auckland",
+    mapHint:"…or click the map to pick a precise spot — a trail head, a lake, a mountain. Drag the pin to fine-tune.",
+    namePh:"Name this spot", naming:"Naming spot…", useSpot:"Use this spot", noMatch:"No matches.",
+    myLoc:"My location",
+    mapUnavail:"Map unavailable (couldn’t load Leaflet) — use the search above.",
+    intro:"BlockCast scores every block of your week for your sport — green means go. Pick your activity, click a green block, plan your session.",
+    footer:`BlockCast · Live data from <a href="https://open-meteo.com" style="color:var(--accent)">Open-Meteo</a> · Forecast refreshes on every visit — planned sessions are re-checked automatically.`,
+    actNames:{tennis:"Tennis", cycling:"Cycling", jogging:"Jogging", fishing:"Fishing", golf:"Golf",
+      hiking:"Hiking", sailing:"Sailing", picnic:"Picnic / BBQ", skiing:"Skiing", snowmob:"Snowmobiling"},
+  },
+  fr: {
+    tagline:"Planifiez votre sport selon le ciel",
+    activity:"Activité", blockLen:"Durée du bloc", riskTol:"Tolérance au risque", hours:"Heures affichées",
+    tuneBtn:"⚙ Ajuster les critères", cautious:"Prudent", balanced:"Équilibré", tolerant:"Tolérant",
+    critFor:"Critères pour",
+    critHint:"Quelle importance donner à chaque facteur? 0 = ignorer, 10 = critique. Les préréglages remplissent ces valeurs — ajustez-les à votre goût.",
+    fRain:"🌧 Pluie", fRainS:"Probabilité et quantité de précipitations",
+    fSnow:"❄️ Base de neige", fSnowS:"Risque quand la neige au sol est trop mince",
+    fFresh:"🌨 Neige fraîche", fFreshS:"Recherche la poudreuse des dernières 48 h",
+    fWind:"💨 Vent", fWindS:"Vent soutenu et rafales",
+    fCold:"🥶 Froid", fColdS:"Trop froid sous",
+    fHeat:"🥵 Chaleur", fHeatS:"Trop chaud au-dessus de",
+    fUv:"☀️ UV", fUvS:"Indice d’exposition au soleil",
+    reset:"Revenir aux valeurs du préréglage",
+    legendG:"C’est bon", legendY:"Un peu risqué", legendR:"Risque élevé",
+    loading:"Chargement des prévisions en direct…", weekGlance:"— votre semaine en un coup d’œil", today:"Aujourd’hui",
+    riskWordG:"C’est bon", riskWordY:"Un peu risqué — vérifiez les détails", riskWordR:"Risque élevé",
+    blockDetail:"Détail du bloc",
+    detailEmpty:"Cliquez un bloc dans la grille pour l’inspecter et l’ajouter à votre planificateur.",
+    planner:"Mon planificateur", plannerEmpty:"Aucune séance planifiée. Choisissez un bloc vert!",
+    exportAll:"⬇ Tout exporter au calendrier (.ics)",
+    inPlanner:"✓ Au planificateur", addPlanner:"➕ Ajouter à mon planificateur", icsBtn:"⬇ Fichier calendrier (.ics)",
+    remove:"Retirer", noData:"pas de données",
+    dRain:"🌧 Pluie", dSnow:"❄️ Neige", dFresh:"🌨 Fraîche", dWind:"💨 Vent", dTemp:"🌡 Temp.", dUv:"☀️ UV",
+    uvIdx:"indice", base:"au sol", fresh48h:"fraîche/48 h", gusts:"rafales", chance:"prob.", tipRisk:"Risque",
+    statusFetching:"Chargement des prévisions pour", statusLive:"Prévisions en direct", statusUpdated:"mise à jour",
+    loadErr:"⚠ Impossible de charger les prévisions :", checkConn:"— vérifiez votre connexion et rechargez.",
+    setLoc:"Choisissez votre emplacement",
+    searchPh:"Cherchez une ville… p. ex. Québec, Genève, Auckland",
+    mapHint:"…ou cliquez la carte pour choisir un endroit précis — un sentier, un lac, une montagne. Glissez l’épingle pour ajuster.",
+    namePh:"Nommez cet endroit", naming:"Recherche du nom…", useSpot:"Utiliser cet endroit", noMatch:"Aucun résultat.",
+    myLoc:"Ma position",
+    mapUnavail:"Carte indisponible (Leaflet n’a pas pu charger) — utilisez la recherche ci-dessus.",
+    intro:"BlockCast note chaque bloc de votre semaine pour votre sport — vert = allez-y. Choisissez votre activité, cliquez un bloc vert, planifiez votre séance.",
+    footer:`BlockCast · Données en direct d’<a href="https://open-meteo.com" style="color:var(--accent)">Open-Meteo</a> · Les prévisions se rafraîchissent à chaque visite — les séances planifiées sont revérifiées automatiquement.`,
+    actNames:{tennis:"Tennis", cycling:"Vélo", jogging:"Course", fishing:"Pêche", golf:"Golf",
+      hiking:"Randonnée", sailing:"Voile", picnic:"Pique-nique / BBQ", skiing:"Ski", snowmob:"Motoneige"},
+  },
+};
+const T = () => LANGS[S.lang] ?? LANGS.en;
+const LOC = () => S.lang === "fr" ? "fr-CA" : "en-US";
+const actEmoji = k => (ACTIVITIES[k]?.label ?? "❓").split(" ")[0];
+const actName  = k => T().actNames[k] ?? (ACTIVITIES[k] ? ACTIVITIES[k].label.replace(/^\S+\s/,"") : k);
+const actLabel = k => `${actEmoji(k)} ${actName(k)}`;
+
 // ---------- State ----------
 const S = {
   activity:"tennis",
+  lang:(navigator.language || "en").toLowerCase().startsWith("fr") ? "fr" : "en",
   blockLen:4,
   tolerance:"balanced",
   hFrom:6, hTo:20,            // visible hours of the day
@@ -419,7 +527,7 @@ const S = {
 // persistence
 function saveState(){
   localStorage.setItem("blockcast.settings", JSON.stringify({
-    activity:S.activity, blockLen:S.blockLen, tolerance:S.tolerance,
+    activity:S.activity, lang:S.lang, blockLen:S.blockLen, tolerance:S.tolerance,
     weights:S.weights, loc:S.loc, hFrom:S.hFrom, hTo:S.hTo, tMin:S.tMin, tMax:S.tMax
   }));
   localStorage.setItem("blockcast.planner", JSON.stringify(S.planner));
@@ -427,7 +535,7 @@ function saveState(){
 function loadState(){
   try{
     const s = JSON.parse(localStorage.getItem("blockcast.settings"));
-    if(s){ Object.assign(S, {activity:s.activity??S.activity, blockLen:s.blockLen??4,
+    if(s){ Object.assign(S, {activity:s.activity??S.activity, lang:s.lang??S.lang, blockLen:s.blockLen??4,
       tolerance:s.tolerance??"balanced", weights:s.weights??null, loc:s.loc??S.loc,
       hFrom:s.hFrom??6, hTo:s.hTo??20, tMin:s.tMin??null, tMax:s.tMax??null}); }
     S.planner = JSON.parse(localStorage.getItem("blockcast.planner")) ?? [];
@@ -483,12 +591,12 @@ function riskScore(f){
   return Math.round(Math.min(1, worst + 0.18*others) * 100);
 }
 const riskBand  = s => s<25 ? "g" : s<55 ? "y" : "r";
-const riskWord  = s => s<25 ? "Good to go" : s<55 ? "Some risk — check details" : "High risk";
+const riskWord  = s => s<25 ? T().riskWordG : s<55 ? T().riskWordY : T().riskWordR;
 const riskColor = s => s<25 ? "var(--green)" : s<55 ? "var(--amber)" : "var(--red)";
 
 // ---------- Weather fetch ----------
 async function fetchWeather(){
-  setStatus("Fetching live forecast for " + S.loc.name + "…");
+  setStatus(T().statusFetching + " " + S.loc.name + "…");
   const u = new URL("https://api.open-meteo.com/v1/forecast");
   u.search = new URLSearchParams({
     latitude:S.loc.lat, longitude:S.loc.lon, timezone:"auto", forecast_days:"7",
@@ -517,7 +625,12 @@ async function fetchWeather(){
     };
   }
   S.data = {days, daily:j.daily, tz:j.timezone, timeIdx, snowfall:H.snowfall, pastDays:2};
-  setStatus("Live forecast · " + S.loc.name + " · updated " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}));
+  S.updatedAt = new Date();
+  renderStatus();
+}
+function renderStatus(){
+  if(!S.updatedAt) return;
+  setStatus(`${T().statusLive} · ${S.loc.name} · ${T().statusUpdated} ${S.updatedAt.toLocaleTimeString(LOC(), {hour:"2-digit",minute:"2-digit"})}`);
 }
 
 const WMO_ICON = c =>
@@ -553,9 +666,9 @@ function renderGrid(){
     const di = i + S.data.pastDays;
     const dt = new Date(d+"T12:00");
     const h = el("div","gh");
-    h.innerHTML = `<b>${d===todayISO?"Today":dt.toLocaleDateString([], {weekday:"short"})}</b>
+    h.innerHTML = `<b>${d===todayISO?T().today:dt.toLocaleDateString(LOC(), {weekday:"short"})}</b>
       <span class="ico">${WMO_ICON(S.data.daily.weather_code[di])}</span>
-      ${dt.toLocaleDateString([], {day:"numeric", month:"short"})}<br>
+      ${dt.toLocaleDateString(LOC(), {day:"numeric", month:"short"})}<br>
       <span class="mm">${Math.round(S.data.daily.temperature_2m_min[di])}° / ${Math.round(S.data.daily.temperature_2m_max[di])}°</span>`;
     grid.appendChild(h);
   });
@@ -586,7 +699,7 @@ function renderGrid(){
   });
 
   document.getElementById("boardTitle").textContent =
-    `${ACTIVITIES[S.activity].label.replace(/^\S+\s/,"")} — your week at a glance`;
+    `${actName(S.activity)} ${T().weekGlance}`;
 }
 
 function el(tag,cls){ const e=document.createElement(tag); if(cls)e.className=cls; return e; }
@@ -595,13 +708,13 @@ function el(tag,cls){ const e=document.createElement(tag); if(cls)e.className=cl
 const tip = document.getElementById("tip");
 function showTip(e,d,h0,b){
   const dt = new Date(d+"T12:00");
-  tip.innerHTML = `<b>${dt.toLocaleDateString([], {weekday:"long", day:"numeric", month:"short"})},
+  tip.innerHTML = `<b>${dt.toLocaleDateString(LOC(), {weekday:"long", day:"numeric", month:"short"})},
     ${fmtHour(h0)}–${fmtEnd(blockEnd(h0))}</b><br>
     <span class="trisk" style="color:${b.score<25?"#4ade80":b.score<55?"#fbbf24":"#f87171"}">
-    Risk ${b.score} · ${riskWord(b.score)}</span><br>
-    🌧 ${b.f.rainProb}% chance · ${b.f.rainSum} mm<br>
-    💨 ${b.f.wind} km/h (gusts ${b.f.gust})<br>
-    ${ACTIVITIES[S.activity].snowBase ? `❄️ ${b.f.depth} cm base · ${b.f.fresh48} cm fresh/48 h<br>` : ""}
+    ${T().tipRisk} ${b.score} · ${riskWord(b.score)}</span><br>
+    🌧 ${b.f.rainProb}% ${T().chance} · ${b.f.rainSum} mm<br>
+    💨 ${b.f.wind} km/h (${T().gusts} ${b.f.gust})<br>
+    ${ACTIVITIES[S.activity].snowBase ? `❄️ ${b.f.depth} cm ${T().base} · ${b.f.fresh48} cm ${T().fresh48h}<br>` : ""}
     🌡 ${b.f.temp}°C · ☀️ UV ${b.f.uv}`;
   tip.style.display="block";
   const x = Math.min(e.clientX+16, innerWidth-270), y = Math.min(e.clientY+16, innerHeight-160);
@@ -629,12 +742,12 @@ function renderDetail(){
                 : `${b.f.temp} °C`;
   const isWinter = !!ACTIVITIES[S.activity].snowBase;
   const defs = [
-    {k:"rain",  n:"🌧 Rain",  val:`${b.f.rainProb}% · ${b.f.rainSum} mm`},
-    {k:"snow",  n:"❄️ Snow",  val:`${b.f.depth} cm base`},
-    {k:"fresh", n:"🌨 Fresh", val:`${b.f.fresh48} cm / 48 h`},
-    {k:"wind",  n:"💨 Wind",  val:`${b.f.wind} / ${b.f.gust} km/h`},
-    {n:"🌡 Temp", val:tempVal, eff:Math.max(effOf("cold"), effOf("heat"))},
-    {k:"uv",    n:"☀️ UV",    val:`index ${b.f.uv}`},
+    {k:"rain",  n:T().dRain,  val:`${b.f.rainProb}% · ${b.f.rainSum} mm`},
+    {k:"snow",  n:T().dSnow,  val:`${b.f.depth} cm ${T().base}`},
+    {k:"fresh", n:T().dFresh, val:`${b.f.fresh48} cm / 48 h`},
+    {k:"wind",  n:T().dWind,  val:`${b.f.wind} / ${b.f.gust} km/h`},
+    {n:T().dTemp, val:tempVal, eff:Math.max(effOf("cold"), effOf("heat"))},
+    {k:"uv",    n:T().dUv,    val:`${T().uvIdx} ${b.f.uv}`},
   ];
   const factRows = defs
     .filter(x => (x.k!=="snow" && x.k!=="fresh") || isWinter)
@@ -651,14 +764,14 @@ function renderDetail(){
     <div class="detail-top">
       <div class="gauge" style="background:${b.score<25?"var(--green-bg)":b.score<55?"var(--amber-bg)":"var(--red-bg)"};color:${riskColor(b.score)}">${b.score}</div>
       <div>
-        <div class="when">${ACTIVITIES[S.activity].label} · ${dt.toLocaleDateString([], {weekday:"long", day:"numeric", month:"long"})}</div>
+        <div class="when">${actLabel(S.activity)} · ${dt.toLocaleDateString(LOC(), {weekday:"long", day:"numeric", month:"long"})}</div>
         <div class="verdict">${fmtHour(h)} – ${fmtEnd(end)} · ${riskWord(b.score)}</div>
       </div>
     </div>
     <div class="fbars">${factRows}</div>
     <div class="detail-actions">
-      <button class="btn" id="addPlan" ${already?"disabled":""}>${already?"✓ In planner":"➕ Add to my planner"}</button>
-      <button class="btn-ghost" id="dlIcs">⬇ Calendar file (.ics)</button>
+      <button class="btn" id="addPlan" ${already?"disabled":""}>${already?T().inPlanner:T().addPlanner}</button>
+      <button class="btn-ghost" id="dlIcs">${T().icsBtn}</button>
     </div>`;
 
   document.getElementById("addPlan").onclick = ()=>{
@@ -676,14 +789,13 @@ function renderPlanner(){
   const now = new Date();
   S.planner = S.planner.filter(p => new Date(`${p.day}T${String(p.h).padStart(2,"0")}:00`) > new Date(now - 864e5));
   exp.disabled = !S.planner.length;
-  if(!S.planner.length){ list.innerHTML = `<div class="empty">No sessions planned yet. Pick a green block!</div>`; return; }
+  if(!S.planner.length){ list.innerHTML = `<div class="empty">${T().plannerEmpty}</div>`; return; }
 
   S.planner.sort((a,b)=> (a.day+a.h) < (b.day+b.h) ? -1 : 1);
   list.innerHTML = S.planner.map(p=>{
-    const act = ACTIVITIES[p.activity] ?? {label:"❓ "+p.activity};
     const dt = new Date(p.day+"T12:00");
     // live re-check against fresh forecast (this is the "weather update")
-    let chip = `<span class="chip" style="background:var(--surface2);color:var(--ink3)">no data</span>`;
+    let chip = `<span class="chip" style="background:var(--surface2);color:var(--ink3)">${T().noData}</span>`;
     // score with the item's own activity preset (weights + comfort band)
     const saveAct = S.activity, wSave = S.weights, tSave = [S.tMin, S.tMax];
     if(p.activity in ACTIVITIES){
@@ -695,14 +807,14 @@ function renderPlanner(){
     S.activity = saveAct; S.weights = wSave; [S.tMin, S.tMax] = tSave;
     if(b) chip = `<span class="chip c-${riskBand(b.score)}">${riskWord(b.score)} · ${b.score}</span>`;
     return `<div class="plan-item">
-      <span class="p-ico">${act.label.split(" ")[0]}</span>
+      <span class="p-ico">${actEmoji(p.activity)}</span>
       <div class="p-main">
-        <div class="p-title">${act.label.replace(/^\S+\s/,"")}</div>
-        <div class="p-sub">${dt.toLocaleDateString([], {weekday:"short", day:"numeric", month:"short"})} ·
+        <div class="p-title">${actName(p.activity)}</div>
+        <div class="p-sub">${dt.toLocaleDateString(LOC(), {weekday:"short", day:"numeric", month:"short"})} ·
           ${fmtHour(p.h)}–${fmtHour((p.h+p.len)%24||24)} · ${p.loc}</div>
       </div>
       ${chip}
-      <button class="p-del" data-id="${p.id}" title="Remove">✕</button>
+      <button class="p-del" data-id="${p.id}" title="${T().remove}">✕</button>
     </div>`;
   }).join("");
 
@@ -730,7 +842,6 @@ function downloadICS(items){
   const pad = n => String(n).padStart(2,"0");
   const stamp = new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z";
   const events = items.map(p=>{
-    const act = ACTIVITIES[p.activity] ?? {label:p.activity};
     const d = p.day.replace(/-/g,"");
     const b = S.data ? getBlockLen(p.day, p.h, p.len) : null;
     const desc = b ? `Forecast: risk ${b.score}/100 (${riskWord(b.score)}). Rain ${b.f.rainProb}%/${b.f.rainSum}mm, wind ${b.f.wind}km/h (gusts ${b.f.gust}), ${b.f.temp}C, UV ${b.f.uv}. — BlockCast` : "Planned with BlockCast";
@@ -739,7 +850,7 @@ function downloadICS(items){
       `DTSTAMP:${stamp}`,
       `DTSTART:${d}T${pad(p.h)}0000`,
       `DTEND:${d}T${(p.h+p.len)>=24 ? "235959" : pad(p.h+p.len)+"0000"}`,
-      `SUMMARY:${act.label.replace(/^\S+\s/,"")} — BlockCast`,
+      `SUMMARY:${actName(p.activity)} — BlockCast`,
       `LOCATION:${p.loc ?? ""}`,
       `DESCRIPTION:${desc}`,
       "END:VEVENT"].join("\r\n");
@@ -764,7 +875,7 @@ pickNameIn.addEventListener("input", ()=>{ pickNameEdited = true; });
 
 function initPickMap(){
   if(!window.L){ document.getElementById("pickMap").innerHTML =
-    `<div class="empty" style="padding:14px">Map unavailable (couldn’t load Leaflet) — use the search above.</div>`; return; }
+    `<div class="empty" style="padding:14px">${T().mapUnavail}</div>`; return; }
   if(pickMap){
     // modal was display:none when Leaflet last measured itself — recompute, then recenter
     setTimeout(()=>{ pickMap.invalidateSize(); pickMap.setView([S.loc.lat, S.loc.lon]); }, 0);
@@ -789,17 +900,17 @@ async function setPick(lat, lon){
   document.getElementById("pickCoords").textContent = `${lat}, ${lon}`;
   pickNameEdited = false;
   pickNameIn.value = "";
-  pickNameIn.placeholder = "Naming spot…";
+  pickNameIn.placeholder = T().naming;
   // best-effort reverse geocode; the field stays editable ("Mont-Valin trail head"…)
   const token = ++pickToken;
   let name = "";
   try{
-    const r = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+    const r = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${S.lang}`);
     const j = await r.json();
     name = j.locality || j.city || j.principalSubdivision || "";
   }catch(e){/* offline reverse geocode is optional */}
   if(token !== pickToken || pickNameEdited) return;  // newer pick, or user typed a name
-  pickNameIn.placeholder = "Name this spot";
+  pickNameIn.placeholder = T().namePh;
   pickNameIn.value = name || `${lat}, ${lon}`;
 }
 
@@ -818,13 +929,13 @@ document.getElementById("locSearch").addEventListener("input", e=>{
   const q = e.target.value.trim();
   if(q.length<2) return;
   searchTimer = setTimeout(async ()=>{
-    const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=en`);
+    const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=${S.lang}`);
     const j = await r.json();
     const box = document.getElementById("locResults");
     box.innerHTML = (j.results ?? []).map(x=>
       `<div class="loc-res" data-lat="${x.latitude}" data-lon="${x.longitude}" data-name="${x.name}">
         ${x.name}<small>${[x.admin1, x.country].filter(Boolean).join(", ")}</small></div>`).join("")
-      || `<div class="empty">No matches.</div>`;
+      || `<div class="empty">${T().noMatch}</div>`;
     box.querySelectorAll(".loc-res").forEach(d => d.onclick = async ()=>{
       S.loc = {name:d.dataset.name, lat:+d.dataset.lat, lon:+d.dataset.lon};
       modal.classList.remove("open");
@@ -851,7 +962,7 @@ function wireSeg(id, key, cast){
 
 function fillActivitySelect(){
   const sel = document.getElementById("activity");
-  sel.innerHTML = Object.entries(ACTIVITIES).map(([k,a])=>`<option value="${k}">${a.label}</option>`).join("");
+  sel.innerHTML = Object.keys(ACTIVITIES).map(k=>`<option value="${k}">${actLabel(k)}</option>`).join("");
   sel.value = S.activity;
   sel.onchange = ()=>{
     S.activity = sel.value;
@@ -865,7 +976,7 @@ function fillActivitySelect(){
 const SLIDERS = ["rain","wind","cold","heat","uv","snow","fresh"];
 function syncTune(){
   const act = ACTIVITIES[S.activity];
-  document.getElementById("tuneActName").textContent = act.label;
+  document.getElementById("tuneActName").textContent = actLabel(S.activity);
   document.getElementById("tMinIn").value = S.tMin;
   document.getElementById("tMaxIn").value = S.tMax;
   // snow criteria only make sense for winter sports (those with a snowBase)
@@ -918,23 +1029,54 @@ async function refresh(){
     await fetchWeather();
     renderGrid(); renderDetail(); renderPlanner();
   }catch(err){
-    setStatus("⚠ Could not load forecast: " + err.message + " — check your connection and reload.");
+    setStatus(`${T().loadErr} ${err.message} ${T().checkConn}`);
   }
+}
+
+// apply the current language to static markup and re-render everything dynamic
+function applyLang(){
+  const t = T();
+  document.documentElement.lang = S.lang;
+  document.querySelectorAll("[data-i18n]").forEach(n=>{ if(t[n.dataset.i18n]!=null) n.textContent = t[n.dataset.i18n]; });
+  document.querySelectorAll("[data-i18n-ph]").forEach(n=>{ if(t[n.dataset.i18nPh]!=null) n.placeholder = t[n.dataset.i18nPh]; });
+  document.getElementById("footerTxt").innerHTML = t.footer;
+  document.getElementById("introTxt").textContent = t.intro;
+  document.getElementById("langBtn").textContent = S.lang==="fr" ? "EN" : "FR";
+  fillActivitySelect(); syncTune(); renderStatus();
+  if(S.data){ renderGrid(); renderDetail(); renderPlanner(); }
 }
 
 (async function init(){
   loadState();
-  fillActivitySelect();
   wireSeg("blockSeg","blockLen", v=>+v);
   wireSeg("tolSeg","tolerance");
   wireHours();
-  wireTune(); syncTune();
+  wireTune();
+  applyLang();
   document.getElementById("locName").textContent = S.loc.name;
+
+  document.getElementById("langBtn").onclick = ()=>{
+    S.lang = S.lang==="fr" ? "en" : "fr";
+    saveState(); applyLang();
+  };
+
+  // one-time intro for first-time visitors
+  if(!localStorage.getItem("blockcast.introSeen")){
+    document.getElementById("intro").classList.add("show");
+  }
+  document.getElementById("introClose").onclick = ()=>{
+    localStorage.setItem("blockcast.introSeen","1");
+    document.getElementById("intro").classList.remove("show");
+  };
+
+  // offline shell + installability (only on the real site; localhost stays cache-free)
+  if("serviceWorker" in navigator && location.protocol === "https:")
+    navigator.serviceWorker.register("./sw.js").catch(()=>{});
 
   // try browser geolocation once (only if user never picked a place)
   if(!localStorage.getItem("blockcast.settings") && navigator.geolocation){
     navigator.geolocation.getCurrentPosition(async pos=>{
-      S.loc = {name:"My location", lat:+pos.coords.latitude.toFixed(3), lon:+pos.coords.longitude.toFixed(3)};
+      S.loc = {name:T().myLoc, lat:+pos.coords.latitude.toFixed(3), lon:+pos.coords.longitude.toFixed(3)};
       document.getElementById("locName").textContent = S.loc.name;
       saveState(); await refresh();
     }, ()=>{}, {timeout:4000});
