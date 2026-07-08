@@ -19,6 +19,7 @@ const LIVE_HOSTS = [
   "geocoding-api.open-meteo.com",
   "api.bigdatacloud.net",
   "tile.openstreetmap.org",
+  "blockcast.goatcounter.com",
 ];
 
 self.addEventListener("install", e => {

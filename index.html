@@ -1084,5 +1084,13 @@ function applyLang(){
   await refresh();
 })();
 </script>
+<script>
+  // GoatCounter analytics (privacy-friendly, no cookies).
+  // Visit the site once with #skipgc in the URL to exclude your own device.
+  if (window.location.hash === "#skipgc") localStorage.setItem("skipgc", "t");
+  window.goatcounter = {no_onload: localStorage.getItem("skipgc") === "t"};
+</script>
+<script data-goatcounter="https://blockcast.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
