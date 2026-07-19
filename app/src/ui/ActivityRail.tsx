@@ -7,18 +7,22 @@ import { useState } from 'react';
 import { groupActivities } from '../core/season';
 import { ActivityIcon } from './ActivityIcon';
 import { useSeason } from '../features/home/useSeason';
-import { useT } from '../hooks';
+import { useLocale, useT } from '../hooks';
 import { useSettings } from '../state/settings';
 import s from './ui.module.css';
 
 export function ActivityRail() {
   const t = useT();
+  const locale = useLocale();
   const activity = useSettings((st) => st.activity);
   const setActivity = useSettings((st) => st.setActivity);
   const winter = useSeason();
   const [showOff, setShowOff] = useState(false);
 
-  const groups = groupActivities(winter);
+  // alphabetical by the label the user actually sees, so FR and EN each sort naturally
+  const groups = groupActivities(winter).sort((a, b) =>
+    t.cats[a.cat].localeCompare(t.cats[b.cat], locale),
+  );
   const hiddenCount = groups.reduce(
     (n, g) => n + g.offSeason.filter((id) => id !== activity).length,
     0,
