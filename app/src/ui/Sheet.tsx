@@ -51,7 +51,7 @@ export function Sheet({ open, onClose, children, ariaLabel }: SheetProps) {
               aria-modal="true"
               aria-label={ariaLabel}
               initial={{ y: '100%' }}
-              animate={{ y: 0 }}
+              animate={{ y: '0%' }}
               exit={{ y: '100%' }}
               transition={spring}
             >
