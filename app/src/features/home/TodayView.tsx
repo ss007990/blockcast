@@ -1,22 +1,30 @@
 import { motion } from 'framer-motion';
 import { useMemo } from 'react';
-import { ACTIVITIES, TOL_MULT, type ActivityId } from '../../core/activities';
-import { forecastDayKeys, getBlock, isoDate, locNow, wmoIcon } from '../../core/forecast';
+import { TOL_MULT } from '../../core/activities';
+import {
+  forecastDayKeys,
+  getBlock,
+  isoDate,
+  locNow,
+  wmoIcon,
+  type BlockResult,
+} from '../../core/forecast';
 import { orderActivities } from '../../core/season';
-import type { Band } from '../../core/scoring';
-import { bestWindows, snowfallEvent } from '../../core/suggestions';
+import type { Band, HourSlice } from '../../core/scoring';
+import { snowfallEvent } from '../../core/suggestions';
 import { formatDepth, formatHour, formatHourRange, formatTemp } from '../../core/units';
 import { useLocale, useNowMs, useT } from '../../hooks';
 import { fill } from '../../i18n';
-import { fmtFull, fmtIsoTime, fmtWeekdayLong } from '../../lib/format';
+import { fmtFull, fmtIsoTime } from '../../lib/format';
 import { useForecast } from '../../state/forecast';
 import { critFor, useSettings } from '../../state/settings';
 import { useUi } from '../../state/ui';
 import { ActivityRail } from '../../ui/ActivityRail';
 import { Icon } from '../../ui/Icon';
 import { uiCss } from '../../ui/primitives';
+import { FactorChips } from '../detail/FactorChips';
+import { HourlyCharts } from '../detail/HourlyCharts';
 import { paintSky } from './sky';
-import { useSeason } from './useSeason';
 import s from './home.module.css';
 
 interface TodayBlock {
@@ -26,6 +34,7 @@ interface TodayBlock {
   band: Band;
   isPast: boolean;
   isNow: boolean;
+  b: BlockResult;
 }
 
 export function TodayView() {
@@ -33,8 +42,7 @@ export function TodayView() {
   const locale = useLocale();
   const st = useSettings();
   const { data, status, error } = useForecast();
-  const { setTab, select, setLocOpen } = useUi();
-  const winter = useSeason();
+  const { select, setLocOpen } = useUi();
   const nowMs = useNowMs();
 
   const now = locNow(data, nowMs);
@@ -59,29 +67,11 @@ export function TodayView() {
         band: b.band,
         isPast: end <= nowH,
         isNow: h <= nowH && nowH < end,
+        b,
       });
     }
     return out;
   }, [data, st.hFrom, st.hTo, st.blockLen, todayISO, crit, tolMult, nowH]);
-
-  const suggestions = useMemo(() => {
-    if (!data) return [];
-    const ordered = orderActivities(winter);
-    const scan: ActivityId[] = [
-      st.activity,
-      ...ordered.filter((id) => id !== st.activity).slice(0, 3),
-    ];
-    return bestWindows(data, {
-      activities: scan,
-      critFor: (id) => critFor(st, id),
-      tolMult,
-      blockLen: st.blockLen,
-      hFrom: st.hFrom,
-      hTo: st.hTo,
-      todayISO,
-      nowHour: nowH,
-    });
-  }, [data, winter, st, tolMult, todayISO, nowH]);
 
   const snow = useMemo(() => {
     if (!data) return null;
@@ -103,7 +93,8 @@ export function TodayView() {
   const sunset = data.daily.sunset?.[di];
   const code = data.daily.weather_code[di] ?? 0;
 
-  const sky = paintSky(data.days[todayISO] ?? [], st.hFrom, st.hTo, sunrise, sunset);
+  const daySlices = data.days[todayISO] ?? [];
+  const sky = paintSky(daySlices, st.hFrom, st.hTo, sunrise, sunset);
 
   // the verdict: lead with the answer for the best block still ahead
   const upcoming = blocks.filter((b) => !b.isPast);
@@ -128,10 +119,13 @@ export function TodayView() {
           score: String(best.score),
         });
 
-  const goPlan = (activityId: ActivityId, day: string, h: number) => {
-    st.setActivity(activityId);
-    setTab('week');
-    select({ day, h });
+  const blockHours = (blk: TodayBlock): { h: number; slice: HourSlice }[] => {
+    const out: { h: number; slice: HourSlice }[] = [];
+    for (let hh = blk.h; hh < blk.end && hh < 24; hh++) {
+      const slice = daySlices[hh];
+      if (slice) out.push({ h: hh, slice });
+    }
+    return out;
   };
 
   return (
@@ -229,43 +223,53 @@ export function TodayView() {
       )}
 
       <h2 className={s.sectionTitle}>
-        <span>{t.home.suggestions}</span>
+        <span>{t.home.blockByBlock}</span>
       </h2>
-      {suggestions.length === 0 ? (
-        <div className={uiCss.empty}>{t.home.suggestionsEmpty}</div>
-      ) : (
-        <div className={s.list}>
-          {suggestions.map((w, i) => (
-            <motion.button
-              key={`${w.activityId}-${w.day}-${w.h}`}
-              className={s.row}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.05 * i }}
-              onClick={() => goPlan(w.activityId, w.day, w.h)}
-            >
-              <span className={s.rowIdx}>{String(i + 1).padStart(2, '0')}</span>
-              <span className={s.rowIco}>{ACTIVITIES[w.activityId].emoji}</span>
-              <span className={s.rowMain}>
-                <span className={s.rowTitle}>
-                  {fill(t.home.bestWindow, { activity: t.activities[w.activityId] })}
-                  {w.isWeekend && <span className={s.rowBadge}>{t.home.weekendBadge}</span>}
-                </span>
-                <span className={s.rowSub}>
-                  {fmtWeekdayLong(w.day, locale)} ·{' '}
-                  {formatHourRange(w.h, Math.min(w.h + w.len, 24), st.clock)}
+      <div className={s.details}>
+        {blocks.map((blk, i) => (
+          <motion.section
+            key={`${st.activity}-${blk.h}-d`}
+            className={s.detailCard}
+            data-past={blk.isPast || undefined}
+            data-now={blk.isNow || undefined}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: blk.isPast ? 0.55 : 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.05 * i }}
+            aria-label={`${formatHourRange(blk.h, blk.end, st.clock)} · ${t.common.risk} ${blk.score}`}
+          >
+            <button className={s.detailHead} onClick={() => select({ day: todayISO, h: blk.h })}>
+              <span className={s.detailGauge} data-band={blk.band}>
+                {blk.score}
+              </span>
+              <span className={s.detailWhen}>
+                <b>{formatHourRange(blk.h, blk.end, st.clock)}</b>
+                <span>
+                  {t.risk[blk.band]}
+                  {blk.isNow ? ` · ${t.home.now}` : ''}
                 </span>
               </span>
-              <span className={uiCss.chipG}>
-                {t.common.risk} {w.score}
-              </span>
-              <span className={s.rowArrow} aria-hidden="true">
+              <span className={s.detailArrow} aria-hidden="true">
                 →
               </span>
-            </motion.button>
-          ))}
-        </div>
-      )}
+            </button>
+            <FactorChips
+              b={blk.b}
+              crit={crit}
+              tolMult={tolMult}
+              units={st.units}
+              activity={st.activity}
+              t={t}
+            />
+            <HourlyCharts
+              hours={blockHours(blk)}
+              units={st.units}
+              clock={st.clock}
+              t={t}
+              sun={null}
+            />
+          </motion.section>
+        ))}
+      </div>
     </div>
   );
 }

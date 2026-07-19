@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { ACTIVITIES, TOL_MULT, type FactorKey } from '../../core/activities';
+import { ACTIVITIES, TOL_MULT } from '../../core/activities';
 import { getBlock } from '../../core/forecast';
 import type { HourSlice } from '../../core/scoring';
-import { formatDepth, formatHour, formatPrecip, formatSpeed, formatTemp } from '../../core/units';
+import { formatHour } from '../../core/units';
 import { useLocale, useT } from '../../hooks';
 import { downloadFile, sessionsToIcs } from '../../lib/download';
 import { fmtFull, fmtIsoTime } from '../../lib/format';
@@ -12,6 +12,7 @@ import { critFor, useSettings } from '../../state/settings';
 import { useUi } from '../../state/ui';
 import { Button } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
+import { FactorChips } from './FactorChips';
 import { HourlyCharts } from './HourlyCharts';
 import s from './detail.module.css';
 
@@ -44,45 +45,6 @@ export function DetailSheet() {
 
   const { b, end, len } = block;
   const { day, h } = selected;
-  const effOf = (k: FactorKey) => Math.min(1, b.f.sev[k] * tolMult) * (crit.weights[k] / 10);
-  const isWinterAct = ACTIVITIES[st.activity].snowBase != null;
-
-  const tempVal =
-    b.f.temp < crit.tMin
-      ? `${formatTemp(b.f.temp, st.units)} · ${t.detail.min} ${formatTemp(crit.tMin, st.units)}`
-      : b.f.temp > crit.tMax
-        ? `${formatTemp(b.f.temp, st.units)} · ${t.detail.max} ${formatTemp(crit.tMax, st.units)}`
-        : formatTemp(b.f.temp, st.units);
-
-  const gustSpan = `${Math.round(b.f.wind)}–${Math.round(b.f.gust)}`;
-  const rows: { name: string; val: string; eff: number }[] = [
-    {
-      name: `🌧 ${t.detail.rain}`,
-      val: `${b.f.rainProb}% · ${formatPrecip(b.f.rainSum, st.units)}`,
-      eff: effOf('rain'),
-    },
-    ...(isWinterAct
-      ? [
-          {
-            name: `❄️ ${t.detail.snow}`,
-            val: formatDepth(b.f.depth, st.units),
-            eff: effOf('snow'),
-          },
-          {
-            name: `🌨 ${t.detail.freshSnow}`,
-            val: `${formatDepth(b.f.fresh48, st.units)}/48 h`,
-            eff: effOf('fresh'),
-          },
-        ]
-      : []),
-    {
-      name: `💨 ${t.detail.wind}`,
-      val: st.units === 'imperial' ? formatSpeed(b.f.gust, st.units) : `${gustSpan} km/h`,
-      eff: effOf('wind'),
-    },
-    { name: `🌡 ${t.detail.feels}`, val: tempVal, eff: Math.max(effOf('cold'), effOf('heat')) },
-    { name: `☀️ ${t.detail.uv}`, val: String(b.f.uv), eff: effOf('uv') },
-  ];
 
   const already = planner.sessions.some(
     (p) => p.day === day && p.h === h && p.activityId === st.activity,
@@ -152,17 +114,7 @@ export function DetailSheet() {
         </div>
       </div>
 
-      <div className={s.chips}>
-        {rows.map((r) => (
-          <span
-            key={r.name}
-            className={s.chip}
-            data-sev={r.eff >= 0.55 ? 'r' : r.eff >= 0.25 ? 'y' : 'ok'}
-          >
-            {r.name} <b>{r.val}</b>
-          </span>
-        ))}
-      </div>
+      <FactorChips b={b} crit={crit} tolMult={tolMult} units={st.units} activity={st.activity} t={t} />
 
       <HourlyCharts
         hours={dayHours}
