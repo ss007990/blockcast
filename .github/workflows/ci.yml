@@ -28,6 +28,9 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+        env:
+          VITE_PUSH_API: https://blockcast-push.sandy-p-scullion.workers.dev
+          VITE_VAPID_PUBLIC_KEY: BIZXZtVGnG74VkCQBzHCOceJbJmKQXdDhXFxf12316nrY_yrq-mIsqAnbMjn8xtTawbxosm5vk8exSnEwrLg9c0
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main'
         with:

@@ -6,7 +6,7 @@ compatibility_date = "2026-07-01"
 #   npx wrangler kv namespace create SUBS
 # then paste the id below.
 kv_namespaces = [
-  { binding = "SUBS", id = "REPLACE_WITH_KV_NAMESPACE_ID" }
+  { binding = "SUBS", id = "7d9f27b3c92d45c1a278a5b00614f496" }
 ]
 
 # Re-check subscribed sessions every 3 hours.
