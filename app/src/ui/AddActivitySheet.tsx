@@ -1,6 +1,8 @@
 // "Add activity" — lets the user grow the rail with their own activities and
 // categories. Saving selects the new activity and opens the tune panel on the
 // Week tab so its criteria can be adjusted right away.
+// Mounted at the App root (never inside a scroll container): iOS clips
+// position-fixed sheets that live under an overflow-scrolling ancestor.
 
 import { useState } from 'react';
 import { CATEGORY_IDS, type Season } from '../core/activities';
@@ -12,12 +14,13 @@ import { Sheet } from './Sheet';
 
 const NEW_CAT = '__new__';
 
-export function AddActivitySheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function AddActivitySheet() {
   const t = useT();
   const locale = useLocale();
   const addActivity = useSettings((s) => s.addActivity);
   const customs = useSettings((s) => s.customActivities);
-  const { setTab, setTuneOpen } = useUi();
+  const { setTab, setTuneOpen, addActOpen, setAddActOpen } = useUi();
+  const onClose = () => setAddActOpen(false);
 
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState('');
@@ -51,7 +54,7 @@ export function AddActivitySheet({ open, onClose }: { open: boolean; onClose: ()
   };
 
   return (
-    <Sheet open={open} onClose={onClose} ariaLabel={t.add.title}>
+    <Sheet open={addActOpen} onClose={onClose} ariaLabel={t.add.title}>
       <h2 style={{ fontSize: 19, marginBottom: 14 }}>{t.add.title}</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <Field label={t.add.name}>

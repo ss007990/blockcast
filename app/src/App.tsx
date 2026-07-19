@@ -6,6 +6,7 @@ import { isoDate, locNow } from './core/forecast';
 import { useT, useThemeEffect } from './hooks';
 import { AlertsSheet } from './features/alerts/AlertsSheet';
 import { DetailSheet } from './features/detail/DetailSheet';
+import { AddActivitySheet } from './ui/AddActivitySheet';
 import { TodayView } from './features/home/TodayView';
 import { LocationSheet } from './features/location/LocationSheet';
 import { PlannerView } from './features/planner/PlannerView';
@@ -111,6 +112,7 @@ export function App() {
       <DetailSheet />
       <LocationSheet />
       <AlertsSheet />
+      <AddActivitySheet />
     </>
   );
 }

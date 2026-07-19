@@ -8,10 +8,10 @@
 import { useState } from 'react';
 import { groupActivities } from '../core/season';
 import { ActivityIcon } from './ActivityIcon';
-import { AddActivitySheet } from './AddActivitySheet';
 import { useSeason } from '../features/home/useSeason';
 import { useActivityName, useLocale, useT } from '../hooks';
 import { useSettings } from '../state/settings';
+import { useUi } from '../state/ui';
 import s from './ui.module.css';
 
 export function ActivityRail() {
@@ -22,8 +22,8 @@ export function ActivityRail() {
   const setActivity = useSettings((st) => st.setActivity);
   const customs = useSettings((st) => st.customActivities);
   const winter = useSeason();
+  const setAddActOpen = useUi((u) => u.setAddActOpen);
   const [showOff, setShowOff] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
 
   // preset categories are localized; user-created ones display as typed
   const catLabel = (cat: string) => (t.cats as Record<string, string | undefined>)[cat] ?? cat;
@@ -81,10 +81,9 @@ export function ActivityRail() {
           {showOff ? t.controls.lessActs : t.controls.moreActs.replace('{n}', String(hiddenCount))}
         </button>
       )}
-      <button className={`${s.railBtn} ${s.railAdd}`} onClick={() => setAddOpen(true)}>
+      <button className={`${s.railBtn} ${s.railAdd}`} onClick={() => setAddActOpen(true)}>
         ＋ {t.controls.addAct}
       </button>
-      <AddActivitySheet open={addOpen} onClose={() => setAddOpen(false)} />
     </div>
   );
 }
