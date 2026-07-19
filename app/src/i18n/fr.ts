@@ -196,7 +196,7 @@ export const fr: Dict = {
   },
 
   cats: {
-    powersports: 'Motorisé',
+    powersports: 'Sport motorisé',
     trail: 'Sentier',
     water: 'Nautique',
     court: 'Terrain',
