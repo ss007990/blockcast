@@ -23,9 +23,10 @@ interface ChartsProps {
   units: UnitSystem;
   clock: ClockFormat;
   t: Dict;
+  sun: { rise: string; set: string } | null;
 }
 
-export function HourlyCharts({ hours, units, clock, t }: ChartsProps) {
+export function HourlyCharts({ hours, units, clock, t, sun }: ChartsProps) {
   if (hours.length < 2) return null;
   const n = hours.length;
   const temps = hours.map((h) => h.slice.temp);
@@ -105,6 +106,17 @@ export function HourlyCharts({ hours, units, clock, t }: ChartsProps) {
           </span>
         ))}
       </div>
+
+      {sun && (
+        <div className={s.panelFoot}>
+          <span>
+            🌅 {t.home.sunrise} {sun.rise}
+          </span>
+          <span>
+            🌇 {t.home.sunset} {sun.set}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

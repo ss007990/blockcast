@@ -54,6 +54,7 @@ export function DetailSheet() {
         ? `${formatTemp(b.f.temp, st.units)} · ${t.detail.max} ${formatTemp(crit.tMax, st.units)}`
         : formatTemp(b.f.temp, st.units);
 
+  const gustSpan = `${Math.round(b.f.wind)}–${Math.round(b.f.gust)}`;
   const rows: { name: string; val: string; eff: number }[] = [
     {
       name: `🌧 ${t.detail.rain}`,
@@ -64,23 +65,23 @@ export function DetailSheet() {
       ? [
           {
             name: `❄️ ${t.detail.snow}`,
-            val: `${formatDepth(b.f.depth, st.units)} ${t.detail.base}`,
+            val: formatDepth(b.f.depth, st.units),
             eff: effOf('snow'),
           },
           {
             name: `🌨 ${t.detail.freshSnow}`,
-            val: `${formatDepth(b.f.fresh48, st.units)} / 48 h`,
+            val: `${formatDepth(b.f.fresh48, st.units)}/48 h`,
             eff: effOf('fresh'),
           },
         ]
       : []),
     {
       name: `💨 ${t.detail.wind}`,
-      val: `${formatSpeed(b.f.wind, st.units)} · ${t.detail.gusts} ${formatSpeed(b.f.gust, st.units)}`,
+      val: st.units === 'imperial' ? formatSpeed(b.f.gust, st.units) : `${gustSpan} km/h`,
       eff: effOf('wind'),
     },
     { name: `🌡 ${t.detail.feels}`, val: tempVal, eff: Math.max(effOf('cold'), effOf('heat')) },
-    { name: `☀️ ${t.detail.uv}`, val: `${t.detail.uvIdx} ${b.f.uv}`, eff: effOf('uv') },
+    { name: `☀️ ${t.detail.uv}`, val: String(b.f.uv), eff: effOf('uv') },
   ];
 
   const already = planner.sessions.some(
@@ -151,33 +152,32 @@ export function DetailSheet() {
         </div>
       </div>
 
-      <div className={s.fbars}>
+      <div className={s.chips}>
         {rows.map((r) => (
-          <div className={s.fbar} key={r.name}>
-            <span>{r.name}</span>
-            <div className={s.track}>
-              <div
-                className={s.fill}
-                style={{
-                  width: `${Math.round(r.eff * 100)}%`,
-                  background:
-                    r.eff < 0.25 ? 'var(--green-vivid)' : r.eff < 0.55 ? 'var(--amber-vivid)' : 'var(--red-vivid)',
-                }}
-              />
-            </div>
-            <span className={s.val}>{r.val}</span>
-          </div>
+          <span
+            key={r.name}
+            className={s.chip}
+            data-sev={r.eff >= 0.55 ? 'r' : r.eff >= 0.25 ? 'y' : 'ok'}
+          >
+            {r.name} <b>{r.val}</b>
+          </span>
         ))}
       </div>
 
-      <HourlyCharts hours={dayHours} units={st.units} clock={st.clock} t={t} />
-
-      {sunrise && sunset && (
-        <div className={s.sun}>
-          <span>🌅 {t.home.sunrise} {fmtIsoTime(sunrise, locale, st.clock)}</span>
-          <span>🌇 {t.home.sunset} {fmtIsoTime(sunset, locale, st.clock)}</span>
-        </div>
-      )}
+      <HourlyCharts
+        hours={dayHours}
+        units={st.units}
+        clock={st.clock}
+        t={t}
+        sun={
+          sunrise && sunset
+            ? {
+                rise: fmtIsoTime(sunrise, locale, st.clock),
+                set: fmtIsoTime(sunset, locale, st.clock),
+              }
+            : null
+        }
+      />
 
       <div className={s.actions}>
         <Button onClick={addToPlanner} disabled={already}>
