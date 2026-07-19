@@ -2,7 +2,7 @@
 // winter sports first when snow is on the ground (and last in July).
 // Never hides activities; ordering only.
 
-import { ACTIVITY_IDS, isWinterActivity, type ActivityId } from './activities';
+import { ACTIVITIES, ACTIVITY_IDS, type ActivityId, type CategoryId } from './activities';
 import type { ForecastData } from './forecast';
 import { forecastDayKeys } from './forecast';
 
@@ -47,9 +47,39 @@ export function seasonSignals(data: ForecastData, lat: number, todayISO: string)
   return { lat, month: +todayISO.slice(5, 7) - 1, weekMaxTemp, weekMaxSnowCm };
 }
 
-/** Activity picker order: winter sports first in winter, last otherwise. */
+/** True when the activity fits the current season ('all' always fits). */
+export const inSeason = (id: ActivityId, winter: boolean): boolean =>
+  ACTIVITIES[id].season !== (winter ? 'warm' : 'winter');
+
+// Category order per season: winter pulls snow up front, summer pushes it last.
+const CAT_ORDER: Record<'winter' | 'summer', readonly CategoryId[]> = {
+  winter: ['powersports', 'snow', 'trail', 'water', 'court', 'leisure'],
+  summer: ['powersports', 'water', 'court', 'trail', 'leisure', 'snow'],
+};
+
+export interface ActivityGroup {
+  cat: CategoryId;
+  /** Members that fit the season, in ACTIVITY_IDS order. */
+  inSeason: ActivityId[];
+  /** Members collapsed behind “more” until expanded. */
+  offSeason: ActivityId[];
+}
+
+/** Rail structure: categories in seasonal order, groups with nothing in season last. */
+export function groupActivities(winter: boolean): ActivityGroup[] {
+  const groups = CAT_ORDER[winter ? 'winter' : 'summer'].map((cat) => {
+    const members = ACTIVITY_IDS.filter((id) => ACTIVITIES[id].cat === cat);
+    return {
+      cat,
+      inSeason: members.filter((id) => inSeason(id, winter)),
+      offSeason: members.filter((id) => !inSeason(id, winter)),
+    };
+  });
+  return groups.sort((a, b) => (b.inSeason.length ? 1 : 0) - (a.inSeason.length ? 1 : 0));
+}
+
+/** Flat picker order: in-season activities by group, off-season trailing. */
 export function orderActivities(winter: boolean): ActivityId[] {
-  const snow = ACTIVITY_IDS.filter(isWinterActivity);
-  const rest = ACTIVITY_IDS.filter((id) => !isWinterActivity(id));
-  return winter ? [...snow, ...rest] : [...rest, ...snow];
+  const groups = groupActivities(winter);
+  return [...groups.flatMap((g) => g.inSeason), ...groups.flatMap((g) => g.offSeason)];
 }

@@ -8,6 +8,7 @@ import {
   type Tolerance,
 } from '../../core/activities';
 import { forecastDayKeys, getBlock, isoDate, locNow, wmoIcon } from '../../core/forecast';
+import { ActivityIcon } from '../../ui/ActivityIcon';
 import { formatHour, formatTemp } from '../../core/units';
 import { useLocale, useNowMs, useT } from '../../hooks';
 import { fmtDayMonth, fmtWeekdayShort } from '../../lib/format';
@@ -121,7 +122,7 @@ function TunePanel() {
         >
           <Card className={s.tunePanel}>
             <h3>
-              {t.tune.critFor} {ACTIVITIES[st.activity].emoji} {t.activities[st.activity]}
+              {t.tune.critFor} <ActivityIcon id={st.activity} /> {t.activities[st.activity]}
             </h3>
             <div className={s.tuneHint}>{t.tune.hint}</div>
             <div className={s.sliders}>

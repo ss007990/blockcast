@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ACTIVITIES, TOL_MULT } from '../../core/activities';
+import { TOL_MULT } from '../../core/activities';
+import { ActivityIcon } from '../../ui/ActivityIcon';
 import { formatHour } from '../../core/units';
 import { useLocale, useT } from '../../hooks';
 import { downloadFile, sessionsToIcs } from '../../lib/download';
@@ -52,7 +53,9 @@ export function PlannerView() {
             const b = checkOf(p);
             return (
               <div className={s.item} key={p.id}>
-                <span className={s.ico}>{ACTIVITIES[p.activityId].emoji}</span>
+                <span className={s.ico}>
+                  <ActivityIcon id={p.activityId} />
+                </span>
                 <div className={s.main}>
                   <div className={s.title}>{t.activities[p.activityId]}</div>
                   <div className={s.sub}>

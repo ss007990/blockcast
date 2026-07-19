@@ -13,9 +13,21 @@ export const ACTIVITY_IDS = [
   'picnic',
   'skiing',
   'snowmob',
+  'motorcycle',
+  'utv',
+  'waterski',
+  'pontoon',
+  'pickleball',
 ] as const;
 
 export type ActivityId = (typeof ACTIVITY_IDS)[number];
+
+// Categories group the rail; CATEGORY_IDS order is the base display order.
+export const CATEGORY_IDS = ['powersports', 'trail', 'water', 'court', 'snow', 'leisure'] as const;
+export type CategoryId = (typeof CATEGORY_IDS)[number];
+
+/** 'winter'/'warm' activities go off-season half the year; 'all' never do. */
+export type Season = 'winter' | 'warm' | 'all';
 
 export const FACTOR_KEYS = ['rain', 'wind', 'cold', 'heat', 'uv', 'snow', 'fresh'] as const;
 export type FactorKey = (typeof FACTOR_KEYS)[number];
@@ -23,6 +35,8 @@ export type Weights = Record<FactorKey, number>;
 
 export interface ActivityPreset {
   emoji: string;
+  cat: CategoryId;
+  season: Season;
   w: Weights;
   tMin: number;
   tMax: number;
@@ -43,16 +57,66 @@ const w = (
 ): Weights => ({ rain, wind, cold, heat, uv, snow, fresh });
 
 export const ACTIVITIES: Record<ActivityId, ActivityPreset> = {
-  tennis: { emoji: '🎾', w: w(10, 6, 4, 5, 3), tMin: 10, tMax: 30 },
-  cycling: { emoji: '🚴', w: w(8, 8, 6, 5, 4), tMin: 5, tMax: 32 },
-  jogging: { emoji: '🏃', w: w(5, 3, 4, 8, 5), tMin: 0, tMax: 26 },
-  fishing: { emoji: '🎣', w: w(2, 9, 5, 3, 4), tMin: 2, tMax: 32 },
-  golf: { emoji: '⛳', w: w(9, 6, 5, 4, 4), tMin: 8, tMax: 31 },
-  hiking: { emoji: '🥾', w: w(6, 5, 6, 6, 6), tMin: 2, tMax: 28 },
-  sailing: { emoji: '⛵', w: w(3, 8, 5, 2, 5), tMin: 5, tMax: 33, windIdeal: [9, 32] },
-  picnic: { emoji: '🧺', w: w(9, 5, 6, 4, 3), tMin: 15, tMax: 32 },
-  skiing: { emoji: '⛷️', w: w(7, 6, 6, 6, 5, 9, 3), tMin: -18, tMax: 6, snowBase: 0.2 },
-  snowmob: { emoji: '🛷', w: w(6, 5, 5, 7, 3, 10, 2), tMin: -25, tMax: 4, snowBase: 0.15 },
+  tennis: { emoji: '🎾', cat: 'court', season: 'warm', w: w(10, 6, 4, 5, 3), tMin: 10, tMax: 30 },
+  cycling: { emoji: '🚴', cat: 'trail', season: 'all', w: w(8, 8, 6, 5, 4), tMin: 5, tMax: 32 },
+  jogging: { emoji: '🏃', cat: 'trail', season: 'all', w: w(5, 3, 4, 8, 5), tMin: 0, tMax: 26 },
+  fishing: { emoji: '🎣', cat: 'water', season: 'all', w: w(2, 9, 5, 3, 4), tMin: 2, tMax: 32 },
+  golf: { emoji: '⛳', cat: 'court', season: 'warm', w: w(9, 6, 5, 4, 4), tMin: 8, tMax: 31 },
+  hiking: { emoji: '🥾', cat: 'trail', season: 'all', w: w(6, 5, 6, 6, 6), tMin: 2, tMax: 28 },
+  sailing: {
+    emoji: '⛵',
+    cat: 'water',
+    season: 'warm',
+    w: w(3, 8, 5, 2, 5),
+    tMin: 5,
+    tMax: 33,
+    windIdeal: [9, 32],
+  },
+  picnic: { emoji: '🧺', cat: 'leisure', season: 'warm', w: w(9, 5, 6, 4, 3), tMin: 15, tMax: 32 },
+  skiing: {
+    emoji: '⛷️',
+    cat: 'snow',
+    season: 'winter',
+    w: w(7, 6, 6, 6, 5, 9, 3),
+    tMin: -18,
+    tMax: 6,
+    snowBase: 0.2,
+  },
+  snowmob: {
+    emoji: '🛷',
+    cat: 'powersports',
+    season: 'winter',
+    w: w(6, 5, 5, 7, 3, 10, 2),
+    tMin: -25,
+    tMax: 4,
+    snowBase: 0.15,
+  },
+  motorcycle: {
+    emoji: '🏍️',
+    cat: 'powersports',
+    season: 'warm',
+    w: w(10, 7, 6, 4, 5),
+    tMin: 8,
+    tMax: 35,
+  },
+  utv: { emoji: '🛻', cat: 'powersports', season: 'all', w: w(5, 3, 5, 5, 5), tMin: -5, tMax: 33 },
+  waterski: {
+    emoji: '🚤',
+    cat: 'water',
+    season: 'warm',
+    w: w(6, 8, 7, 2, 6),
+    tMin: 18,
+    tMax: 36,
+  },
+  pontoon: { emoji: '⛴️', cat: 'water', season: 'warm', w: w(8, 7, 6, 3, 6), tMin: 15, tMax: 34 },
+  pickleball: {
+    emoji: '🏓',
+    cat: 'court',
+    season: 'warm',
+    w: w(10, 8, 4, 5, 3),
+    tMin: 8,
+    tMax: 30,
+  },
 };
 
 export const TOL_MULT = { cautious: 1.3, balanced: 1.0, tolerant: 0.68 } as const;

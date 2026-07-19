@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { ACTIVITIES, TOL_MULT } from '../../core/activities';
+import { TOL_MULT } from '../../core/activities';
+import { ActivityIcon } from '../../ui/ActivityIcon';
 import { getBlock } from '../../core/forecast';
 import type { HourSlice } from '../../core/scoring';
 import { formatHour } from '../../core/units';
@@ -106,7 +107,7 @@ export function DetailSheet() {
         </div>
         <div>
           <div className={s.when}>
-            {ACTIVITIES[st.activity].emoji} {t.activities[st.activity]} · {fmtFull(day, locale)}
+            <ActivityIcon id={st.activity} /> {t.activities[st.activity]} · {fmtFull(day, locale)}
           </div>
           <div className={s.verdict}>
             {formatHour(h, st.clock)} – {formatHour(end, st.clock)} · {t.risk[b.band]}

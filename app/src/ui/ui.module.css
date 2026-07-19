@@ -148,6 +148,41 @@
   line-height: 1;
 }
 
+/* category cluster inside the rail */
+.railGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.railGroup + .railGroup {
+  border-left: 1px solid var(--line-strong);
+  padding-left: 10px;
+  margin-left: 2px;
+}
+
+.railCat {
+  font-size: 10.5px;
+  font-weight: 640;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* off-season pill — reachable but visibly resting */
+.railOff {
+  opacity: 0.55;
+  border-style: dashed;
+}
+
+.railMore {
+  border-style: dashed;
+  color: var(--ink-3);
+}
+
 /* stamped chip — mono value, tinted ink */
 .chip {
   display: inline-flex;

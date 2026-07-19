@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { ACTIVITIES } from '../../core/activities';
+import { ActivityIcon } from '../../ui/ActivityIcon';
 import { formatHour } from '../../core/units';
 import { useLocale, useT } from '../../hooks';
 import { fill } from '../../i18n';
@@ -40,7 +40,9 @@ export function AlertsSheet() {
               fontSize: 13.5,
             }}
           >
-            <span style={{ fontSize: 22 }}>{ACTIVITIES[a.activityId].emoji}</span>
+            <span style={{ fontSize: 22 }}>
+              <ActivityIcon id={a.activityId} />
+            </span>
             <span style={{ flex: 1, lineHeight: 1.45 }}>
               {fill(t.alerts[a.kind], {
                 activity: t.activities[a.activityId],

@@ -62,6 +62,8 @@ export const fr: Dict = {
     tolerant: 'Tolérant',
     tune: 'Ajuster les critères',
     hourUnit: 'h',
+    moreActs: '+{n} hors saison',
+    lessActs: 'Moins',
   },
 
   tune: {
@@ -186,5 +188,19 @@ export const fr: Dict = {
     picnic: 'Pique-nique / BBQ',
     skiing: 'Ski',
     snowmob: 'Motoneige',
+    motorcycle: 'Moto',
+    utv: 'VTT / Côte-à-côte',
+    waterski: 'Ski nautique',
+    pontoon: 'Ponton',
+    pickleball: 'Pickleball',
+  },
+
+  cats: {
+    powersports: 'Motorisé',
+    trail: 'Sentier',
+    water: 'Nautique',
+    court: 'Terrain',
+    snow: 'Neige',
+    leisure: 'Détente',
   },
 };

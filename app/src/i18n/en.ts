@@ -60,6 +60,8 @@ export const en = {
     tolerant: 'Tolerant',
     tune: 'Tune criteria',
     hourUnit: 'h',
+    moreActs: '+{n} off-season',
+    lessActs: 'Fewer',
   },
 
   tune: {
@@ -183,6 +185,20 @@ export const en = {
     picnic: 'Picnic / BBQ',
     skiing: 'Skiing',
     snowmob: 'Snowmobiling',
+    motorcycle: 'Motorcycle',
+    utv: 'UTV / ATV',
+    waterski: 'Waterskiing',
+    pontoon: 'Pontooning',
+    pickleball: 'Pickleball',
+  },
+
+  cats: {
+    powersports: 'Powersports',
+    trail: 'Trail',
+    water: 'Water',
+    court: 'Court',
+    snow: 'Snow',
+    leisure: 'Leisure',
   },
 };
 
