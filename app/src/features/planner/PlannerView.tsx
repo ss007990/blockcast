@@ -42,7 +42,7 @@ export function PlannerView() {
 
   return (
     <Card>
-      <h2 style={{ fontSize: 16, marginBottom: 12 }}>{t.planner.title}</h2>
+      <h2 style={{ fontSize: 21, marginBottom: 14 }}>{t.planner.title}</h2>
 
       {sessions.length === 0 ? (
         <div className={uiCss.empty}>{t.planner.empty}</div>

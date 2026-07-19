@@ -1,7 +1,9 @@
 .title {
-  font-size: 15px;
-  font-weight: 700;
-  margin-bottom: 12px;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 14px;
 }
 
 .results {
@@ -14,8 +16,9 @@
   width: 100%;
   text-align: left;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-s);
   font-size: 14px;
+  font-weight: 550;
   transition: background 0.12s ease;
 }
 
@@ -25,25 +28,27 @@
 
 .res small {
   color: var(--ink-3);
+  font-weight: 400;
   display: block;
+  margin-top: 1px;
 }
 
 .myLoc {
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .hint {
   font-size: 12.5px;
   color: var(--ink-3);
-  margin-top: 14px;
+  margin-top: 16px;
   line-height: 1.5;
 }
 
 .map {
   height: 270px;
-  border-radius: 12px;
+  border-radius: var(--radius);
   margin-top: 8px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   overflow: hidden;
 }
 
@@ -61,7 +66,8 @@
 }
 
 .coords {
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   color: var(--ink-3);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;

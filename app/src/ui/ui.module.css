@@ -1,11 +1,11 @@
-/* Design-system primitives. */
+/* Design-system primitives — hairline panels, stamped chips, mono data. */
 
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow-1);
-  padding: 20px;
+  padding: 22px;
 }
 
 .btn {
@@ -13,16 +13,18 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
-  padding: 10px 18px;
-  border-radius: 12px;
+  letter-spacing: 0.01em;
+  padding: 10px 20px;
+  border-radius: 999px;
   transition:
     transform 0.12s ease,
     filter 0.15s ease,
     background 0.15s ease,
     border-color 0.15s ease,
-    color 0.15s ease;
+    color 0.15s ease,
+    box-shadow 0.15s ease;
   white-space: nowrap;
 }
 
@@ -38,41 +40,44 @@
 
 .primary {
   composes: btn;
-  background: var(--gradient-brand);
-  color: #fff;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+  background: var(--ink);
+  color: var(--bg);
+  box-shadow: var(--shadow-1);
 }
 
 .primary:hover:not(:disabled) {
-  filter: brightness(1.08);
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(76, 64, 207, 0.35);
 }
 
 .ghost {
   composes: btn;
-  border: 1px solid var(--line);
-  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  background: transparent;
   color: var(--ink-2);
 }
 
 .ghost:hover:not(:disabled) {
   border-color: var(--accent);
   color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .seg {
   display: inline-flex;
   background: var(--surface-2);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 999px;
   padding: 3px;
   gap: 2px;
 }
 
 .segBtn {
-  font-size: 13.5px;
-  font-weight: 500;
-  padding: 7px 13px;
-  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 550;
+  padding: 6px 14px;
+  border-radius: 999px;
   color: var(--ink-2);
   transition:
     background 0.15s ease,
@@ -82,20 +87,23 @@
 }
 
 .segBtn.on {
-  background: var(--surface);
-  color: var(--ink);
+  background: var(--ink);
+  color: var(--bg);
   font-weight: 600;
-  box-shadow: var(--shadow-1);
 }
 
+/* stamped chip — mono value, tinted ink */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 4px 11px;
   border-radius: 999px;
+  border: 1px solid transparent;
   white-space: nowrap;
 }
 
@@ -103,24 +111,28 @@
   composes: chip;
   background: var(--green-bg);
   color: var(--green);
+  border-color: color-mix(in srgb, var(--green) 25%, transparent);
 }
 
 .chipY {
   composes: chip;
   background: var(--amber-bg);
   color: var(--amber);
+  border-color: color-mix(in srgb, var(--amber) 25%, transparent);
 }
 
 .chipR {
   composes: chip;
   background: var(--red-bg);
   color: var(--red);
+  border-color: color-mix(in srgb, var(--red) 25%, transparent);
 }
 
 .chipMuted {
   composes: chip;
   background: var(--surface-2);
   color: var(--ink-3);
+  border-color: var(--line);
 }
 
 .overlay {
@@ -128,8 +140,8 @@
   inset: 0;
   background: var(--overlay);
   z-index: 100;
-  -webkit-backdrop-filter: blur(2px);
-  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(3px) saturate(0.9);
+  backdrop-filter: blur(3px) saturate(0.9);
 }
 
 .sheetDesktop {
@@ -141,10 +153,10 @@
   max-height: 86vh;
   overflow-y: auto;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-l);
   box-shadow: var(--shadow-3);
-  padding: 24px;
+  padding: 26px;
 }
 
 .sheetMobile {
@@ -156,6 +168,7 @@
   max-height: 88dvh;
   overflow-y: auto;
   background: var(--surface);
+  border-top: 1px solid var(--line-strong);
   border-top-left-radius: var(--radius-l);
   border-top-right-radius: var(--radius-l);
   box-shadow: var(--shadow-3);
@@ -172,42 +185,46 @@
 
 .sheetClose {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 16px;
+  right: 16px;
   width: 30px;
   height: 30px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--surface-2);
+  border: 1px solid var(--line);
   color: var(--ink-3);
-  font-size: 14px;
+  font-size: 13px;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .sheetClose:hover {
   color: var(--ink);
+  border-color: var(--line-strong);
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
 }
 
 .fieldLabel {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--ink-2);
+  font-size: 10.5px;
+  font-weight: 650;
+  color: var(--ink-3);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.14em;
 }
 
 .select {
   font: inherit;
   padding: 9px 12px;
-  border: 1px solid var(--line);
-  border-radius: 11px;
-  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-s);
+  background: var(--surface);
   color: var(--ink);
   min-width: 130px;
   cursor: pointer;
@@ -216,11 +233,15 @@
 .input {
   font: inherit;
   padding: 10px 13px;
-  border: 1px solid var(--line);
-  border-radius: 11px;
-  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-s);
+  background: var(--surface);
   color: var(--ink);
   width: 100%;
+}
+
+.input::placeholder {
+  color: var(--ink-3);
 }
 
 .input:focus,

@@ -1,3 +1,8 @@
+@import '@fontsource-variable/fraunces/index.css';
+@import '@fontsource-variable/fraunces/wght-italic.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
 @import './tokens.css';
 
 *,
@@ -19,12 +24,36 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overscroll-behavior-y: none;
+  position: relative;
+}
+
+/* the paper itself: a whisper of film grain across the whole app */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: var(--grain);
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+:root[data-theme='dark'] body::before {
+  opacity: 0.07;
 }
 
 #root {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 560;
+  letter-spacing: -0.01em;
 }
 
 button {
@@ -42,12 +71,20 @@ select {
 }
 
 a {
-  color: var(--accent);
-  text-decoration: none;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.15s ease;
 }
 
 a:hover {
-  text-decoration: underline;
+  text-decoration-color: var(--accent);
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
 }
 
 :focus-visible {
@@ -57,6 +94,15 @@ a:hover {
 
 .tnum {
   font-variant-numeric: tabular-nums;
+}
+
+/* small-caps editorial label — used across features */
+.overline {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
 }
 
 @media (prefers-reduced-motion: reduce) {

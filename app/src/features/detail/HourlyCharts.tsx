@@ -78,10 +78,10 @@ export function HourlyCharts({ hours, units, clock, t, sun }: ChartsProps) {
               x={x(i)}
               y={y(v) - 8}
               textAnchor="middle"
-              fontSize="11"
-              fontWeight="650"
+              fontSize="10.5"
+              fontWeight="600"
               fill="var(--ink)"
-              style={{ fontVariantNumeric: 'tabular-nums' }}
+              style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums' }}
             >
               {deg(v)}
             </text>

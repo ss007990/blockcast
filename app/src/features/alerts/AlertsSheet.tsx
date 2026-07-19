@@ -24,7 +24,7 @@ export function AlertsSheet() {
 
   return (
     <Sheet open={alertsOpen} onClose={() => setAlertsOpen(false)} ariaLabel={t.alerts.title}>
-      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>{t.alerts.title}</div>
+      <h2 style={{ fontSize: 19, marginBottom: 14 }}>{t.alerts.title}</h2>
       {items.length === 0 ? (
         <div className={uiCss.empty}>{t.alerts.empty}</div>
       ) : (

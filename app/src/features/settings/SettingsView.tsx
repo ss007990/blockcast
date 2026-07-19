@@ -13,7 +13,7 @@ export function SettingsView() {
   return (
     <div style={{ display: 'grid', gap: 16, maxWidth: 620 }}>
       <Card>
-        <h2 style={{ fontSize: 16, marginBottom: 14 }}>{t.settings.appearance}</h2>
+        <h2 style={{ fontSize: 19, marginBottom: 16 }}>{t.settings.appearance}</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Field label={t.settings.theme}>
             <Segmented<ThemeChoice>
@@ -40,7 +40,7 @@ export function SettingsView() {
       </Card>
 
       <Card>
-        <h2 style={{ fontSize: 16, marginBottom: 14 }}>{t.settings.unitsTitle}</h2>
+        <h2 style={{ fontSize: 19, marginBottom: 16 }}>{t.settings.unitsTitle}</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Field label={t.settings.units}>
             <Segmented<UnitSystem>
@@ -66,7 +66,7 @@ export function SettingsView() {
       </Card>
 
       <Card>
-        <h2 style={{ fontSize: 16, marginBottom: 10 }}>{t.settings.about}</h2>
+        <h2 style={{ fontSize: 19, marginBottom: 12 }}>{t.settings.about}</h2>
         <p style={{ fontSize: 13.5, color: 'var(--ink-2)', lineHeight: 1.6 }}>
           {t.settings.aboutBody}
         </p>

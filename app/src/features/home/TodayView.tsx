@@ -7,7 +7,7 @@ import { bestWindows, snowfallEvent } from '../../core/suggestions';
 import { formatDepth, formatHourRange, formatTemp } from '../../core/units';
 import { useLocale, useNowMs, useT } from '../../hooks';
 import { fill } from '../../i18n';
-import { fmtIsoTime, fmtWeekdayLong } from '../../lib/format';
+import { fmtFull, fmtIsoTime, fmtWeekdayLong } from '../../lib/format';
 import { useForecast } from '../../state/forecast';
 import { critFor, useSettings } from '../../state/settings';
 import { useUi } from '../../state/ui';
@@ -15,6 +15,20 @@ import { Icon } from '../../ui/Icon';
 import { uiCss } from '../../ui/primitives';
 import { useSeason } from './useSeason';
 import s from './home.module.css';
+
+type Sky = 'clear' | 'cloud' | 'rain' | 'snow' | 'storm' | 'dusk' | 'night';
+
+/** Map WMO code + local hour to one of the hero sky moods. */
+function skyOf(code: number, hour: number, sunrise?: string, sunset?: string): Sky {
+  if (code >= 95) return 'storm';
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow';
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'rain';
+  const rise = sunrise ? +sunrise.slice(11, 13) : 6;
+  const set = sunset ? +sunset.slice(11, 13) : 20;
+  if (hour < rise - 1 || hour > set + 1) return 'night';
+  if (Math.abs(hour - rise) <= 1 || Math.abs(hour - set) <= 1) return 'dusk';
+  return code >= 2 ? 'cloud' : 'clear';
+}
 
 export function TodayView() {
   const t = useT();
@@ -65,6 +79,8 @@ export function TodayView() {
   const cur = data.days[todayISO]?.[now.getHours()] ?? data.days[dayKeys[0] ?? '']?.[12];
   const sunrise = data.daily.sunrise?.[di];
   const sunset = data.daily.sunset?.[di];
+  const code = data.daily.weather_code[di] ?? 0;
+  const sky = skyOf(code, now.getHours(), sunrise, sunset);
 
   const goPlan = (activityId: ActivityId, day: string, h: number) => {
     st.setActivity(activityId);
@@ -76,32 +92,38 @@ export function TodayView() {
     <div>
       <motion.section
         className={s.hero}
+        data-sky={sky}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
       >
-        <button className={s.heroLoc} onClick={() => setLocOpen(true)} style={{ color: '#fff' }}>
-          <Icon name="pin" size={14} /> {st.loc.name}
-        </button>
+        <div className={s.heroHead}>
+          <button className={s.heroLoc} onClick={() => setLocOpen(true)}>
+            <Icon name="pin" size={13} /> {st.loc.name}
+          </button>
+          <span className={s.heroDate}>{fmtFull(todayISO, locale)}</span>
+        </div>
+
         <div className={s.heroRow}>
           <span className={s.heroTemp}>{cur ? formatTemp(cur.temp, st.units) : '–'}</span>
-          <span className={s.heroIcon}>{wmoIcon(data.daily.weather_code[di] ?? 0)}</span>
-          <div className={s.heroMeta}>
+          <span className={s.heroIcon}>{wmoIcon(code)}</span>
+        </div>
+
+        <div className={s.heroStrip}>
+          <span>
+            {t.home.now} · {t.home.feels} <b>{cur ? formatTemp(cur.temp, st.units) : '–'}</b>
+          </span>
+          <span className="tnum">
+            {fill(t.home.hiLo, {
+              hi: formatTemp(data.daily.apparent_temperature_max[di] ?? 0, st.units),
+              lo: formatTemp(data.daily.apparent_temperature_min[di] ?? 0, st.units),
+            })}
+          </span>
+          {sunrise && sunset && (
             <span>
-              {t.home.now} · {t.home.feels} {cur ? formatTemp(cur.temp, st.units) : '–'}
+              🌅 {fmtIsoTime(sunrise, locale, st.clock)} · 🌇 {fmtIsoTime(sunset, locale, st.clock)}
             </span>
-            <span className="tnum">
-              {fill(t.home.hiLo, {
-                hi: formatTemp(data.daily.apparent_temperature_max[di] ?? 0, st.units),
-                lo: formatTemp(data.daily.apparent_temperature_min[di] ?? 0, st.units),
-              })}
-            </span>
-            {sunrise && sunset && (
-              <span>
-                🌅 {fmtIsoTime(sunrise, locale, st.clock)} · 🌇 {fmtIsoTime(sunset, locale, st.clock)}
-              </span>
-            )}
-          </div>
+          )}
         </div>
       </motion.section>
 
@@ -126,33 +148,39 @@ export function TodayView() {
         </motion.div>
       )}
 
-      <h2 className={s.sectionTitle}>{t.home.suggestions}</h2>
+      <h2 className={s.sectionTitle}>
+        <span>{t.home.suggestions}</span>
+      </h2>
       {suggestions.length === 0 ? (
         <div className={uiCss.empty}>{t.home.suggestionsEmpty}</div>
       ) : (
-        <div className={s.rail}>
+        <div className={s.list}>
           {suggestions.map((w, i) => (
             <motion.button
               key={`${w.activityId}-${w.day}-${w.h}`}
-              className={s.sCard}
+              className={s.row}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.05 * i }}
               onClick={() => goPlan(w.activityId, w.day, w.h)}
             >
-              <span className={s.sIco}>{ACTIVITIES[w.activityId].emoji}</span>
-              <span className={s.sMain}>
-                <span className={s.sTitle}>
+              <span className={s.rowIdx}>{String(i + 1).padStart(2, '0')}</span>
+              <span className={s.rowIco}>{ACTIVITIES[w.activityId].emoji}</span>
+              <span className={s.rowMain}>
+                <span className={s.rowTitle}>
                   {fill(t.home.bestWindow, { activity: t.activities[w.activityId] })}
-                  {w.isWeekend && <span className={s.sBadge}>{t.home.weekendBadge}</span>}
+                  {w.isWeekend && <span className={s.rowBadge}>{t.home.weekendBadge}</span>}
                 </span>
-                <span className={s.sSub} style={{ display: 'block' }}>
+                <span className={s.rowSub}>
                   {fmtWeekdayLong(w.day, locale)} ·{' '}
                   {formatHourRange(w.h, Math.min(w.h + w.len, 24), st.clock)}
                 </span>
               </span>
               <span className={uiCss.chipG}>
                 {t.common.risk} {w.score}
+              </span>
+              <span className={s.rowArrow} aria-hidden="true">
+                →
               </span>
             </motion.button>
           ))}

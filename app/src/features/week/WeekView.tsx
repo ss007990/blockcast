@@ -327,7 +327,10 @@ function HeatBoard() {
         })}
       </div>
 
-      <div className={`${uiCss.empty}`} style={{ padding: '10px 0 0', fontSize: 12.5 }}>
+      <div
+        className={`${uiCss.empty}`}
+        style={{ padding: '10px 0 0', fontSize: 11, fontFamily: 'var(--font-mono)' }}
+      >
         {updatedAt
           ? `${t.common.liveForecast} · ${st.loc.name} · ${t.common.updated} ${new Date(updatedAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}`
           : null}
