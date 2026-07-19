@@ -621,6 +621,48 @@ const esc = s => String(s).replace(/[&<>"']/g, c =>
   ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 // RFC 5545 text escaping and 75-octet line folding for .ics output
+// --- location search helpers ---
+// The Open-Meteo geocoder matches the city NAME only ("Alma, Qc" → nothing)
+// and ranks small foreign towns above big local ones, so we split off a
+// ", region" qualifier, fetch a generous batch and filter/rank ourselves.
+const normTxt = s => String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+const CA_PROV = {qc:"quebec", on:"ontario", bc:"british columbia", ab:"alberta",
+  mb:"manitoba", sk:"saskatchewan", ns:"nova scotia", nb:"new brunswick",
+  nl:"newfoundland", pe:"prince edward island", yt:"yukon",
+  nt:"northwest territories", nu:"nunavut"};
+function parseLocQuery(q){
+  const i = q.indexOf(",");
+  if(i < 0) return {name:q.trim(), qual:""};
+  return {name:q.slice(0,i).trim(), qual:normTxt(q.slice(i+1))};
+}
+// great-circle distance in km
+function distKm(a, b){
+  const rad = x => x*Math.PI/180, R = 6371;
+  const h = Math.sin(rad(b.lat-a.lat)/2)**2 +
+    Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(rad(b.lon-a.lon)/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+// keep results matching the qualifier (if it matches anything), float exact
+// name matches, then rank "close and big" first: from ref (the user's current
+// spot), one decade of population offsets ~1000 km of distance — so searching
+// "Alma" from Sherbrooke finds Alma QC, not Alma Nebraska
+function rankLocResults(results, name, qual, ref){
+  let out = results;
+  if(qual){
+    const want = CA_PROV[qual] ?? qual;
+    const m = results.filter(x => [x.admin1, x.admin2, x.country, x.country_code]
+      .some(f => f && normTxt(f).startsWith(want)));
+    if(m.length) out = m;
+  }
+  const n = normTxt(name);
+  const score = x => Math.log10((x.population ?? 0) + 1)
+    - (ref ? distKm(ref, {lat:x.latitude, lon:x.longitude})/1000 : 0);
+  return out
+    .map((x,i)=>({x, exact:normTxt(x.name)===n ? 0 : 1, s:-score(x), i}))
+    .sort((a,b)=> a.exact-b.exact || a.s-b.s || a.i-b.i)
+    .map(o=>o.x);
+}
+
 const icsEsc = s => String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n");
 function foldIcs(line){
   const bytes = ch => unescape(encodeURIComponent(ch)).length;
@@ -1042,10 +1084,11 @@ document.getElementById("locSearch").addEventListener("input", e=>{
   if(q.length<2) return;
   searchTimer = setTimeout(async ()=>{
     const box = document.getElementById("locResults");
+    const {name, qual} = parseLocQuery(q);
     let results = [];
     try{
-      const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=${S.lang}`);
-      results = (await r.json()).results ?? [];
+      const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=20&language=${S.lang}`);
+      results = rankLocResults((await r.json()).results ?? [], name, qual, S.loc).slice(0, 8);
     }catch(e){/* network hiccup — fall through to "no matches" */}
     box.innerHTML = "";
     if(!results.length){ box.innerHTML = `<div class="empty">${T().noMatch}</div>`; return; }
@@ -1054,7 +1097,8 @@ document.getElementById("locSearch").addEventListener("input", e=>{
       const d = el("div","loc-res");
       d.textContent = x.name;
       const sm = document.createElement("small");
-      sm.textContent = [x.admin1, x.country].filter(Boolean).join(", ");
+      const away = Math.round(distKm(S.loc, {lat:x.latitude, lon:x.longitude}));
+      sm.textContent = [x.admin1, x.country].filter(Boolean).join(", ") + ` · ${away} km`;
       d.appendChild(sm);
       d.onclick = async ()=>{
         S.loc = {name:x.name, lat:x.latitude, lon:x.longitude};

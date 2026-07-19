@@ -12,12 +12,12 @@ export function buildApi(indexHtmlSource){
   return new Function(`"use strict";
     ${blocks};
     return {ACTIVITIES, TOL_MULT, ramp, blockFactors, riskScore, riskBand,
-            planKey, esc, icsEsc, foldIcs};`)();
+            planKey, esc, icsEsc, foldIcs, normTxt, parseLocQuery, rankLocResults, distKm};`)();
 }
 
 export function runTests(api){
   const {ACTIVITIES, TOL_MULT, ramp, blockFactors, riskScore, riskBand,
-         planKey, esc, icsEsc, foldIcs} = api;
+         planKey, esc, icsEsc, foldIcs, normTxt, parseLocQuery, rankLocResults, distKm} = api;
   const failures = [];
   let passed = 0;
   const eq = (name, got, want) => {
@@ -61,6 +61,36 @@ export function runTests(api){
   ok("fold line lengths", folded.split("\r\n").every(l => byteLen(l) <= 75));
   eq("fold roundtrip", folded.replaceAll("\r\n ", ""), long);
   eq("fold short line untouched", foldIcs("BEGIN:VEVENT"), "BEGIN:VEVENT");
+
+  // location search: qualifier parsing and result ranking
+  eq("normTxt accents", normTxt("Québec "), "quebec");
+  eq("parse plain query", JSON.stringify(parseLocQuery("Geneva")), JSON.stringify({name:"Geneva", qual:""}));
+  eq("parse qualified query", JSON.stringify(parseLocQuery("Alma, Qc")), JSON.stringify({name:"Alma", qual:"qc"}));
+  const sherbrooke = {lat:45.40, lon:-71.90};
+  const almas = [
+    {name:"Alma", admin1:"Georgia", country:"United States", country_code:"US",
+      latitude:31.54, longitude:-82.46, population:3536},
+    {name:"Almaty", admin1:"Almaty", country:"Kazakhstan", country_code:"KZ",
+      latitude:43.25, longitude:76.92, population:1977011},
+    {name:"Alma", admin1:"Québec", country:"Canada", country_code:"CA",
+      latitude:48.55, longitude:-71.65, population:29526},
+    {name:"Alma", admin1:"Nebraska", country:"United States", country_code:"US",
+      latitude:40.10, longitude:-99.36, population:1146},
+  ];
+  const d = distKm(sherbrooke, {lat:48.55, lon:-71.65});
+  ok("distKm Sherbrooke→Alma QC ≈ 350 km", d > 300 && d < 400);
+  eq("rank: 'Qc' qualifier filters to Québec",
+    rankLocResults(almas, "Alma", "qc", sherbrooke).map(x=>x.country_code).join(","), "CA");
+  eq("rank from Sherbrooke: Alma QC first, exact matches by distance-weighted score, fuzzy last",
+    rankLocResults(almas, "Alma", "", sherbrooke).map(x=>x.admin1).join(","),
+    "Québec,Georgia,Nebraska,Almaty");
+  eq("rank without ref: population decides",
+    rankLocResults(almas, "Alma", "", null).map(x=>x.admin1).join(","),
+    "Québec,Georgia,Nebraska,Almaty");
+  eq("rank: unmatched qualifier falls back to all results",
+    rankLocResults(almas, "Alma", "zz", sherbrooke).length, 4);
+  eq("rank: full province name works",
+    rankLocResults(almas, "Alma", "quebec", sherbrooke).map(x=>x.country_code).join(","), "CA");
 
   // blockFactors severities
   const fGood = blockFactors([hour()], 0, crit("tennis"));
