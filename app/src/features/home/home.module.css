@@ -232,10 +232,82 @@
   z-index: 1;
 }
 
+/* fine-print risk scale: 0–100 band bar so the numbers read as risk, not degrees */
+.scale {
+  margin-top: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.scaleBar {
+  display: flex;
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.scaleBar i[data-band='g'] {
+  width: 25%;
+  background: #a9ecb6;
+}
+
+.scaleBar i[data-band='y'] {
+  width: 30%;
+  background: #f8d78c;
+}
+
+.scaleBar i[data-band='r'] {
+  width: 45%;
+  background: #fbab9c;
+}
+
+.scaleLabels {
+  position: relative;
+  height: 13px;
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.03em;
+  opacity: 0.85;
+}
+
+.scaleLabels span {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+}
+
+.scaleLabels span:nth-child(1) {
+  left: 0;
+}
+
+.scaleLabels span:nth-child(2) {
+  left: 25%;
+  transform: translateX(-50%);
+}
+
+.scaleLabels span:nth-child(3) {
+  left: 55%;
+  transform: translateX(-50%);
+}
+
+.scaleLabels span:nth-child(4) {
+  right: 0;
+}
+
+/* narrow screens: the 25/55 ticks crowd the endpoint labels — drop them */
+@media (max-width: 480px) {
+  .scaleLabels span:nth-child(2),
+  .scaleLabels span:nth-child(3) {
+    display: none;
+  }
+}
+
 /* section title — uppercase with a starting-block accent bar */
 .sectionTitle {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 14px;
   font-size: 17px;
   font-weight: 830;
@@ -260,11 +332,37 @@
   background: var(--line-strong);
 }
 
-/* block-by-block: one card per block — score, chips, hour-by-hour graphs */
+.sectionFine {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+/* block-by-block: one card per block — score, chips, hour-by-hour graphs.
+   Stacked on mobile; on wide screens the cards sit side by side, one column
+   under each block of the sky timeline (same 20px inset and 7px gap). */
 .details {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+@media (min-width: 880px) {
+  .details {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 7px;
+    padding: 0 20px;
+  }
+
+  .detailCard {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 .detailCard {
@@ -273,6 +371,25 @@
   border-radius: var(--radius);
   box-shadow: var(--shadow-1);
   padding: 14px 16px;
+}
+
+/* past blocks: shaded out — the hours are gone, the card is history */
+.detailCard[data-past] {
+  background: color-mix(in srgb, var(--surface-2) 82%, var(--ink-3));
+  border-color: color-mix(in srgb, var(--ink-3) 45%, var(--line));
+  opacity: 0.8;
+  filter: saturate(0.2);
+}
+
+/* on mobile, past cards collapse to just the header row */
+@media (max-width: 879px) {
+  .detailCard[data-past] {
+    padding: 10px 16px;
+  }
+
+  .detailCard[data-past] > :not(.detailHead) {
+    display: none;
+  }
 }
 
 .detailCard[data-now] {

@@ -199,6 +199,20 @@ export function TodayView() {
             <span>🌇 {fmtIsoTime(sunset, locale, st.clock)}</span>
           </div>
         )}
+
+        <div className={s.scale} aria-label={t.home.scaleFine}>
+          <div className={s.scaleBar} aria-hidden="true">
+            <i data-band="g" />
+            <i data-band="y" />
+            <i data-band="r" />
+          </div>
+          <div className={s.scaleLabels} aria-hidden="true">
+            <span>{t.home.scaleGo}</span>
+            <span>25</span>
+            <span>55</span>
+            <span>{t.home.scaleStay}</span>
+          </div>
+        </div>
       </motion.section>
 
       {snow && (
@@ -224,6 +238,7 @@ export function TodayView() {
 
       <h2 className={s.sectionTitle}>
         <span>{t.home.blockByBlock}</span>
+        <span className={s.sectionFine}>{t.home.scaleFine}</span>
       </h2>
       <div className={s.details}>
         {blocks.map((blk, i) => (
@@ -233,7 +248,7 @@ export function TodayView() {
             data-past={blk.isPast || undefined}
             data-now={blk.isNow || undefined}
             initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: blk.isPast ? 0.55 : 1, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.05 * i }}
             aria-label={`${formatHourRange(blk.h, blk.end, st.clock)} · ${t.common.risk} ${blk.score}`}
           >
