@@ -1,0 +1,22 @@
+name = "blockcast-push"
+main = "src/index.ts"
+compatibility_date = "2026-07-01"
+
+# KV namespace holding push subscriptions. Create with:
+#   npx wrangler kv namespace create SUBS
+# then paste the id below.
+kv_namespaces = [
+  { binding = "SUBS", id = "REPLACE_WITH_KV_NAMESPACE_ID" }
+]
+
+# Re-check subscribed sessions every 3 hours.
+[triggers]
+crons = ["0 */3 * * *"]
+
+[vars]
+ALLOWED_ORIGINS = "https://blockcast.ca,http://localhost:5173"
+
+# Secrets (set with `npx wrangler secret put <NAME>`):
+#   VAPID_PUBLIC_KEY   — base64url public key  (npx web-push generate-vapid-keys)
+#   VAPID_PRIVATE_KEY  — base64url private key
+#   VAPID_SUBJECT      — e.g. "mailto:sandy.p.scullion@gmail.com"

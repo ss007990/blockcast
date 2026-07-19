@@ -1,0 +1,21 @@
+{
+  "name": "@blockcast/worker",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260719.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.112.0"
+  },
+  "dependencies": {
+    "@block65/webcrypto-web-push": "^1.0.2"
+  }
+}

@@ -1,2 +1,10 @@
 .DS_Store
 .claude/
+node_modules/
+dist/
+dev-dist/
+*.log
+.wrangler/
+.env
+.env.*
+coverage/

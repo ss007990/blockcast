@@ -1,0 +1,74 @@
+.title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.results {
+  margin-top: 10px;
+  max-height: 230px;
+  overflow-y: auto;
+}
+
+.res {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  transition: background 0.12s ease;
+}
+
+.res:hover {
+  background: var(--accent-soft);
+}
+
+.res small {
+  color: var(--ink-3);
+  display: block;
+}
+
+.myLoc {
+  margin-top: 10px;
+}
+
+.hint {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  margin-top: 14px;
+  line-height: 1.5;
+}
+
+.map {
+  height: 270px;
+  border-radius: 12px;
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.pickBar {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pickBar input {
+  flex: 1;
+  min-width: 140px;
+}
+
+.coords {
+  font-size: 12px;
+  color: var(--ink-3);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+:global(.bc-pin) {
+  font-size: 22px;
+  line-height: 1;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}

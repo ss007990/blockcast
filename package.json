@@ -1,0 +1,29 @@
+{
+  "name": "blockcast",
+  "private": true,
+  "type": "module",
+  "version": "2.0.0",
+  "description": "BlockCast — plan your sport around the sky",
+  "workspaces": [
+    "app",
+    "worker"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w app",
+    "build": "npm run build -w app",
+    "preview": "npm run preview -w app",
+    "test": "npm run test -w app && npm run test -w worker",
+    "typecheck": "npm run typecheck -w app && npm run typecheck -w worker",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.7.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "globals": "^17.7.0",
+    "prettier": "^3.9.5",
+    "typescript-eslint": "^8.64.0"
+  }
+}
