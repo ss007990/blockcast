@@ -452,8 +452,8 @@ const LANGS = {
     exportAll:"⬇ Export all to calendar (.ics)",
     inPlanner:"✓ In planner", addPlanner:"➕ Add to my planner", icsBtn:"⬇ Calendar file (.ics)",
     remove:"Remove", noData:"no data",
-    dRain:"🌧 Rain", dSnow:"❄️ Snow", dFresh:"🌨 Fresh", dWind:"💨 Wind", dTemp:"🌡 Temp", dUv:"☀️ UV",
-    uvIdx:"index", base:"base", fresh48h:"fresh/48 h", gusts:"gusts", chance:"chance", tipRisk:"Risk",
+    dRain:"🌧 Rain", dSnow:"❄️ Snow", dFresh:"🌨 Fresh", dWind:"💨 Wind", dTemp:"🌡 Feels like", dUv:"☀️ UV",
+    uvIdx:"index", base:"base", fresh48h:"fresh/48 h", gusts:"gusts", chance:"chance", tipRisk:"Risk", felt:"felt",
     statusFetching:"Fetching live forecast for", statusLive:"Live forecast", statusUpdated:"updated",
     loadErr:"⚠ Could not load forecast:", checkConn:"— check your connection and reload.",
     setLoc:"Set your location",
@@ -490,8 +490,8 @@ const LANGS = {
     exportAll:"⬇ Tout exporter au calendrier (.ics)",
     inPlanner:"✓ Au planificateur", addPlanner:"➕ Ajouter à mon planificateur", icsBtn:"⬇ Fichier calendrier (.ics)",
     remove:"Retirer", noData:"pas de données",
-    dRain:"🌧 Pluie", dSnow:"❄️ Neige", dFresh:"🌨 Fraîche", dWind:"💨 Vent", dTemp:"🌡 Temp.", dUv:"☀️ UV",
-    uvIdx:"indice", base:"au sol", fresh48h:"fraîche/48 h", gusts:"rafales", chance:"prob.", tipRisk:"Risque",
+    dRain:"🌧 Pluie", dSnow:"❄️ Neige", dFresh:"🌨 Fraîche", dWind:"💨 Vent", dTemp:"🌡 Ressenti", dUv:"☀️ UV",
+    uvIdx:"indice", base:"au sol", fresh48h:"fraîche/48 h", gusts:"rafales", chance:"prob.", tipRisk:"Risque", felt:"ressenti",
     statusFetching:"Chargement des prévisions pour", statusLive:"Prévisions en direct", statusUpdated:"mise à jour",
     loadErr:"⚠ Impossible de charger les prévisions :", checkConn:"— vérifiez votre connexion et rechargez.",
     setLoc:"Choisissez votre emplacement",
@@ -699,8 +699,8 @@ async function fetchWeather(){
   u.search = new URLSearchParams({
     latitude:S.loc.lat, longitude:S.loc.lon, timezone:"auto", forecast_days:"7",
     past_days:"2",   // needed to compute fresh snow over the last 48 h
-    hourly:"temperature_2m,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,cloud_cover,uv_index,snowfall,snow_depth",
-    daily:"weather_code,temperature_2m_max,temperature_2m_min",
+    hourly:"temperature_2m,apparent_temperature,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,cloud_cover,uv_index,snowfall,snow_depth",
+    daily:"weather_code,apparent_temperature_max,apparent_temperature_min",
   });
   const res = await fetch(u);
   if(!res.ok) throw new Error("Weather API error " + res.status);
@@ -713,7 +713,9 @@ async function fetchWeather(){
     timeIdx.set(H.time[i], i);
     const [d, t] = H.time[i].split("T");
     (days[d] ??= [])[+t.slice(0,2)] = {
-      temp:H.temperature_2m[i] ?? 0,
+      // comfort is judged on the felt (apparent) temperature — wind chill and
+      // humidity matter more outdoors than the thermometer reading
+      temp:H.apparent_temperature[i] ?? H.temperature_2m[i] ?? 0,
       pprob:H.precipitation_probability[i] ?? 0,
       precip:H.precipitation[i] ?? 0,
       wind:H.wind_speed_10m[i] ?? 0,
@@ -778,7 +780,7 @@ function renderGrid(){
     h.innerHTML = `<b>${d===todayISO?T().today:dt.toLocaleDateString(LOC(), {weekday:"short"})}</b>
       <span class="ico">${WMO_ICON(S.data.daily.weather_code[di])}</span>
       ${dt.toLocaleDateString(LOC(), {day:"numeric", month:"short"})}<br>
-      <span class="mm">${Math.round(S.data.daily.temperature_2m_min[di])}° / ${Math.round(S.data.daily.temperature_2m_max[di])}°</span>`;
+      <span class="mm">${Math.round(S.data.daily.apparent_temperature_min[di])}° / ${Math.round(S.data.daily.apparent_temperature_max[di])}°</span>`;
     grid.appendChild(h);
   });
 
@@ -840,7 +842,7 @@ function showTip(e,d,h0,b){
     🌧 ${b.f.rainProb}% ${T().chance} · ${b.f.rainSum} mm<br>
     💨 ${b.f.wind} km/h (${T().gusts} ${b.f.gust})<br>
     ${ACTIVITIES[S.activity].snowBase ? `❄️ ${b.f.depth} cm ${T().base} · ${b.f.fresh48} cm ${T().fresh48h}<br>` : ""}
-    🌡 ${b.f.temp}°C · ☀️ UV ${b.f.uv}`;
+    🌡 ${b.f.temp}°C ${T().felt} · ☀️ UV ${b.f.uv}`;
   tip.style.display="block";
   const x = Math.min(e.clientX+16, innerWidth-270), y = Math.min(e.clientY+16, innerHeight-160);
   tip.style.left=x+"px"; tip.style.top=y+"px";
@@ -969,7 +971,7 @@ function downloadICS(items){
   const events = items.map(p=>{
     const d = p.day.replace(/-/g,"");
     const b = S.data && sameLoc(p) ? getBlockLen(p.day, p.h, p.len, critFor(p.activity)) : null;
-    const desc = b ? `Forecast: risk ${b.score}/100 (${riskWord(b.score)}). Rain ${b.f.rainProb}%/${b.f.rainSum}mm, wind ${b.f.wind}km/h (gusts ${b.f.gust}), ${b.f.temp}C, UV ${b.f.uv}. — BlockCast` : "Planned with BlockCast";
+    const desc = b ? `Forecast: risk ${b.score}/100 (${riskWord(b.score)}). Rain ${b.f.rainProb}%/${b.f.rainSum}mm, wind ${b.f.wind}km/h (gusts ${b.f.gust}), feels ${b.f.temp}C, UV ${b.f.uv}. — BlockCast` : "Planned with BlockCast";
     return ["BEGIN:VEVENT",
       `UID:${p.id ?? Date.now()}-${d}${pad(p.h)}@blockcast`,
       `DTSTAMP:${stamp}`,
