@@ -1,13 +1,20 @@
-import type { GeoResult } from '../core/geo';
+import { expandLocAbbrev, type GeoResult } from '../core/geo';
 import type { Lang } from '../i18n';
 
-export async function searchCities(name: string, lang: Lang): Promise<GeoResult[]> {
+async function fetchCities(name: string, lang: Lang): Promise<GeoResult[]> {
   const r = await fetch(
     `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=20&language=${lang}`,
   );
   if (!r.ok) return [];
   const j = (await r.json()) as { results?: GeoResult[] };
   return j.results ?? [];
+}
+
+export async function searchCities(name: string, lang: Lang): Promise<GeoResult[]> {
+  const out = await fetchCities(name, lang);
+  if (out.length) return out;
+  const expanded = expandLocAbbrev(name);
+  return expanded === name ? out : fetchCities(expanded, lang);
 }
 
 /** Best-effort reverse geocode for naming a map-picked spot. */

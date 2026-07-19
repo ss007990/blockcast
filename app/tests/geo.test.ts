@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { distKm, normTxt, parseLocQuery, rankLocResults, type GeoResult } from '../src/core/geo';
+import {
+  distKm,
+  expandLocAbbrev,
+  normTxt,
+  parseLocQuery,
+  rankLocResults,
+  type GeoResult,
+} from '../src/core/geo';
 
 const sherbrooke = { lat: 45.4, lon: -71.9 };
 const almas: GeoResult[] = [
@@ -44,6 +51,20 @@ const almas: GeoResult[] = [
 describe('normTxt', () => {
   it('lowercases and strips accents', () => {
     expect(normTxt('Québec ')).toBe('quebec');
+  });
+});
+
+describe('expandLocAbbrev', () => {
+  it('expands St/Ste/Ft/Mt before a space or hyphen', () => {
+    expect(expandLocAbbrev('Port St Lucie')).toBe('Port Saint Lucie');
+    expect(expandLocAbbrev('Port St. Lucie')).toBe('Port Saint Lucie');
+    expect(expandLocAbbrev('Ste-Foy')).toBe('Sainte-Foy');
+    expect(expandLocAbbrev('Ft Lauderdale')).toBe('Fort Lauderdale');
+    expect(expandLocAbbrev('Mt Vernon')).toBe('Mount Vernon');
+  });
+  it('leaves other names alone', () => {
+    expect(expandLocAbbrev('Stockholm')).toBe('Stockholm');
+    expect(expandLocAbbrev('Fte Ville')).toBe('Fte Ville');
   });
 });
 

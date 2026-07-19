@@ -42,6 +42,23 @@ const CA_PROV: Record<string, string> = {
   nu: 'nunavut',
 };
 
+// GeoNames stores "Saint"/"Sainte" spelled out, and the geocoder does no
+// abbreviation expansion — "Port St Lucie" and "St-Jérôme" both return nothing.
+const ABBREV: Record<string, string> = {
+  st: 'Saint',
+  ste: 'Sainte',
+  ft: 'Fort',
+  mt: 'Mount',
+};
+
+/** "Port St Lucie" → "Port Saint Lucie", "Ste-Foy" → "Sainte-Foy". */
+export function expandLocAbbrev(name: string): string {
+  return name.replace(
+    /\b(st|ste|ft|mt)\.?(?=[ -])/gi,
+    (m, a: string) => ABBREV[a.toLowerCase()] ?? m,
+  );
+}
+
 export function parseLocQuery(q: string): { name: string; qual: string } {
   const i = q.indexOf(',');
   if (i < 0) return { name: q.trim(), qual: '' };
@@ -78,12 +95,12 @@ export function rankLocResults(
     );
     if (m.length) out = m;
   }
-  const n = normTxt(name);
+  const names = new Set([normTxt(name), normTxt(expandLocAbbrev(name))]);
   const score = (x: GeoResult) =>
     Math.log10((x.population ?? 0) + 1) -
     (ref ? distKm(ref, { lat: x.latitude, lon: x.longitude }) / 1000 : 0);
   return out
-    .map((x, i) => ({ x, exact: normTxt(x.name) === n ? 0 : 1, s: -score(x), i }))
+    .map((x, i) => ({ x, exact: names.has(normTxt(x.name)) ? 0 : 1, s: -score(x), i }))
     .sort((a, b) => a.exact - b.exact || a.s - b.s || a.i - b.i)
     .map((o) => o.x);
 }
