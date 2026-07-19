@@ -332,6 +332,13 @@
   background: var(--line-strong);
 }
 
+/* after the flexing ::after rule line, so the button hugs the right edge */
+.sectionTune {
+  order: 1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
 .sectionFine {
   font-family: var(--font-mono);
   font-size: 10.5px;

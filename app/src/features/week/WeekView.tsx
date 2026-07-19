@@ -1,8 +1,6 @@
-import { AnimatePresence, motion } from 'framer-motion';
 import { Fragment, useMemo, type ReactNode } from 'react';
-import { FACTOR_KEYS, TOL_MULT, type FactorKey, type Tolerance } from '../../core/activities';
+import { TOL_MULT, type Tolerance } from '../../core/activities';
 import { forecastDayKeys, getBlock, isoDate, locNow, wmoIcon } from '../../core/forecast';
-import { ActivityIcon } from '../../ui/ActivityIcon';
 import { formatHour, formatTemp } from '../../core/units';
 import { useActivityName, useLocale, useNowMs, useT } from '../../hooks';
 import { fmtDayMonth, fmtWeekdayShort } from '../../lib/format';
@@ -11,7 +9,8 @@ import { usePlanner } from '../../state/planner';
 import { critFor, useSettings, type BlockLen } from '../../state/settings';
 import { useUi } from '../../state/ui';
 import { ActivityRail } from '../../ui/ActivityRail';
-import { Button, Card, Field, Segmented, uiCss } from '../../ui/primitives';
+import { TunePanel, TuneToggle } from '../tune/TunePanel';
+import { Card, Field, Segmented, uiCss } from '../../ui/primitives';
 import s from './week.module.css';
 
 export function WeekView() {
@@ -28,7 +27,6 @@ export function WeekView() {
 function Controls() {
   const t = useT();
   const st = useSettings();
-  const { tuneOpen, setTuneOpen } = useUi();
 
   return (
     <Card className={s.controls}>
@@ -84,119 +82,9 @@ function Controls() {
       </Field>
 
       <div style={{ marginLeft: 'auto' }}>
-        <Button variant="ghost" onClick={() => setTuneOpen(!tuneOpen)}>
-          ⚙ {t.controls.tune}
-        </Button>
+        <TuneToggle />
       </div>
     </Card>
-  );
-}
-
-const SLIDER_DEFS: { k: FactorKey; snowOnly: boolean; marineOnly: boolean }[] = FACTOR_KEYS.map(
-  (k) => ({
-    k,
-    snowOnly: k === 'snow' || k === 'fresh',
-    marineOnly: k === 'swell' || k === 'tide',
-  }),
-);
-
-function TunePanel() {
-  const t = useT();
-  const st = useSettings();
-  const nameOf = useActivityName();
-  const tuneOpen = useUi((u) => u.tuneOpen);
-  const marine = useForecast((f) => f.data?.marine ?? null);
-  const crit = critFor(st, st.activity);
-  const isWinterAct = crit.act.snowBase != null;
-  // swell/tide only make sense for water sports where that ocean data exists
-  const showMarine = (k: FactorKey) =>
-    crit.act.cat === 'water' && (k === 'tide' ? !!marine?.tide : !!marine?.swell);
-  const isCustom = st.customActivities.some((c) => c.id === st.activity);
-
-  return (
-    <AnimatePresence initial={false}>
-      {tuneOpen && (
-        <motion.div
-          className={s.tuneWrap}
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: 'auto', opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          transition={{ duration: 0.22, ease: 'easeOut' }}
-        >
-          <Card className={s.tunePanel}>
-            <h3>
-              {t.tune.critFor} <ActivityIcon id={st.activity} /> {nameOf(st.activity)}
-            </h3>
-            <div className={s.tuneHint}>{t.tune.hint}</div>
-            <div className={s.sliders}>
-              {SLIDER_DEFS.filter(
-                (d) => (!d.snowOnly || isWinterAct) && (!d.marineOnly || showMarine(d.k)),
-              ).map(({ k }) => (
-                <div className={s.srow} key={k}>
-                  <label>
-                    <span>{t.tune[k]}</span>
-                    <span>{crit.weights[k]}</span>
-                  </label>
-                  <input
-                    type="range"
-                    min={0}
-                    max={10}
-                    step={1}
-                    value={crit.weights[k]}
-                    onChange={(e) => st.setWeight(st.activity, k, +e.target.value)}
-                  />
-                  {k === 'cold' ? (
-                    <small>
-                      {t.tune.coldS}{' '}
-                      <input
-                        type="number"
-                        className={s.tnum}
-                        value={crit.tMin}
-                        onChange={(e) => {
-                          const v = +e.target.value;
-                          if (Number.isFinite(v)) st.setTempBand(st.activity, 'tMin', v);
-                        }}
-                      />{' '}
-                      °C
-                    </small>
-                  ) : k === 'heat' ? (
-                    <small>
-                      {t.tune.heatS}{' '}
-                      <input
-                        type="number"
-                        className={s.tnum}
-                        value={crit.tMax}
-                        onChange={(e) => {
-                          const v = +e.target.value;
-                          if (Number.isFinite(v)) st.setTempBand(st.activity, 'tMax', v);
-                        }}
-                      />{' '}
-                      °C
-                    </small>
-                  ) : (
-                    <small>{t.tune[`${k}S`]}</small>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <Button variant="ghost" onClick={() => st.resetTune(st.activity)}>
-                {t.tune.reset}
-              </Button>
-              {isCustom && (
-                <Button
-                  variant="ghost"
-                  style={{ color: 'var(--red)' }}
-                  onClick={() => st.removeActivity(st.activity)}
-                >
-                  🗑 {t.add.remove}
-                </Button>
-              )}
-            </div>
-          </Card>
-        </motion.div>
-      )}
-    </AnimatePresence>
   );
 }
 

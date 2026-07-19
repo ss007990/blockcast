@@ -24,6 +24,7 @@ import { Icon } from '../../ui/Icon';
 import { uiCss } from '../../ui/primitives';
 import { FactorChips } from '../detail/FactorChips';
 import { HourlyCharts } from '../detail/HourlyCharts';
+import { TunePanel, TuneToggle } from '../tune/TunePanel';
 import { paintSky } from './sky';
 import s from './home.module.css';
 
@@ -240,7 +241,11 @@ export function TodayView() {
       <h2 className={s.sectionTitle}>
         <span>{t.home.blockByBlock}</span>
         <span className={s.sectionFine}>{t.home.scaleFine}</span>
+        <span className={s.sectionTune}>
+          <TuneToggle />
+        </span>
       </h2>
+      <TunePanel />
       <div className={s.details}>
         {blocks.map((blk, i) => (
           <motion.section

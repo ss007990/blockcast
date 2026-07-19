@@ -1,0 +1,64 @@
+/* Tune — per-activity criteria sliders, shared by Today and Week. */
+
+.tuneWrap {
+  overflow: hidden;
+}
+
+.tunePanel {
+  margin-top: 14px;
+}
+
+.tunePanel h3 {
+  font-size: 17px;
+  margin-bottom: 4px;
+}
+
+.tuneHint {
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.sliders {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px 26px;
+}
+
+.srow label {
+  font-size: 12.5px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.srow label span {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.srow small {
+  display: block;
+  color: var(--ink-3);
+  font-size: 11.5px;
+  margin-top: 3px;
+}
+
+.srow input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.tnum {
+  width: 58px;
+  padding: 3px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink);
+}
