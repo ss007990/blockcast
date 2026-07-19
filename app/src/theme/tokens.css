@@ -1,98 +1,97 @@
-/* BlockCast design tokens — "The Outdoor Almanac".
-   An editorial, print-inspired system: warm paper by day, night sky after
-   dark, an alpenglow iris accent, serif display type and mono data type.
-   Light is the default; dark overrides via [data-theme] set from settings
-   (system preference resolves to one of the two before it reaches the DOM). */
+/* BlockCast design tokens — "Race Day".
+   Athletic, kinetic, high-contrast: chalk court by day, floodlit carbon by
+   night, one ember-orange accent, condensed heavyweight display type and
+   scoreboard mono for every number. Light is the default; dark overrides via
+   [data-theme] set from settings. */
 
 :root {
-  /* surfaces — warm paper */
-  --bg: #f4f0e6;
-  --surface: #fbf8f1;
-  --surface-2: #ede8da;
-  --surface-glass: rgba(244, 240, 230, 0.82);
-  --overlay: rgba(26, 22, 14, 0.45);
+  /* surfaces — chalk */
+  --bg: #f1f1ec;
+  --surface: #fcfcfa;
+  --surface-2: #e7e7e0;
+  --surface-glass: rgba(241, 241, 236, 0.85);
+  --overlay: rgba(12, 13, 14, 0.5);
 
-  /* ink — warm black on paper */
-  --ink: #201c15;
-  --ink-2: #5d5647;
-  --ink-3: #948c79;
-  --line: #ddd5c2;
-  --line-strong: #b9b099;
+  /* ink — carbon */
+  --ink: #131417;
+  --ink-2: #55575c;
+  --ink-3: #96979b;
+  --line: #dfdfd7;
+  --line-strong: #c2c2b9;
 
-  /* brand — alpenglow iris */
-  --accent: #4c40cf;
-  --accent-2: #7a6ef0;
-  --accent-soft: #e6e2fa;
-  --accent-ink: #322a8d;
-  --gradient-brand: linear-gradient(135deg, #4c40cf, #7a6ef0);
+  /* brand — ember */
+  --accent: #e8440a;
+  --accent-2: #ff6d3b;
+  --accent-soft: #fde5da;
+  --accent-ink: #942905;
+  --gradient-brand: linear-gradient(135deg, #e8440a, #ff6d3b);
 
-  /* risk — inky stamp tones */
-  --green: #2e6f3c;
-  --green-vivid: #4c9a5d;
-  --green-bg: #dcead6;
-  --amber: #995f0c;
-  --amber-vivid: #cf8a1e;
-  --amber-bg: #f2e3c2;
-  --red: #ab3830;
-  --red-vivid: #cd5248;
-  --red-bg: #f1d7cf;
+  /* risk — kit colours */
+  --green: #157f40;
+  --green-vivid: #1fab58;
+  --green-bg: #d9efdd;
+  --amber: #96700a;
+  --amber-vivid: #e0b419;
+  --amber-bg: #f6ecc3;
+  --red: #c01f1f;
+  --red-vivid: #e23636;
+  --red-bg: #f8dcd6;
 
-  /* geometry — crisper, editorial */
-  --radius-s: 7px;
-  --radius: 12px;
-  --radius-l: 18px;
+  /* geometry — sharper, athletic */
+  --radius-s: 6px;
+  --radius: 10px;
+  --radius-l: 16px;
 
-  /* elevation — soft warm shadows */
-  --shadow-1: 0 1px 2px rgba(32, 25, 12, 0.05), 0 4px 14px rgba(32, 25, 12, 0.06);
-  --shadow-2: 0 2px 4px rgba(32, 25, 12, 0.07), 0 14px 34px rgba(32, 25, 12, 0.12);
-  --shadow-3: 0 8px 18px rgba(32, 25, 12, 0.12), 0 28px 70px rgba(32, 25, 12, 0.22);
+  /* elevation */
+  --shadow-1: 0 1px 2px rgba(10, 11, 12, 0.05), 0 4px 14px rgba(10, 11, 12, 0.06);
+  --shadow-2: 0 2px 4px rgba(10, 11, 12, 0.07), 0 14px 34px rgba(10, 11, 12, 0.13);
+  --shadow-3: 0 8px 18px rgba(10, 11, 12, 0.13), 0 28px 70px rgba(10, 11, 12, 0.24);
 
   /* type */
   --font:
     -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Inter, sans-serif;
-  --font-display: 'Fraunces Variable', 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-display: 'Archivo Variable', 'Archivo', 'Arial Narrow', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
 
-  /* film grain — inline SVG turbulence, tiled */
+  /* film grain — inline SVG turbulence, tiled (used on the sky panel) */
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
 
   color-scheme: light;
 }
 
 :root[data-theme='dark'] {
-  /* surfaces — night sky */
-  --bg: #0d0f16;
-  --surface: #151823;
-  --surface-2: #1c2030;
-  --surface-glass: rgba(13, 15, 22, 0.8);
-  --overlay: rgba(3, 4, 9, 0.62);
+  /* surfaces — floodlit carbon */
+  --bg: #0c0d0f;
+  --surface: #16171a;
+  --surface-2: #1e2024;
+  --surface-glass: rgba(12, 13, 15, 0.84);
+  --overlay: rgba(0, 0, 0, 0.65);
 
-  /* ink — warm cream on night blue: the almanac after dark */
-  --ink: #ece7da;
-  --ink-2: #a9a291;
-  --ink-3: #6d685c;
-  --line: #262b3a;
-  --line-strong: #3c4356;
+  --ink: #f2f2ef;
+  --ink-2: #a4a5a8;
+  --ink-3: #626366;
+  --line: #26272b;
+  --line-strong: #3b3d42;
 
-  --accent: #978cf5;
-  --accent-2: #b7aefa;
-  --accent-soft: rgba(122, 110, 240, 0.2);
-  --accent-ink: #d4cefb;
-  --gradient-brand: linear-gradient(135deg, #6c5fe8, #978cf5);
+  --accent: #ff6d3b;
+  --accent-2: #ff8d64;
+  --accent-soft: rgba(255, 109, 59, 0.16);
+  --accent-ink: #ffc4ab;
+  --gradient-brand: linear-gradient(135deg, #f4551c, #ff8d64);
 
-  --green: #85cb92;
-  --green-vivid: #5cb26e;
-  --green-bg: rgba(92, 178, 110, 0.16);
-  --amber: #e5b45f;
-  --amber-vivid: #d99a33;
-  --amber-bg: rgba(217, 154, 51, 0.15);
-  --red: #e88d80;
-  --red-vivid: #d9604f;
-  --red-bg: rgba(217, 96, 79, 0.17);
+  --green: #58cf85;
+  --green-vivid: #2dbd66;
+  --green-bg: rgba(45, 189, 102, 0.15);
+  --amber: #ecc45c;
+  --amber-vivid: #e6b62e;
+  --amber-bg: rgba(230, 182, 46, 0.14);
+  --red: #f37c6c;
+  --red-vivid: #e84545;
+  --red-bg: rgba(232, 69, 69, 0.16);
 
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 14px rgba(0, 0, 0, 0.32);
-  --shadow-2: 0 2px 4px rgba(0, 0, 0, 0.4), 0 14px 34px rgba(0, 0, 0, 0.48);
-  --shadow-3: 0 8px 18px rgba(0, 0, 0, 0.45), 0 28px 70px rgba(0, 0, 0, 0.65);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.35);
+  --shadow-2: 0 2px 4px rgba(0, 0, 0, 0.45), 0 14px 34px rgba(0, 0, 0, 0.5);
+  --shadow-3: 0 8px 18px rgba(0, 0, 0, 0.5), 0 28px 70px rgba(0, 0, 0, 0.7);
 
   color-scheme: dark;
 }

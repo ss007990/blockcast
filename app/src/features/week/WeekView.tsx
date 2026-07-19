@@ -4,12 +4,10 @@ import {
   ACTIVITIES,
   FACTOR_KEYS,
   TOL_MULT,
-  type ActivityId,
   type FactorKey,
   type Tolerance,
 } from '../../core/activities';
 import { forecastDayKeys, getBlock, isoDate, locNow, wmoIcon } from '../../core/forecast';
-import { orderActivities } from '../../core/season';
 import { formatHour, formatTemp } from '../../core/units';
 import { useLocale, useNowMs, useT } from '../../hooks';
 import { fmtDayMonth, fmtWeekdayShort } from '../../lib/format';
@@ -17,13 +15,14 @@ import { useForecast } from '../../state/forecast';
 import { usePlanner } from '../../state/planner';
 import { critFor, useSettings, type BlockLen } from '../../state/settings';
 import { useUi } from '../../state/ui';
-import { useSeason } from '../home/useSeason';
+import { ActivityRail } from '../../ui/ActivityRail';
 import { Button, Card, Field, Segmented, uiCss } from '../../ui/primitives';
 import s from './week.module.css';
 
 export function WeekView() {
   return (
     <>
+      <ActivityRail />
       <Controls />
       <TunePanel />
       <HeatBoard />
@@ -35,25 +34,9 @@ function Controls() {
   const t = useT();
   const st = useSettings();
   const { tuneOpen, setTuneOpen } = useUi();
-  const winter = useSeason();
-  const ordered = useMemo(() => orderActivities(winter), [winter]);
 
   return (
     <Card className={s.controls}>
-      <Field label={t.controls.activity}>
-        <select
-          className={uiCss.select}
-          value={st.activity}
-          onChange={(e) => st.setActivity(e.target.value as typeof st.activity)}
-        >
-          {ordered.map((id) => (
-            <option key={id} value={id}>
-              {`${emojiOf(id)} ${t.activities[id]}`}
-            </option>
-          ))}
-        </select>
-      </Field>
-
       <Field label={t.controls.blockLen}>
         <Segmented<BlockLen>
           options={[2, 3, 4, 6].map((v) => ({ value: v as BlockLen, label: `${v} ${t.controls.hourUnit}` }))}
@@ -113,8 +96,6 @@ function Controls() {
     </Card>
   );
 }
-
-const emojiOf = (id: ActivityId) => ACTIVITIES[id].emoji;
 
 const SLIDER_DEFS: { k: FactorKey; snowOnly: boolean }[] = FACTOR_KEYS.map((k) => ({
   k,
@@ -264,7 +245,7 @@ function HeatBoard() {
         {dayKeys.map((d) => {
           const di = dailyIdx(d);
           return (
-            <div className={s.gh} key={d}>
+            <div className={d === todayISO ? `${s.gh} ${s.ghToday}` : s.gh} key={d}>
               <b>{d === todayISO ? t.common.today : fmtWeekdayShort(d, locale)}</b>
               <span className="ico" style={{ fontSize: 19, display: 'block', margin: '2px 0' }}>
                 {wmoIcon(data.daily.weather_code[di] ?? 0)}

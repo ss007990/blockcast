@@ -1,13 +1,13 @@
 import s from './shell.module.css';
 
-// Letterpress mark: a cream block-mosaic cloud stamped on warm ink, with the
-// three risk tones set into the last row — the whole product in one glyph.
+// Kit badge: a chalk block-mosaic cloud on carbon, the three risk tones set
+// into the last row — the whole product in one glyph.
 export function Logo() {
   return (
     <svg className={s.logo} viewBox="0 0 64 64" role="img" aria-label="BlockCast logo">
-      <rect width="64" height="64" rx="13" fill="#241f16" />
-      <rect x="0.5" y="0.5" width="63" height="63" rx="12.5" fill="none" stroke="#f4f0e6" strokeOpacity="0.14" />
-      <g fill="#f4f0e6">
+      <rect width="64" height="64" rx="13" fill="#131417" />
+      <rect x="0.5" y="0.5" width="63" height="63" rx="12.5" fill="none" stroke="#fff" strokeOpacity="0.12" />
+      <g fill="#f4f4f0">
         {[
           [22, 18],
           [29, 18],
@@ -28,12 +28,12 @@ export function Logo() {
           [22, 39],
           [29, 39],
         ].map(([x, y]) => (
-          <rect key={`${x}-${y}`} x={x} y={y} width="6" height="6" rx="1.6" />
+          <rect key={`${x}-${y}`} x={x} y={y} width="6" height="6" rx="1.4" />
         ))}
       </g>
-      <rect x="36" y="39" width="6" height="6" rx="1.6" fill="#4c9a5d" />
-      <rect x="43" y="39" width="6" height="6" rx="1.6" fill="#cf8a1e" />
-      <rect x="50" y="39" width="6" height="6" rx="1.6" fill="#cd5248" />
+      <rect x="36" y="39" width="6" height="6" rx="1.4" fill="#1fab58" />
+      <rect x="43" y="39" width="6" height="6" rx="1.4" fill="#e0b419" />
+      <rect x="50" y="39" width="6" height="6" rx="1.4" fill="#e23636" />
     </svg>
   );
 }

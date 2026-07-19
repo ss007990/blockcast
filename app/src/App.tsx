@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { TOL_MULT } from './core/activities';
 import { detectChanges, type PlannedSession } from './core/alerts';
 import { isoDate, locNow } from './core/forecast';
-import { useIsMobile, useT, useThemeEffect } from './hooks';
+import { useT, useThemeEffect } from './hooks';
 import { AlertsSheet } from './features/alerts/AlertsSheet';
 import { DetailSheet } from './features/detail/DetailSheet';
 import { TodayView } from './features/home/TodayView';
@@ -11,7 +11,7 @@ import { LocationSheet } from './features/location/LocationSheet';
 import { PlannerView } from './features/planner/PlannerView';
 import { SettingsView } from './features/settings/SettingsView';
 import { WeekView } from './features/week/WeekView';
-import { Header, TabBar } from './shell/Header';
+import { Masthead, TabBar } from './shell/Header';
 import s from './shell/shell.module.css';
 import { useAlerts } from './state/alerts';
 import { useForecast } from './state/forecast';
@@ -22,7 +22,6 @@ import { useUi } from './state/ui';
 export function App() {
   useThemeEffect();
   const t = useT();
-  const mobile = useIsMobile();
   const tab = useUi((u) => u.tab);
   const { loc, locChosen, setLoc, lang } = useSettings();
   const { data, dataFor, load } = useForecast();
@@ -89,7 +88,7 @@ export function App() {
 
   return (
     <>
-      <Header />
+      <Masthead />
       <main className={s.main}>
         <IntroBanner />
         <motion.div
@@ -108,7 +107,7 @@ export function App() {
         BlockCast · <a href="https://open-meteo.com">Open-Meteo</a> ·{' '}
         <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>
       </footer>
-      {mobile && <TabBar />}
+      <TabBar />
       <DetailSheet />
       <LocationSheet />
       <AlertsSheet />

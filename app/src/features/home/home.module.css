@@ -1,18 +1,80 @@
-/* Today — a living sky hero and an editorial, numbered suggestion index. */
+/* Today — verdict lede, the painted-sky timeline with today's blocks,
+   and the numbered editorial suggestion index. */
 
-.hero {
+.lede {
+  margin: 4px 0 20px;
+}
+
+.headline {
+  font-size: clamp(34px, 6.5vw, 56px);
+  font-weight: 870;
+  font-style: italic;
+  font-variation-settings: 'wdth' 76;
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
+  line-height: 0.98;
+  max-width: 24ch;
+}
+
+.ledeSub {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 10px;
+}
+
+.ledeLoc {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--ink-2);
+  padding: 4px 12px 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.ledeLoc:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.ledeMeta {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+}
+
+/* ---- the sky: today painted hour-by-hour, blocks resting on it ---- */
+
+.sky {
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-l);
-  padding: 24px 28px 22px;
+  padding: 18px 20px 14px;
   color: #fdfcf8;
-  background: var(--sky, linear-gradient(150deg, #2e63cf, #6fa4e8));
   box-shadow: var(--shadow-2);
   isolation: isolate;
 }
 
-/* film grain over the sky */
-.hero::after {
+/* vertical light: brighter zenith above, ground shadow below */
+.sky::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 38%, rgba(5, 7, 14, 0.3));
+  pointer-events: none;
+}
+
+.sky::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -22,138 +84,173 @@
   pointer-events: none;
 }
 
-/* light source — a soft glow whose place depends on the mood */
-.hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(60% 90% at 82% 0%, rgba(255, 255, 255, 0.32), transparent 60%);
-  pointer-events: none;
-}
-
-.hero[data-sky='clear'] {
-  --sky: linear-gradient(155deg, #2a5fc9 0%, #5f97e2 55%, #93bdea 100%);
-}
-
-.hero[data-sky='cloud'] {
-  --sky: linear-gradient(155deg, #4e5d72 0%, #7c8a9b 60%, #a0abb8 100%);
-}
-
-.hero[data-sky='rain'] {
-  --sky: linear-gradient(155deg, #263a50 0%, #48607a 60%, #67809a 100%);
-}
-
-.hero[data-sky='snow'] {
-  --sky: linear-gradient(155deg, #5c7093 0%, #8b9dbc 60%, #b3c2d8 100%);
-}
-
-.hero[data-sky='storm'] {
-  --sky: linear-gradient(155deg, #1d1834 0%, #3d3458 55%, #6a5a80 100%);
-}
-
-.hero[data-sky='dusk'] {
-  --sky: linear-gradient(155deg, #2e2a5e 0%, #74507e 48%, #c98a67 88%, #e8b06e 100%);
-}
-
-.hero[data-sky='night'] {
-  --sky:
-    radial-gradient(1px 1px at 18% 28%, rgba(255, 255, 255, 0.9), transparent 100%),
-    radial-gradient(1px 1px at 42% 12%, rgba(255, 255, 255, 0.7), transparent 100%),
-    radial-gradient(1.5px 1.5px at 64% 34%, rgba(255, 255, 255, 0.8), transparent 100%),
-    radial-gradient(1px 1px at 81% 18%, rgba(255, 255, 255, 0.65), transparent 100%),
-    radial-gradient(1px 1px at 92% 42%, rgba(255, 255, 255, 0.5), transparent 100%),
-    radial-gradient(1.5px 1.5px at 30% 52%, rgba(255, 255, 255, 0.45), transparent 100%),
-    linear-gradient(165deg, #0a0e24 0%, #1c2450 70%, #2c3a6e 100%);
-}
-
-.hero[data-sky='night']::before {
-  background: radial-gradient(50% 70% at 80% 10%, rgba(180, 195, 255, 0.2), transparent 60%);
-}
-
-.heroHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.heroLoc {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: inherit;
-  font-size: 13px;
-  font-weight: 650;
-  letter-spacing: 0.01em;
-  padding: 5px 12px 5px 9px;
-  margin-left: -9px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.1);
-  transition: background 0.15s ease;
-}
-
-.heroLoc:hover {
-  background: rgba(255, 255, 255, 0.22);
-}
-
-.heroDate {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  opacity: 0.85;
-}
-
-.heroRow {
+.skyMeta {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 18px;
-  margin-top: 6px;
+  gap: 14px;
+  position: relative;
+  z-index: 1;
 }
 
-.heroTemp {
+.skyTemp {
   font-family: var(--font-display);
-  font-size: clamp(68px, 13vw, 112px);
-  font-weight: 470;
-  letter-spacing: -0.045em;
-  line-height: 1.02;
-  font-variant-numeric: tabular-nums;
-  text-shadow: 0 2px 24px rgba(10, 15, 40, 0.25);
-}
-
-.heroIcon {
-  font-size: clamp(38px, 7vw, 54px);
+  font-size: clamp(38px, 7vw, 50px);
+  font-weight: 830;
+  font-variation-settings: 'wdth' 80;
+  font-style: italic;
+  letter-spacing: -0.01em;
   line-height: 1;
-  filter: drop-shadow(0 3px 12px rgba(10, 15, 40, 0.3));
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 18px rgba(8, 12, 30, 0.35);
 }
 
-.heroStrip {
+.skyIcon {
+  font-size: 26px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 8px rgba(8, 12, 30, 0.35));
+}
+
+.skyHiLo {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.92;
+}
+
+.blocks {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px 22px;
+  gap: 7px;
+  margin-top: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.block {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 11px 4px 9px;
+  border-radius: 11px;
+  background: rgba(9, 12, 22, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.block:hover:not(:disabled) {
+  background: rgba(9, 12, 22, 0.52);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.block[data-past] {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.block[data-now] {
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.block[data-now]::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  animation: nowPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes nowPulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 0 5px rgba(255, 255, 255, 0);
+  }
+}
+
+.blockScore {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.block[data-band='g'] .blockScore {
+  color: #a9ecb6;
+}
+
+.block[data-band='y'] .blockScore {
+  color: #f8d78c;
+}
+
+.block[data-band='r'] .blockScore {
+  color: #fbab9c;
+}
+
+.blockHours {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skyFoot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
   margin-top: 14px;
-  padding-top: 13px;
-  border-top: 1px solid rgba(255, 255, 255, 0.28);
-  font-size: 13px;
-  opacity: 0.94;
+  padding-top: 11px;
+  border-top: 1px solid rgba(255, 255, 255, 0.24);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  opacity: 0.92;
+  position: relative;
+  z-index: 1;
 }
 
-.heroStrip b {
-  font-weight: 700;
-}
-
-/* section title — serif with a trailing hairline rule */
+/* section title — uppercase with a starting-block accent bar */
 .sectionTitle {
   display: flex;
   align-items: center;
-  gap: 16px;
-  font-size: 21px;
-  font-weight: 590;
+  gap: 14px;
+  font-size: 17px;
+  font-weight: 830;
+  font-variation-settings: 'wdth' 80;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   margin: 30px 0 14px;
+}
+
+.sectionTitle::before {
+  content: '';
+  width: 5px;
+  height: 1.1em;
+  background: var(--accent);
+  transform: skewX(-12deg);
 }
 
 .sectionTitle::after {
@@ -285,9 +382,9 @@
 
 .snowTitle {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 16.5px;
-  letter-spacing: -0.01em;
+  font-weight: 800;
+  font-variation-settings: 'wdth' 86;
+  font-size: 16px;
 }
 
 .snowBody {

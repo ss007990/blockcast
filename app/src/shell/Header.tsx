@@ -1,4 +1,7 @@
-import { useIsMobile, useT } from '../hooks';
+// No app chrome: a masthead row that scrolls away with the page, and a
+// floating dock that is the only persistent navigation on every screen size.
+
+import { useT } from '../hooks';
 import { useSettings } from '../state/settings';
 import { unreadCount, useAlerts } from '../state/alerts';
 import { useUi, type Tab } from '../state/ui';
@@ -13,50 +16,27 @@ const TAB_ICONS: Record<Tab, IconName> = {
   settings: 'settings',
 };
 
-export function Header() {
+export function Masthead() {
   const t = useT();
-  const mobile = useIsMobile();
   const loc = useSettings((st) => st.loc);
-  const { tab, setTab, setLocOpen, setAlertsOpen } = useUi();
+  const { setLocOpen, setAlertsOpen } = useUi();
   const unread = useAlerts(unreadCount);
 
   return (
-    <header className={s.header}>
+    <header className={s.masthead}>
       <Logo />
-      <div className={s.title}>
-        <h1>BlockCast</h1>
-        {!mobile && <div className={s.tagline}>{t.tagline}</div>}
-      </div>
-
-      {!mobile && (
-        <nav className={s.nav} aria-label="Sections">
-          {(Object.keys(TAB_ICONS) as Tab[]).map((k) => (
-            <button
-              key={k}
-              className={tab === k ? `${s.navBtn} ${s.on}` : s.navBtn}
-              aria-current={tab === k ? 'page' : undefined}
-              onClick={() => setTab(k)}
-            >
-              <Icon name={TAB_ICONS[k]} size={16} />
-              {t.tabs[k]}
-            </button>
-          ))}
-        </nav>
-      )}
-
+      <span className={s.wordmark}>BlockCast</span>
       <span className={s.spacer} />
-
       <button className={s.locChip} onClick={() => setLocOpen(true)} title={t.location.set}>
-        <Icon name="pin" size={15} />
+        <Icon name="pin" size={14} />
         <b>{loc.name}</b>
       </button>
-
       <button
         className={s.bell}
         onClick={() => setAlertsOpen(true)}
         aria-label={`${t.alerts.title}${unread ? ` (${unread})` : ''}`}
       >
-        <Icon name="bell" size={18} />
+        <Icon name="bell" size={17} />
         {unread > 0 && <span className={s.badge}>{unread > 9 ? '9+' : unread}</span>}
       </button>
     </header>
@@ -67,15 +47,15 @@ export function TabBar() {
   const t = useT();
   const { tab, setTab } = useUi();
   return (
-    <nav className={s.tabbar} aria-label="Sections">
+    <nav className={s.dock} aria-label="Sections">
       {(Object.keys(TAB_ICONS) as Tab[]).map((k) => (
         <button
           key={k}
-          className={tab === k ? `${s.tabBtn} ${s.on}` : s.tabBtn}
+          className={tab === k ? `${s.dockBtn} ${s.on}` : s.dockBtn}
           aria-current={tab === k ? 'page' : undefined}
           onClick={() => setTab(k)}
         >
-          <Icon name={TAB_ICONS[k]} size={21} />
+          <Icon name={TAB_ICONS[k]} size={19} />
           {t.tabs[k]}
         </button>
       ))}

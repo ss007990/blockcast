@@ -85,8 +85,11 @@
 }
 
 .boardHead h2 {
-  font-size: 21px;
-  font-weight: 590;
+  font-size: 18px;
+  font-weight: 830;
+  font-variation-settings: 'wdth' 80;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .legend {
@@ -134,6 +137,20 @@
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--ink);
+}
+
+.ghToday b {
+  color: var(--accent);
+}
+
+.ghToday b::after {
+  content: '';
+  display: block;
+  width: 22px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+  margin: 3px auto 0;
 }
 
 .tlabel {

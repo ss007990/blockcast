@@ -24,9 +24,9 @@
 
 .when {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 17px;
-  letter-spacing: -0.01em;
+  font-weight: 800;
+  font-variation-settings: 'wdth' 86;
+  font-size: 16.5px;
 }
 
 .verdict {
