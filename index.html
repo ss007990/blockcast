@@ -15,8 +15,8 @@
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://blockcast.ca/icon-512.png">
 <meta name="twitter:card" content="summary">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="preconnect" href="https://api.open-meteo.com" crossorigin>
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
 <style>
   :root{
     --bg:#f4f6f9; --surface:#ffffff; --surface2:#f8fafc;
@@ -150,6 +150,7 @@
     display:grid; place-items:center; font-size:11px; font-weight:700;
   }
   .cell:hover{transform:scale(1.05); z-index:2;}
+  .cell:focus-visible{outline:2px solid var(--accent); outline-offset:1px; z-index:2;}
   .cell.sel{border-color:var(--ink); box-shadow:0 0 0 2px #fff inset;}
   .cell.past{opacity:.28; cursor:default; pointer-events:none;}
   .cell .pin{position:absolute; top:2px; right:4px; font-size:10px;}
@@ -410,6 +411,7 @@
 // ---------- Activity presets ----------
 // weights 0–10: rain, wind, cold, heat, uv. tMin/tMax = comfort band °C.
 // windIdeal (sailing): too little wind is ALSO a risk.
+/* @pure */
 const ACTIVITIES = {
   tennis:  {label:"🎾 Tennis",   w:{rain:10, wind:6, cold:4, heat:5, uv:3, snow:0, fresh:0}, tMin:10, tMax:30},
   cycling: {label:"🚴 Cycling",  w:{rain:8,  wind:8, cold:6, heat:5, uv:4, snow:0, fresh:0}, tMin:5,  tMax:32},
@@ -423,6 +425,7 @@ const ACTIVITIES = {
   snowmob: {label:"🛷 Snowmobiling", w:{rain:6, wind:5, cold:5, heat:7, uv:3, snow:10, fresh:2}, tMin:-25, tMax:4, snowBase:0.15},
 };
 const TOL_MULT = {cautious:1.3, balanced:1.0, tolerant:0.68};
+/* @end-pure */
 
 // ---------- Languages ----------
 const LANGS = {
@@ -516,45 +519,64 @@ const S = {
   blockLen:4,
   tolerance:"balanced",
   hFrom:6, hTo:20,            // visible hours of the day
-  tMin:null, tMax:null,       // comfort band °C (user-adjustable)
-  weights:null,               // live copy (may be user-tuned)
+  tMin:null, tMax:null,       // comfort band °C of the CURRENT activity (user-adjustable)
+  weights:null,               // live weights of the CURRENT activity (may be user-tuned)
+  tune:{},                    // per-activity saved tuning {act:{w, tMin, tMax}}
   loc:{name:"Québec", lat:46.8131, lon:-71.2075},
   data:null,                  // open-meteo response
+  updatedAt:null,
   selected:null,              // {dayISO, startHour}
   planner:[],
 };
 
+// load the current activity's tuning (saved or preset) into the live fields
+function applyActTune(){
+  const act = ACTIVITIES[S.activity];
+  const t = S.tune[S.activity] ?? {};
+  S.weights = {...act.w, ...(t.w ?? {})};   // merge so new factors (snow, fresh) get defaults
+  S.tMin = Number.isFinite(t.tMin) ? t.tMin : act.tMin;
+  S.tMax = Number.isFinite(t.tMax) ? t.tMax : act.tMax;
+}
+
 // persistence
 function saveState(){
+  S.tune[S.activity] = {w:{...S.weights}, tMin:S.tMin, tMax:S.tMax};
   localStorage.setItem("blockcast.settings", JSON.stringify({
     activity:S.activity, lang:S.lang, blockLen:S.blockLen, tolerance:S.tolerance,
-    weights:S.weights, loc:S.loc, hFrom:S.hFrom, hTo:S.hTo, tMin:S.tMin, tMax:S.tMax
+    tune:S.tune, loc:S.loc, hFrom:S.hFrom, hTo:S.hTo
   }));
   localStorage.setItem("blockcast.planner", JSON.stringify(S.planner));
 }
 function loadState(){
   try{
-    const s = JSON.parse(localStorage.getItem("blockcast.settings"));
-    if(s){ Object.assign(S, {activity:s.activity??S.activity, lang:s.lang??S.lang, blockLen:s.blockLen??4,
-      tolerance:s.tolerance??"balanced", weights:s.weights??null, loc:s.loc??S.loc,
-      hFrom:s.hFrom??6, hTo:s.hTo??20, tMin:s.tMin??null, tMax:s.tMax??null}); }
-    S.planner = JSON.parse(localStorage.getItem("blockcast.planner")) ?? [];
+    const s = JSON.parse(localStorage.getItem("blockcast.settings")) ?? {};
+    if(ACTIVITIES[s.activity]) S.activity = s.activity;
+    if(s.lang === "fr" || s.lang === "en") S.lang = s.lang;
+    if([2,3,4,6].includes(s.blockLen)) S.blockLen = s.blockLen;
+    if(TOL_MULT[s.tolerance]) S.tolerance = s.tolerance;
+    if(s.loc && Number.isFinite(s.loc.lat) && Number.isFinite(s.loc.lon) && s.loc.name) S.loc = s.loc;
+    if(Number.isInteger(s.hFrom) && s.hFrom >= 0 && s.hFrom <= 22) S.hFrom = s.hFrom;
+    if(Number.isInteger(s.hTo) && s.hTo >= 2 && s.hTo <= 24) S.hTo = s.hTo;
+    if(S.hTo <= S.hFrom){ S.hFrom = 6; S.hTo = 20; }
+    if(s.tune && typeof s.tune === "object") S.tune = s.tune;
+    else if(s.weights) S.tune[S.activity] = {w:s.weights, tMin:s.tMin, tMax:s.tMax};  // migrate pre-tune format
+    const plans = JSON.parse(localStorage.getItem("blockcast.planner"));
+    if(Array.isArray(plans)) S.planner = plans;
   }catch(e){/* fresh start */}
-  if(!ACTIVITIES[S.activity]) S.activity = "tennis";
-  const act = ACTIVITIES[S.activity];
-  S.weights = {...act.w, ...(S.weights ?? {})};   // merge so new factors (snow, fresh) get defaults
-  S.tMin ??= act.tMin; S.tMax ??= act.tMax;
+  applyActTune();
 }
 
 // ---------- Scoring ----------
+// Pure: everything here reads only its arguments (crit = {act, weights, tMin, tMax}).
+/* @pure */
 const ramp = (v, lo, hi) => v<=lo ? 0 : v>=hi ? 1 : (v-lo)/(hi-lo);
 
 // Aggregate hourly slices for one block, return factor severities (0–1 each)
-function blockFactors(hours, fresh48 = 0){
+function blockFactors(hours, fresh48, crit){
   const max = k => Math.max(...hours.map(h=>h[k]));
   const sum = k => hours.reduce((a,h)=>a+h[k],0);
   const avg = k => sum(k)/hours.length;
-  const act = ACTIVITIES[S.activity];
+  const act = crit.act;
   const f = {};
   f.rainProb = max("pprob"); f.rainSum = +sum("precip").toFixed(1);
   f.wind = Math.round(max("wind")); f.gust = Math.round(max("gust"));
@@ -567,8 +589,8 @@ function blockFactors(hours, fresh48 = 0){
   f.sev = {
     rain: Math.max(ramp(f.rainProb,30,75), ramp(f.rainSum,0.4,4)),
     wind: Math.max(ramp(f.wind,20,45), ramp(f.gust,38,68)),
-    cold: ramp(S.tMin - f.temp, 0, 8),
-    heat: ramp(f.temp - S.tMax, 0, 8),
+    cold: ramp(crit.tMin - f.temp, 0, 8),
+    heat: ramp(f.temp - crit.tMax, 0, 8),
     uv:   ramp(f.uv, 6, 9.5),
     snow: baseCm ? ramp(baseCm - f.depth, 0, baseCm) : 0,
     fresh: 1 - ramp(f.fresh48, 0, 15),
@@ -582,20 +604,54 @@ function blockFactors(hours, fresh48 = 0){
 }
 
 // One number 0–100. Worst weighted factor dominates; others add a little.
-function riskScore(f){
-  const tol = TOL_MULT[S.tolerance];
+function riskScore(f, weights, tolMult){
   const contribs = Object.entries(f.sev).map(([k,sev]) =>
-    Math.min(1, sev * tol) * (S.weights[k]/10));
+    Math.min(1, sev * tolMult) * (weights[k]/10));
   const worst = Math.max(...contribs);
   const others = contribs.reduce((a,c)=>a+c,0) - worst;
   return Math.round(Math.min(1, worst + 0.18*others) * 100);
 }
-const riskBand  = s => s<25 ? "g" : s<55 ? "y" : "r";
+const riskBand = s => s<25 ? "g" : s<55 ? "y" : "r";
+
+// chronological sort/prune key for planner items ("2026-07-20T06" — hour zero-padded)
+const planKey = p => p.day + "T" + String(p.h).padStart(2,"0");
+
+// HTML-escape for user/API strings interpolated into innerHTML
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+// RFC 5545 text escaping and 75-octet line folding for .ics output
+const icsEsc = s => String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n");
+function foldIcs(line){
+  const bytes = ch => unescape(encodeURIComponent(ch)).length;
+  const parts = []; let cur = "", len = 0;
+  for(const ch of line){
+    const b = bytes(ch);
+    if(len + b > 73){ parts.push(cur); cur = ch; len = b; }
+    else { cur += ch; len += b; }
+  }
+  parts.push(cur);
+  return parts.join("\r\n ");
+}
+/* @end-pure */
 const riskWord  = s => s<25 ? T().riskWordG : s<55 ? T().riskWordY : T().riskWordR;
 const riskColor = s => s<25 ? "var(--green)" : s<55 ? "var(--amber)" : "var(--red)";
 
+// criteria for any activity: the current one uses the live fields (slider edits
+// apply instantly), others use their saved tuning or preset defaults
+function critFor(k){
+  const act = ACTIVITIES[k] ?? ACTIVITIES.tennis;
+  if(k === S.activity) return {act, weights:S.weights, tMin:S.tMin, tMax:S.tMax};
+  const t = S.tune[k] ?? {};
+  return {act, weights:{...act.w, ...(t.w ?? {})},
+    tMin:Number.isFinite(t.tMin) ? t.tMin : act.tMin,
+    tMax:Number.isFinite(t.tMax) ? t.tMax : act.tMax};
+}
+
 // ---------- Weather fetch ----------
+let fetchGen = 0;   // drop out-of-date responses when the location changes mid-fetch
 async function fetchWeather(){
+  const gen = ++fetchGen;
   setStatus(T().statusFetching + " " + S.loc.name + "…");
   const u = new URL("https://api.open-meteo.com/v1/forecast");
   u.search = new URLSearchParams({
@@ -607,6 +663,7 @@ async function fetchWeather(){
   const res = await fetch(u);
   if(!res.ok) throw new Error("Weather API error " + res.status);
   const j = await res.json();
+  if(gen !== fetchGen) return false;   // a newer fetch superseded this one
 
   // reshape hourly into per-day, per-hour records
   const H = j.hourly, days = {}, timeIdx = new Map();
@@ -624,10 +681,20 @@ async function fetchWeather(){
       sdep:H.snow_depth[i] ?? 0,
     };
   }
-  S.data = {days, daily:j.daily, tz:j.timezone, timeIdx, snowfall:H.snowfall, pastDays:2};
+  S.data = {days, daily:j.daily, tz:j.timezone, utcOffset:j.utc_offset_seconds ?? 0,
+    timeIdx, snowfall:H.snowfall, pastDays:2};
   S.updatedAt = new Date();
   renderStatus();
+  return true;
 }
+
+// "now" as a wall-clock Date at the forecast location (its day keys and hours
+// are in the location's timezone, not necessarily the browser's)
+function locNow(){
+  if(!S.data) return new Date();
+  return new Date(Date.now() + S.data.utcOffset*1000 + new Date().getTimezoneOffset()*60000);
+}
+const isoDate = dt => dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
 function renderStatus(){
   if(!S.updatedAt) return;
   setStatus(`${T().statusLive} · ${S.loc.name} · ${T().statusUpdated} ${S.updatedAt.toLocaleTimeString(LOC(), {hour:"2-digit",minute:"2-digit"})}`);
@@ -644,7 +711,7 @@ function blocksOfDay(){
 }
 function blockEnd(h0){ return Math.min(h0 + S.blockLen, S.hTo); }
 function getBlock(dayISO, startHour){
-  return getBlockLen(dayISO, startHour, Math.max(1, blockEnd(startHour) - startHour));
+  return getBlockLen(dayISO, startHour, Math.max(1, blockEnd(startHour) - startHour), critFor(S.activity));
 }
 function fmtHour(h){ return String(h).padStart(2,"0") + ":00"; }
 function fmtEnd(h){ return h >= 24 ? "24:00" : fmtHour(h); }
@@ -654,8 +721,8 @@ function renderGrid(){
   const grid = document.getElementById("grid");
   const dayKeys = Object.keys(S.data.days).slice(S.data.pastDays, S.data.pastDays + 7);
   const starts = blocksOfDay();
-  const now = new Date();
-  const todayISO = now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
+  const now = locNow();               // wall clock at the forecast location
+  const todayISO = isoDate(now);
 
   grid.style.gridTemplateColumns = `72px repeat(${dayKeys.length}, minmax(0,1fr))`;
   grid.innerHTML = "";
@@ -688,12 +755,25 @@ function renderGrid(){
       c.classList.add("r"+"-"+riskBand(b.score));
       if(isPast) c.classList.add("past");
       c.textContent = b.score;
-      if(S.selected && S.selected.day===d && S.selected.h===h0) c.classList.add("sel");
+      const isSel = S.selected && S.selected.day===d && S.selected.h===h0;
+      if(isSel) c.classList.add("sel");
       if(S.planner.some(p=>p.day===d && p.h===h0 && p.activity===S.activity)) c.innerHTML += `<span class="pin">📌</span>`;
 
-      c.addEventListener("click", ()=>{ S.selected={day:d,h:h0}; renderGrid(); renderDetail(); });
-      c.addEventListener("mousemove", e=>showTip(e,d,h0,b));
-      c.addEventListener("mouseleave", hideTip);
+      c.addEventListener("click", ()=>{
+        hideTip();
+        S.selected = isSel ? null : {day:d, h:h0};   // tap again to deselect
+        renderGrid(); renderDetail();
+      });
+      if(CAN_HOVER){   // touch devices get no hover tooltip — it would stick on screen
+        c.addEventListener("mousemove", e=>showTip(e,d,h0,b));
+        c.addEventListener("mouseleave", hideTip);
+      }
+      c.setAttribute("role","button");
+      if(!isPast){
+        c.tabIndex = 0;
+        c.setAttribute("aria-label", `${new Date(d+"T12:00").toLocaleDateString(LOC(), {weekday:"long", day:"numeric", month:"short"})} ${fmtHour(h0)}–${fmtEnd(end)} · ${T().tipRisk} ${b.score} · ${riskWord(b.score)}`);
+        c.addEventListener("keydown", e=>{ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); c.click(); } });
+      }
       grid.appendChild(c);
     });
   });
@@ -704,8 +784,11 @@ function renderGrid(){
 
 function el(tag,cls){ const e=document.createElement(tag); if(cls)e.className=cls; return e; }
 
-// tooltip
+// tooltip — only on devices with a real hover pointer; on touch it would
+// appear on tap and never leave (mouseleave never fires)
+const CAN_HOVER = matchMedia("(hover:hover) and (pointer:fine)").matches;
 const tip = document.getElementById("tip");
+addEventListener("scroll", hideTip, {passive:true});
 function showTip(e,d,h0,b){
   const dt = new Date(d+"T12:00");
   tip.innerHTML = `<b>${dt.toLocaleDateString(LOC(), {weekday:"long", day:"numeric", month:"short"})},
@@ -775,43 +858,43 @@ function renderDetail(){
     </div>`;
 
   document.getElementById("addPlan").onclick = ()=>{
-    S.planner.push({id:Date.now(), activity:S.activity, day, h, len:end-h, loc:S.loc.name});
+    S.planner.push({id:Date.now(), activity:S.activity, day, h, len:end-h, loc:S.loc.name, lat:S.loc.lat, lon:S.loc.lon});
     saveState(); renderPlanner(); renderGrid(); renderDetail();
   };
-  document.getElementById("dlIcs").onclick = ()=> downloadICS([{activity:S.activity, day, h, len:end-h, loc:S.loc.name}]);
+  document.getElementById("dlIcs").onclick = ()=> downloadICS([{activity:S.activity, day, h, len:end-h, loc:S.loc.name, lat:S.loc.lat, lon:S.loc.lon}]);
 }
 
 // ---------- Planner ----------
+// the loaded forecast only applies to a planner item if it was planned at
+// (nearly) the same coordinates; legacy items without lat/lon are assumed local
+const sameLoc = p => p.lat == null ||
+  (Math.abs(p.lat - S.loc.lat) < 0.05 && Math.abs(p.lon - S.loc.lon) < 0.05);
+
 function renderPlanner(){
   const list = document.getElementById("planList");
   const exp = document.getElementById("exportAll");
-  // prune past sessions
-  const now = new Date();
-  S.planner = S.planner.filter(p => new Date(`${p.day}T${String(p.h).padStart(2,"0")}:00`) > new Date(now - 864e5));
+  // prune past sessions (wall-clock comparison at the forecast location)
+  const cut = new Date(locNow().getTime() - 864e5);
+  const cutKey = isoDate(cut) + "T" + String(cut.getHours()).padStart(2,"0");
+  S.planner = S.planner.filter(p => planKey(p) > cutKey);
   exp.disabled = !S.planner.length;
   if(!S.planner.length){ list.innerHTML = `<div class="empty">${T().plannerEmpty}</div>`; return; }
 
-  S.planner.sort((a,b)=> (a.day+a.h) < (b.day+b.h) ? -1 : 1);
+  S.planner.sort((a,b)=> planKey(a) < planKey(b) ? -1 : 1);
   list.innerHTML = S.planner.map(p=>{
     const dt = new Date(p.day+"T12:00");
-    // live re-check against fresh forecast (this is the "weather update")
+    // live re-check against fresh forecast (this is the "weather update"),
+    // scored with the item's own activity criteria — only if the loaded
+    // forecast is for the place the session was planned at
     let chip = `<span class="chip" style="background:var(--surface2);color:var(--ink3)">${T().noData}</span>`;
-    // score with the item's own activity preset (weights + comfort band)
-    const saveAct = S.activity, wSave = S.weights, tSave = [S.tMin, S.tMax];
-    if(p.activity in ACTIVITIES){
-      S.activity = p.activity;
-      S.weights = {...ACTIVITIES[p.activity].w};
-      S.tMin = ACTIVITIES[p.activity].tMin; S.tMax = ACTIVITIES[p.activity].tMax;
-    }
-    const b = S.data ? getBlockLen(p.day, p.h, p.len) : null;
-    S.activity = saveAct; S.weights = wSave; [S.tMin, S.tMax] = tSave;
+    const b = S.data && sameLoc(p) ? getBlockLen(p.day, p.h, p.len, critFor(p.activity)) : null;
     if(b) chip = `<span class="chip c-${riskBand(b.score)}">${riskWord(b.score)} · ${b.score}</span>`;
     return `<div class="plan-item">
       <span class="p-ico">${actEmoji(p.activity)}</span>
       <div class="p-main">
-        <div class="p-title">${actName(p.activity)}</div>
+        <div class="p-title">${esc(actName(p.activity))}</div>
         <div class="p-sub">${dt.toLocaleDateString(LOC(), {weekday:"short", day:"numeric", month:"short"})} ·
-          ${fmtHour(p.h)}–${fmtHour((p.h+p.len)%24||24)} · ${p.loc}</div>
+          ${fmtHour(p.h)}–${fmtHour((p.h+p.len)%24||24)} · ${esc(p.loc)}</div>
       </div>
       ${chip}
       <button class="p-del" data-id="${p.id}" title="${T().remove}">✕</button>
@@ -824,8 +907,8 @@ function renderPlanner(){
   });
   exp.onclick = ()=> downloadICS(S.planner);
 }
-// like getBlock but with an explicit length (planner items keep their own)
-function getBlockLen(dayISO, startHour, len){
+// like getBlock but with an explicit length and criteria (planner items keep their own)
+function getBlockLen(dayISO, startHour, len, crit){
   const day = S.data.days[dayISO]; if(!day) return null;
   const hours=[]; for(let h=startHour; h<startHour+len && h<24; h++) if(day[h]) hours.push(day[h]);
   if(!hours.length) return null;
@@ -833,8 +916,8 @@ function getBlockLen(dayISO, startHour, len){
   let fresh = 0;
   const idx = S.data.timeIdx.get(`${dayISO}T${String(startHour).padStart(2,"0")}:00`);
   if(idx !== undefined) for(let j=Math.max(0, idx-48); j<idx; j++) fresh += S.data.snowfall[j] ?? 0;
-  const f = blockFactors(hours, +fresh.toFixed(1));
-  return {f, score:riskScore(f)};
+  const f = blockFactors(hours, +fresh.toFixed(1), crit);
+  return {f, score:riskScore(f, crit.weights, TOL_MULT[S.tolerance])};
 }
 
 // ---------- ICS export ----------
@@ -843,19 +926,20 @@ function downloadICS(items){
   const stamp = new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z";
   const events = items.map(p=>{
     const d = p.day.replace(/-/g,"");
-    const b = S.data ? getBlockLen(p.day, p.h, p.len) : null;
+    const b = S.data && sameLoc(p) ? getBlockLen(p.day, p.h, p.len, critFor(p.activity)) : null;
     const desc = b ? `Forecast: risk ${b.score}/100 (${riskWord(b.score)}). Rain ${b.f.rainProb}%/${b.f.rainSum}mm, wind ${b.f.wind}km/h (gusts ${b.f.gust}), ${b.f.temp}C, UV ${b.f.uv}. — BlockCast` : "Planned with BlockCast";
     return ["BEGIN:VEVENT",
       `UID:${p.id ?? Date.now()}-${d}${pad(p.h)}@blockcast`,
       `DTSTAMP:${stamp}`,
       `DTSTART:${d}T${pad(p.h)}0000`,
       `DTEND:${d}T${(p.h+p.len)>=24 ? "235959" : pad(p.h+p.len)+"0000"}`,
-      `SUMMARY:${actName(p.activity)} — BlockCast`,
-      `LOCATION:${p.loc ?? ""}`,
-      `DESCRIPTION:${desc}`,
-      "END:VEVENT"].join("\r\n");
-  }).join("\r\n");
-  const ics = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//BlockCast//EN",events,"END:VCALENDAR"].join("\r\n");
+      `SUMMARY:${icsEsc(actName(p.activity))} — BlockCast`,
+      `LOCATION:${icsEsc(p.loc ?? "")}`,
+      `DESCRIPTION:${icsEsc(desc)}`,
+      "END:VEVENT"];
+  });
+  const ics = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//BlockCast//EN",
+    ...events.flat(), "END:VCALENDAR"].map(foldIcs).join("\r\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([ics], {type:"text/calendar"}));
   a.download = "blockcast-sessions.ics";
@@ -873,8 +957,36 @@ const pickBar = document.getElementById("pickBar");
 const pickNameIn = document.getElementById("pickName");
 pickNameIn.addEventListener("input", ()=>{ pickNameEdited = true; });
 
-function initPickMap(){
-  if(!window.L){ document.getElementById("pickMap").innerHTML =
+// Leaflet is only needed inside this modal — load it on first open instead of
+// blocking first paint with ~150 KB from unpkg. SRI pins the exact files.
+let leafletPromise = null;
+function loadLeaflet(){
+  if(window.L) return Promise.resolve();
+  leafletPromise ??= Promise.all([
+    new Promise((resolve, reject)=>{
+      const l = document.createElement("link");
+      l.rel = "stylesheet";
+      l.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      l.integrity = "sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H";
+      l.crossOrigin = "anonymous";
+      l.onload = resolve; l.onerror = reject;
+      document.head.appendChild(l);
+    }),
+    new Promise((resolve, reject)=>{
+      const s = document.createElement("script");
+      s.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      s.integrity = "sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH";
+      s.crossOrigin = "anonymous";
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    }),
+  ]).catch(err => { leafletPromise = null; throw err; });
+  return leafletPromise;
+}
+
+async function initPickMap(){
+  try{ await loadLeaflet(); }
+  catch(e){ document.getElementById("pickMap").innerHTML =
     `<div class="empty" style="padding:14px">${T().mapUnavail}</div>`; return; }
   if(pickMap){
     // modal was display:none when Leaflet last measured itself — recompute, then recenter
@@ -929,19 +1041,29 @@ document.getElementById("locSearch").addEventListener("input", e=>{
   const q = e.target.value.trim();
   if(q.length<2) return;
   searchTimer = setTimeout(async ()=>{
-    const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=${S.lang}`);
-    const j = await r.json();
     const box = document.getElementById("locResults");
-    box.innerHTML = (j.results ?? []).map(x=>
-      `<div class="loc-res" data-lat="${x.latitude}" data-lon="${x.longitude}" data-name="${x.name}">
-        ${x.name}<small>${[x.admin1, x.country].filter(Boolean).join(", ")}</small></div>`).join("")
-      || `<div class="empty">${T().noMatch}</div>`;
-    box.querySelectorAll(".loc-res").forEach(d => d.onclick = async ()=>{
-      S.loc = {name:d.dataset.name, lat:+d.dataset.lat, lon:+d.dataset.lon};
-      modal.classList.remove("open");
-      document.getElementById("locName").textContent = S.loc.name;
-      saveState();
-      await refresh();
+    let results = [];
+    try{
+      const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=${S.lang}`);
+      results = (await r.json()).results ?? [];
+    }catch(e){/* network hiccup — fall through to "no matches" */}
+    box.innerHTML = "";
+    if(!results.length){ box.innerHTML = `<div class="empty">${T().noMatch}</div>`; return; }
+    // built with textContent — place names from the API must not become markup
+    results.forEach(x=>{
+      const d = el("div","loc-res");
+      d.textContent = x.name;
+      const sm = document.createElement("small");
+      sm.textContent = [x.admin1, x.country].filter(Boolean).join(", ");
+      d.appendChild(sm);
+      d.onclick = async ()=>{
+        S.loc = {name:x.name, lat:x.latitude, lon:x.longitude};
+        modal.classList.remove("open");
+        document.getElementById("locName").textContent = S.loc.name;
+        saveState();
+        await refresh();
+      };
+      box.appendChild(d);
     });
   }, 300);
 });
@@ -966,9 +1088,7 @@ function fillActivitySelect(){
   sel.value = S.activity;
   sel.onchange = ()=>{
     S.activity = sel.value;
-    const act = ACTIVITIES[S.activity];
-    S.weights = {...act.w};
-    S.tMin = act.tMin; S.tMax = act.tMax;
+    applyActTune();   // restore this activity's saved tuning (or presets)
     saveState(); syncTune(); renderGrid(); renderDetail();
   };
 }
@@ -998,12 +1118,17 @@ function wireTune(){
       saveState(); renderGrid(); renderDetail();
     };
   });
-  document.getElementById("tMinIn").onchange = e=>{ S.tMin = +e.target.value; saveState(); renderGrid(); renderDetail(); };
-  document.getElementById("tMaxIn").onchange = e=>{ S.tMax = +e.target.value; saveState(); renderGrid(); renderDetail(); };
+  const setTemp = key => e=>{
+    const v = +e.target.value;
+    if(Number.isFinite(v)) S[key] = v;
+    e.target.value = S[key];
+    saveState(); renderGrid(); renderDetail();
+  };
+  document.getElementById("tMinIn").onchange = setTemp("tMin");
+  document.getElementById("tMaxIn").onchange = setTemp("tMax");
   document.getElementById("resetTune").onclick = ()=>{
-    const act = ACTIVITIES[S.activity];
-    S.weights = {...act.w};
-    S.tMin = act.tMin; S.tMax = act.tMax;
+    delete S.tune[S.activity];
+    applyActTune();
     saveState(); syncTune(); renderGrid(); renderDetail();
   };
 }
@@ -1026,7 +1151,7 @@ function setStatus(t){ document.getElementById("status").textContent = t; }
 // ---------- Boot ----------
 async function refresh(){
   try{
-    await fetchWeather();
+    if(await fetchWeather() === false) return;   // superseded by a newer fetch
     renderGrid(); renderDetail(); renderPlanner();
   }catch(err){
     setStatus(`${T().loadErr} ${err.message} ${T().checkConn}`);

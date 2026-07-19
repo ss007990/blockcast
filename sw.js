@@ -4,7 +4,7 @@
    when online and the app still opens offline. Live data APIs and map
    tiles are never cached (stale forecasts are worse than none). */
 
-const CACHE = "blockcast-v1";
+const CACHE = "blockcast-v2";
 const SHELL = [
   "./",
   "./index.html",
@@ -25,7 +25,11 @@ const LIVE_HOSTS = [
 self.addEventListener("install", e => {
   e.waitUntil(
     caches.open(CACHE)
-      .then(c => Promise.allSettled(SHELL.map(u => c.add(u))))
+      // cross-origin entries are fetched with CORS so the cached responses are
+      // readable — index.html loads Leaflet with subresource integrity, which
+      // an opaque (no-cors) cached response would fail offline
+      .then(c => Promise.allSettled(SHELL.map(u =>
+        c.add(u.startsWith("http") ? new Request(u, {mode: "cors"}) : u))))
       .then(() => self.skipWaiting())
   );
 });

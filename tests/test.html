@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BlockCast tests</title>
+<style>body{font-family:monospace; padding:20px} .fail{color:#dc2626} .pass{color:#16a34a}</style>
+</head>
+<body>
+<h1>BlockCast pure-logic tests</h1>
+<pre id="out">running…</pre>
+<script type="module">
+import {buildApi, runTests} from "./scoring.tests.mjs";
+const out = document.getElementById("out");
+try{
+  const html = await (await fetch("../index.html")).text();
+  const {passed, failed, failures} = runTests(buildApi(html));
+  out.innerHTML = failures.map(f => `<span class="fail">FAIL ${f}</span>`).join("\n")
+    + (failures.length ? "\n\n" : "")
+    + `<span class="${failed ? "fail" : "pass"}">${passed} passed, ${failed} failed</span>`;
+  document.title = failed ? "FAIL — BlockCast tests" : "PASS — BlockCast tests";
+}catch(e){
+  out.innerHTML = `<span class="fail">ERROR ${e.message}</span>`;
+  document.title = "ERROR — BlockCast tests";
+}
+</script>
+</body>
+</html>

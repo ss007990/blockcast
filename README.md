@@ -21,6 +21,15 @@ It's a single self-contained `index.html` — no build step, no dependencies. Op
 ruby -run -e httpd . -p 8642
 ```
 
+## Tests
+
+The scoring engine and export helpers (the `/* @pure */` blocks in `index.html`) have unit tests:
+
+```sh
+node tests/run.mjs          # with Node ≥ 18, or…
+open http://localhost:8642/tests/test.html   # …in the browser while serving the folder
+```
+
 ## Credits
 
 Weather data by [Open-Meteo](https://open-meteo.com) · Maps by [Leaflet](https://leafletjs.com) & [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors
