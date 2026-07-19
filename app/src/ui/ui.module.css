@@ -183,6 +183,13 @@
   color: var(--ink-3);
 }
 
+/* trailing "add activity" pill — dashed like "more", accent-inked */
+.railAdd {
+  border-style: dashed;
+  color: var(--accent);
+  font-weight: 640;
+}
+
 /* stamped chip — mono value, tinted ink */
 .chip {
   display: inline-flex;

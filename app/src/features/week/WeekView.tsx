@@ -1,16 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Fragment, useMemo, type ReactNode } from 'react';
-import {
-  ACTIVITIES,
-  FACTOR_KEYS,
-  TOL_MULT,
-  type FactorKey,
-  type Tolerance,
-} from '../../core/activities';
+import { FACTOR_KEYS, TOL_MULT, type FactorKey, type Tolerance } from '../../core/activities';
 import { forecastDayKeys, getBlock, isoDate, locNow, wmoIcon } from '../../core/forecast';
 import { ActivityIcon } from '../../ui/ActivityIcon';
 import { formatHour, formatTemp } from '../../core/units';
-import { useLocale, useNowMs, useT } from '../../hooks';
+import { useActivityName, useLocale, useNowMs, useT } from '../../hooks';
 import { fmtDayMonth, fmtWeekdayShort } from '../../lib/format';
 import { useForecast } from '../../state/forecast';
 import { usePlanner } from '../../state/planner';
@@ -106,9 +100,11 @@ const SLIDER_DEFS: { k: FactorKey; snowOnly: boolean }[] = FACTOR_KEYS.map((k) =
 function TunePanel() {
   const t = useT();
   const st = useSettings();
+  const nameOf = useActivityName();
   const tuneOpen = useUi((u) => u.tuneOpen);
   const crit = critFor(st, st.activity);
-  const isWinterAct = ACTIVITIES[st.activity].snowBase != null;
+  const isWinterAct = crit.act.snowBase != null;
+  const isCustom = st.customActivities.some((c) => c.id === st.activity);
 
   return (
     <AnimatePresence initial={false}>
@@ -122,7 +118,7 @@ function TunePanel() {
         >
           <Card className={s.tunePanel}>
             <h3>
-              {t.tune.critFor} <ActivityIcon id={st.activity} /> {t.activities[st.activity]}
+              {t.tune.critFor} <ActivityIcon id={st.activity} /> {nameOf(st.activity)}
             </h3>
             <div className={s.tuneHint}>{t.tune.hint}</div>
             <div className={s.sliders}>
@@ -174,10 +170,19 @@ function TunePanel() {
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 14 }}>
+            <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <Button variant="ghost" onClick={() => st.resetTune(st.activity)}>
                 {t.tune.reset}
               </Button>
+              {isCustom && (
+                <Button
+                  variant="ghost"
+                  style={{ color: 'var(--red)' }}
+                  onClick={() => st.removeActivity(st.activity)}
+                >
+                  🗑 {t.add.remove}
+                </Button>
+              )}
             </div>
           </Card>
         </motion.div>
@@ -189,6 +194,7 @@ function TunePanel() {
 function HeatBoard() {
   const t = useT();
   const locale = useLocale();
+  const nameOf = useActivityName();
   const st = useSettings();
   const { data, status, error, updatedAt } = useForecast();
   const { selected, select } = useUi();
@@ -220,7 +226,7 @@ function HeatBoard() {
     <Card className={s.board}>
       <div className={s.boardHead}>
         <h2>
-          {t.activities[st.activity]} {t.board.weekGlance}
+          {nameOf(st.activity)} {t.board.weekGlance}
         </h2>
         <div className={s.legend}>
           <span>

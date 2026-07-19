@@ -2,7 +2,7 @@
 // functional without the worker deployed — everything degrades to in-app
 // alerts when push is unavailable.
 
-import type { ActivityId, Criteria } from '../core/activities';
+import type { ActivityId, Criteria, CustomActivity } from '../core/activities';
 import type { PlannedSession } from '../core/alerts';
 import type { Lang } from '../i18n';
 import type { UnitSystem } from '../core/units';
@@ -31,6 +31,9 @@ export interface PushContext {
   sessions: PlannedSession[];
   /** Resolved criteria per activity present in sessions. */
   critFor: (id: ActivityId) => Criteria;
+  /** User-created activities — their names travel with the subscription so
+   * the worker can label push alerts. */
+  customs?: readonly CustomActivity[];
   tolMult: number;
   lang: Lang;
   units: UnitSystem;
@@ -45,18 +48,27 @@ export async function subscribePush(ctx: PushContext): Promise<boolean> {
     userVisibleOnly: true,
     applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC!).buffer as ArrayBuffer,
   });
-  const criteria: Record<string, { w: Criteria['weights']; tMin: number; tMax: number }> = {};
+  const criteria: Record<
+    string,
+    { w: Criteria['weights']; tMin: number; tMax: number; snowBase?: number }
+  > = {};
   for (const s of ctx.sessions) {
     if (criteria[s.activityId]) continue;
     const c = ctx.critFor(s.activityId);
-    criteria[s.activityId] = { w: c.weights, tMin: c.tMin, tMax: c.tMax };
+    criteria[s.activityId] = {
+      w: c.weights,
+      tMin: c.tMin,
+      tMax: c.tMax,
+      ...(c.act.snowBase != null ? { snowBase: c.act.snowBase } : {}),
+    };
   }
+  const customName = (id: ActivityId) => ctx.customs?.find((c) => c.id === id)?.name;
   const res = await fetch(`${API}/api/subscribe`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       subscription: sub.toJSON(),
-      sessions: ctx.sessions.map((s) => ({ ...s, locName: s.locName })),
+      sessions: ctx.sessions.map((s) => ({ ...s, name: customName(s.activityId) })),
       criteria,
       tolMult: ctx.tolMult,
       lang: ctx.lang,

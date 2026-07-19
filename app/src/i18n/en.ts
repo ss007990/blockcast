@@ -62,6 +62,23 @@ export const en = {
     hourUnit: 'h',
     moreActs: '+{n} off-season',
     lessActs: 'Fewer',
+    addAct: 'Add activity',
+  },
+
+  add: {
+    title: 'New activity',
+    name: 'Name',
+    namePh: 'e.g. Kayaking',
+    emoji: 'Emoji',
+    cat: 'Category',
+    newCat: '+ New category…',
+    newCatPh: 'Category name',
+    season: 'Season',
+    seasonWarm: 'Warm season',
+    seasonWinter: 'Winter',
+    seasonAll: 'Year-round',
+    create: 'Add & tune criteria',
+    remove: 'Delete this activity',
   },
 
   tune: {

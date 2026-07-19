@@ -1,7 +1,7 @@
 // Severity-tinted factor chips for one scored block — shared by the
 // detail sheet and the Today view's inline block cards.
 
-import { isWinterActivity, type ActivityId, type Criteria, type FactorKey } from '../../core/activities';
+import type { Criteria, FactorKey } from '../../core/activities';
 import type { BlockResult } from '../../core/forecast';
 import {
   formatDepth,
@@ -18,11 +18,10 @@ interface Props {
   crit: Criteria;
   tolMult: number;
   units: UnitSystem;
-  activity: ActivityId;
   t: Dict;
 }
 
-export function FactorChips({ b, crit, tolMult, units, activity, t }: Props) {
+export function FactorChips({ b, crit, tolMult, units, t }: Props) {
   const effOf = (k: FactorKey) => Math.min(1, b.f.sev[k] * tolMult) * (crit.weights[k] / 10);
 
   const tempVal =
@@ -39,7 +38,7 @@ export function FactorChips({ b, crit, tolMult, units, activity, t }: Props) {
       val: `${b.f.rainProb}% · ${formatPrecip(b.f.rainSum, units)}`,
       eff: effOf('rain'),
     },
-    ...(isWinterActivity(activity)
+    ...(crit.act.snowBase != null
       ? [
           {
             name: `❄️ ${t.detail.snow}`,

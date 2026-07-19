@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { TOL_MULT } from '../../core/activities';
 import { ActivityIcon } from '../../ui/ActivityIcon';
 import { formatHour } from '../../core/units';
-import { useLocale, useT } from '../../hooks';
+import { useActivityName, useLocale, useT } from '../../hooks';
 import { downloadFile, sessionsToIcs } from '../../lib/download';
 import { fmtWeekdayShort } from '../../lib/format';
 import { pushAvailability, subscribePush } from '../../services/push';
@@ -16,6 +16,7 @@ import s from './planner.module.css';
 export function PlannerView() {
   const t = useT();
   const locale = useLocale();
+  const nameOf = useActivityName();
   const st = useSettings();
   const { data, dataFor } = useForecast();
   const { sessions, remove } = usePlanner();
@@ -25,7 +26,7 @@ export function PlannerView() {
     checkSession(p, data, dataFor, critFor(st, p.activityId), TOL_MULT[st.tolerance]);
 
   const exportAll = () => {
-    downloadFile(sessionsToIcs(sessions, checkOf, t), 'blockcast-sessions.ics', 'text/calendar');
+    downloadFile(sessionsToIcs(sessions, checkOf, t, nameOf), 'blockcast-sessions.ics', 'text/calendar');
   };
 
   const availability = pushAvailability();
@@ -34,6 +35,7 @@ export function PlannerView() {
     const ok = await subscribePush({
       sessions,
       critFor: (id) => critFor(st, id),
+      customs: st.customActivities,
       tolMult: TOL_MULT[st.tolerance],
       lang: st.lang,
       units: st.units,
@@ -57,7 +59,7 @@ export function PlannerView() {
                   <ActivityIcon id={p.activityId} />
                 </span>
                 <div className={s.main}>
-                  <div className={s.title}>{t.activities[p.activityId]}</div>
+                  <div className={s.title}>{nameOf(p.activityId)}</div>
                   <div className={s.sub}>
                     {fmtWeekdayShort(p.day, locale)} ·{' '}
                     {formatHour(p.h, st.clock)}–{formatHour(Math.min(p.h + p.len, 24), st.clock)} ·{' '}
@@ -74,7 +76,7 @@ export function PlannerView() {
                 <button
                   className={s.del}
                   onClick={() => remove(p.id)}
-                  aria-label={`${t.common.remove} ${t.activities[p.activityId]}`}
+                  aria-label={`${t.common.remove} ${nameOf(p.activityId)}`}
                 >
                   ✕
                 </button>

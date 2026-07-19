@@ -2,33 +2,42 @@
 // whole app when switched. Shared by Today and Week so the current sport is
 // always one tap away instead of buried in a dropdown.
 // Grouped by category; off-season activities collapse behind "more".
+// Ends with "Add activity" — users grow the rail with their own activities
+// and categories, then tune the criteria to match.
 
 import { useState } from 'react';
 import { groupActivities } from '../core/season';
 import { ActivityIcon } from './ActivityIcon';
+import { AddActivitySheet } from './AddActivitySheet';
 import { useSeason } from '../features/home/useSeason';
-import { useLocale, useT } from '../hooks';
+import { useActivityName, useLocale, useT } from '../hooks';
 import { useSettings } from '../state/settings';
 import s from './ui.module.css';
 
 export function ActivityRail() {
   const t = useT();
   const locale = useLocale();
+  const nameOf = useActivityName();
   const activity = useSettings((st) => st.activity);
   const setActivity = useSettings((st) => st.setActivity);
+  const customs = useSettings((st) => st.customActivities);
   const winter = useSeason();
   const [showOff, setShowOff] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+
+  // preset categories are localized; user-created ones display as typed
+  const catLabel = (cat: string) => (t.cats as Record<string, string | undefined>)[cat] ?? cat;
 
   // alphabetical by the label the user actually sees, so FR and EN each sort naturally
-  const groups = groupActivities(winter).sort((a, b) =>
-    t.cats[a.cat].localeCompare(t.cats[b.cat], locale),
+  const groups = groupActivities(winter, customs).sort((a, b) =>
+    catLabel(a.cat).localeCompare(catLabel(b.cat), locale),
   );
   const hiddenCount = groups.reduce(
     (n, g) => n + g.offSeason.filter((id) => id !== activity).length,
     0,
   );
 
-  const pill = (id: (typeof groups)[number]['inSeason'][number], off: boolean) => {
+  const pill = (id: string, off: boolean) => {
     const on = id === activity;
     return (
       <button
@@ -41,7 +50,7 @@ export function ActivityRail() {
         <span className={s.railIco} aria-hidden="true">
           <ActivityIcon id={id} />
         </span>
-        {t.activities[id]}
+        {nameOf(id)}
       </button>
     );
   };
@@ -57,7 +66,7 @@ export function ActivityRail() {
         return (
           <span key={g.cat} className={s.railGroup}>
             <span className={s.railCat} aria-hidden="true">
-              {t.cats[g.cat]}
+              {catLabel(g.cat)}
             </span>
             {shown.map((id) => pill(id, !g.inSeason.includes(id)))}
           </span>
@@ -72,6 +81,10 @@ export function ActivityRail() {
           {showOff ? t.controls.lessActs : t.controls.moreActs.replace('{n}', String(hiddenCount))}
         </button>
       )}
+      <button className={`${s.railBtn} ${s.railAdd}`} onClick={() => setAddOpen(true)}>
+        ＋ {t.controls.addAct}
+      </button>
+      <AddActivitySheet open={addOpen} onClose={() => setAddOpen(false)} />
     </div>
   );
 }

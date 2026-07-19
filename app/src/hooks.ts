@@ -1,9 +1,21 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
+import type { ActivityId } from './core/activities';
 import { DICTS, localeOf, type Dict } from './i18n';
 import { useSettings } from './state/settings';
 
 /** The active dictionary. */
 export const useT = (): Dict => DICTS[useSettings((s) => s.lang)];
+
+/** Display name for any activity id: localized preset name or the custom
+ * activity's user-given name (the raw id as a last resort). */
+export function useActivityName(): (id: ActivityId) => string {
+  const t = useT();
+  const customs = useSettings((s) => s.customActivities);
+  return (id) =>
+    (t.activities as Record<string, string | undefined>)[id] ??
+    customs.find((c) => c.id === id)?.name ??
+    id;
+}
 
 /** The active BCP-47 locale for Intl formatting. */
 export const useLocale = (): string => localeOf(useSettings((s) => s.lang));

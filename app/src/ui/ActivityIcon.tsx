@@ -3,7 +3,8 @@
 // SVGs size like emoji: 1.1em square, baseline-nudged, colors emoji-flat.
 
 import type { ReactElement } from 'react';
-import { ACTIVITIES, type ActivityId } from '../core/activities';
+import { ACTIVITIES, type ActivityId, type PresetActivityId } from '../core/activities';
+import { useSettings } from '../state/settings';
 
 const box = {
   width: '1.15em',
@@ -50,11 +51,16 @@ const UtvSvg = (
   </svg>
 );
 
-const CUSTOM: Partial<Record<ActivityId, ReactElement>> = {
+const SVG: Partial<Record<PresetActivityId, ReactElement>> = {
   pontoon: PontoonSvg,
   utv: UtvSvg,
 };
 
 export function ActivityIcon({ id }: { id: ActivityId }) {
-  return CUSTOM[id] ?? <>{ACTIVITIES[id].emoji}</>;
+  // user-created activities carry their own emoji; 🏅 covers deleted ones
+  const customEmoji = useSettings((s) => s.customActivities.find((c) => c.id === id)?.emoji);
+  const svg = SVG[id as PresetActivityId];
+  if (svg) return svg;
+  const preset = (ACTIVITIES as Record<string, { emoji: string } | undefined>)[id];
+  return <>{preset?.emoji ?? customEmoji ?? '🏅'}</>;
 }

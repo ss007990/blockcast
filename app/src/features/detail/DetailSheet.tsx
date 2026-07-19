@@ -4,7 +4,7 @@ import { ActivityIcon } from '../../ui/ActivityIcon';
 import { getBlock } from '../../core/forecast';
 import type { HourSlice } from '../../core/scoring';
 import { formatHour } from '../../core/units';
-import { useLocale, useT } from '../../hooks';
+import { useActivityName, useLocale, useT } from '../../hooks';
 import { downloadFile, sessionsToIcs } from '../../lib/download';
 import { fmtFull, fmtIsoTime } from '../../lib/format';
 import { useForecast } from '../../state/forecast';
@@ -25,6 +25,7 @@ const bandBg = (score: number) =>
 export function DetailSheet() {
   const t = useT();
   const locale = useLocale();
+  const nameOf = useActivityName();
   const st = useSettings();
   const data = useForecast((f) => f.data);
   const { selected, detailOpen, closeDetail } = useUi();
@@ -95,6 +96,7 @@ export function DetailSheet() {
       ],
       () => b,
       t,
+      nameOf,
     );
     downloadFile(ics, 'blockcast-session.ics', 'text/calendar');
   };
@@ -107,7 +109,7 @@ export function DetailSheet() {
         </div>
         <div>
           <div className={s.when}>
-            <ActivityIcon id={st.activity} /> {t.activities[st.activity]} · {fmtFull(day, locale)}
+            <ActivityIcon id={st.activity} /> {nameOf(st.activity)} · {fmtFull(day, locale)}
           </div>
           <div className={s.verdict}>
             {formatHour(h, st.clock)} – {formatHour(end, st.clock)} · {t.risk[b.band]}
@@ -115,7 +117,7 @@ export function DetailSheet() {
         </div>
       </div>
 
-      <FactorChips b={b} crit={crit} tolMult={tolMult} units={st.units} activity={st.activity} t={t} />
+      <FactorChips b={b} crit={crit} tolMult={tolMult} units={st.units} t={t} />
 
       <HourlyCharts
         hours={dayHours}

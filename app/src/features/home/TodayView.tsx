@@ -13,7 +13,7 @@ import { orderActivities } from '../../core/season';
 import type { Band, HourSlice } from '../../core/scoring';
 import { snowfallEvent } from '../../core/suggestions';
 import { formatDepth, formatHour, formatHourRange, formatTemp } from '../../core/units';
-import { useLocale, useNowMs, useT } from '../../hooks';
+import { useActivityName, useLocale, useNowMs, useT } from '../../hooks';
 import { fill } from '../../i18n';
 import { fmtFull, fmtIsoTime } from '../../lib/format';
 import { useForecast } from '../../state/forecast';
@@ -40,6 +40,7 @@ interface TodayBlock {
 export function TodayView() {
   const t = useT();
   const locale = useLocale();
+  const nameOf = useActivityName();
   const st = useSettings();
   const { data, status, error } = useForecast();
   const { select, setLocOpen } = useUi();
@@ -75,8 +76,8 @@ export function TodayView() {
 
   const snow = useMemo(() => {
     if (!data) return null;
-    return snowfallEvent(data, todayISO, nowH, orderActivities(true));
-  }, [data, todayISO, nowH]);
+    return snowfallEvent(data, todayISO, nowH, orderActivities(true, st.customActivities), 5, st.customActivities);
+  }, [data, todayISO, nowH, st.customActivities]);
 
   if (!data) {
     return (
@@ -102,7 +103,7 @@ export function TodayView() {
     (a, b) => (a == null || b.score < a.score ? b : a),
     null,
   );
-  const activityName = t.activities[st.activity];
+  const activityName = nameOf(st.activity);
   const headline = !best
     ? t.home.verdictDone
     : best.band === 'g'
@@ -229,7 +230,7 @@ export function TodayView() {
             </div>
             <div className={s.snowBody}>
               {fill(t.home.snowBody, {
-                activities: snow.activities.map((a) => t.activities[a]).join(' · '),
+                activities: snow.activities.map(nameOf).join(' · '),
               })}
             </div>
           </div>
@@ -267,14 +268,7 @@ export function TodayView() {
                 →
               </span>
             </button>
-            <FactorChips
-              b={blk.b}
-              crit={crit}
-              tolMult={tolMult}
-              units={st.units}
-              activity={st.activity}
-              t={t}
-            />
+            <FactorChips b={blk.b} crit={crit} tolMult={tolMult} units={st.units} t={t} />
             <HourlyCharts
               hours={blockHours(blk)}
               units={st.units}

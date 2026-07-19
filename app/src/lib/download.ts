@@ -1,3 +1,4 @@
+import type { ActivityId } from '../core/activities';
 import type { PlannedSession } from '../core/alerts';
 import { buildCalendar, type IcsEvent } from '../core/ics';
 import type { BlockResult } from '../core/forecast';
@@ -7,6 +8,7 @@ export function sessionsToIcs(
   sessions: PlannedSession[],
   checkOf: (s: PlannedSession) => BlockResult | null,
   t: Dict,
+  nameOf: (id: ActivityId) => string,
 ): string {
   const events: IcsEvent[] = sessions.map((p) => {
     const b = checkOf(p);
@@ -18,7 +20,7 @@ export function sessionsToIcs(
       day: p.day,
       h: p.h,
       len: p.len,
-      summary: `${t.activities[p.activityId]} — BlockCast`,
+      summary: `${nameOf(p.activityId)} — BlockCast`,
       location: p.locName,
       description: desc,
     };

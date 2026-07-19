@@ -4,6 +4,8 @@ import type { ActivityId, Weights } from '../../app/src/core/activities';
 export interface StoredSession {
   id: number;
   activityId: ActivityId;
+  /** Display name for user-created activities (presets are labelled server-side). */
+  name?: string;
   /** ISO day "2026-07-20". */
   day: string;
   h: number;
@@ -19,6 +21,8 @@ export interface StoredCriteria {
   w: Weights;
   tMin: number;
   tMax: number;
+  /** Metres of snow cover under which risk rises (winter custom activities). */
+  snowBase?: number;
 }
 
 export interface Subscription {

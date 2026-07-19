@@ -3,7 +3,7 @@
 // core scoring the app uses — one source of truth.
 
 import { buildPushPayload } from '@block65/webcrypto-web-push';
-import { criteriaFrom, TOL_MULT } from '../../app/src/core/activities';
+import { criteriaFrom, TOL_MULT, type CustomActivity } from '../../app/src/core/activities';
 import { planKey } from '../../app/src/core/alerts';
 import { getBlock, reshapeForecast, type ForecastData, type OpenMeteoResponse } from '../../app/src/core/forecast';
 import type { Band } from '../../app/src/core/scoring';
@@ -31,7 +31,7 @@ export function alertText(
   score: number,
   lang: 'en' | 'fr',
 ): { title: string; body: string } {
-  const name = ACTIVITY_NAME[lang][s.activityId] ?? s.activityId;
+  const name = ACTIVITY_NAME[lang][s.activityId] ?? s.name ?? s.activityId;
   const when = `${s.day} ${String(s.h).padStart(2, '0')}:00`;
   const word = BAND_WORD[lang][band];
   if (lang === 'fr')
@@ -98,7 +98,26 @@ export async function runChecks(env: Env): Promise<void> {
             data = await fetchForecast(s.lat, s.lon);
             forecasts.set(key, data);
           }
-          const crit = criteriaFrom(s.activityId, sub.criteria[s.activityId]);
+          // custom activities aren't in ACTIVITIES — rebuild one from the
+          // stored criteria so snowBase-style behaviour survives the trip
+          const stored = sub.criteria[s.activityId];
+          const customs: CustomActivity[] =
+            stored?.snowBase != null
+              ? [
+                  {
+                    id: s.activityId,
+                    name: s.name ?? s.activityId,
+                    emoji: '🏅',
+                    cat: 'custom',
+                    season: 'all',
+                    w: stored.w,
+                    tMin: stored.tMin,
+                    tMax: stored.tMax,
+                    snowBase: stored.snowBase,
+                  },
+                ]
+              : [];
+          const crit = criteriaFrom(s.activityId, stored, customs);
           const b = getBlock(data, s.day, s.h, s.len, crit, sub.tolMult || TOL_MULT.balanced);
           if (!b) continue;
           if (s.baseBand == null) {

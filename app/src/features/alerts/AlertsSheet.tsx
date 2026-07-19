@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { ActivityIcon } from '../../ui/ActivityIcon';
 import { formatHour } from '../../core/units';
-import { useLocale, useT } from '../../hooks';
+import { useActivityName, useLocale, useT } from '../../hooks';
 import { fill } from '../../i18n';
 import { fmtWeekdayLong } from '../../lib/format';
 import { useAlerts } from '../../state/alerts';
@@ -13,6 +13,7 @@ import { Sheet } from '../../ui/Sheet';
 export function AlertsSheet() {
   const t = useT();
   const locale = useLocale();
+  const nameOf = useActivityName();
   const clock = useSettings((s) => s.clock);
   const { alertsOpen, setAlertsOpen } = useUi();
   const { items, markAllRead } = useAlerts();
@@ -45,7 +46,7 @@ export function AlertsSheet() {
             </span>
             <span style={{ flex: 1, lineHeight: 1.45 }}>
               {fill(t.alerts[a.kind], {
-                activity: t.activities[a.activityId],
+                activity: nameOf(a.activityId),
                 when: `${fmtWeekdayLong(a.day, locale)} ${formatHour(a.h, clock)}`,
                 band: t.risk[`${a.toBand}Short`],
               })}

@@ -20,7 +20,10 @@ export const ACTIVITY_IDS = [
   'pickleball',
 ] as const;
 
-export type ActivityId = (typeof ACTIVITY_IDS)[number];
+export type PresetActivityId = (typeof ACTIVITY_IDS)[number];
+
+/** Any activity id: a preset id or a user-created one ("c-…"). */
+export type ActivityId = string;
 
 // Categories group the rail; CATEGORY_IDS order is the base display order.
 export const CATEGORY_IDS = ['powersports', 'trail', 'water', 'court', 'snow', 'leisure'] as const;
@@ -35,7 +38,8 @@ export type Weights = Record<FactorKey, number>;
 
 export interface ActivityPreset {
   emoji: string;
-  cat: CategoryId;
+  /** A preset category, or any user-typed label for custom categories. */
+  cat: CategoryId | (string & {});
   season: Season;
   w: Weights;
   tMin: number;
@@ -56,7 +60,7 @@ const w = (
   fresh = 0,
 ): Weights => ({ rain, wind, cold, heat, uv, snow, fresh });
 
-export const ACTIVITIES: Record<ActivityId, ActivityPreset> = {
+export const ACTIVITIES: Record<PresetActivityId, ActivityPreset> = {
   tennis: { emoji: '🎾', cat: 'court', season: 'warm', w: w(10, 6, 4, 5, 3), tMin: 10, tMax: 30 },
   cycling: { emoji: '🚴', cat: 'trail', season: 'all', w: w(8, 8, 6, 5, 4), tMin: 5, tMax: 32 },
   jogging: { emoji: '🏃', cat: 'trail', season: 'all', w: w(5, 3, 4, 8, 5), tMin: 0, tMax: 26 },
@@ -122,7 +126,54 @@ export const ACTIVITIES: Record<ActivityId, ActivityPreset> = {
 export const TOL_MULT = { cautious: 1.3, balanced: 1.0, tolerant: 0.68 } as const;
 export type Tolerance = keyof typeof TOL_MULT;
 
-export const isWinterActivity = (id: ActivityId): boolean => ACTIVITIES[id].snowBase != null;
+/** A user-created activity: a full preset plus its id and display name. */
+export interface CustomActivity extends ActivityPreset {
+  id: string;
+  name: string;
+}
+
+/** Starting criteria for a user-created activity — deliberately middle-of-the-road. */
+export function newCustomActivity(input: {
+  name: string;
+  emoji: string;
+  cat: string;
+  season: Season;
+}): CustomActivity {
+  const winter = input.season === 'winter';
+  return {
+    id: `c-${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`,
+    name: input.name,
+    emoji: input.emoji,
+    cat: input.cat,
+    season: input.season,
+    w: winter ? w(6, 5, 5, 6, 3, 8, 2) : w(7, 5, 5, 5, 4),
+    tMin: winter ? -20 : 5,
+    tMax: winter ? 5 : 30,
+    ...(winter ? { snowBase: 0.15 } : {}),
+  };
+}
+
+/** Neutral stand-in when an id resolves to nothing (e.g. a deleted custom
+ * activity still referenced by a planned session). */
+const GENERIC_ACT: ActivityPreset = {
+  emoji: '🏅',
+  cat: 'leisure',
+  season: 'all',
+  w: w(7, 5, 5, 5, 4),
+  tMin: 5,
+  tMax: 30,
+};
+
+/** Resolve any activity id — presets first, then the user's custom list. */
+export const actOf = (
+  id: ActivityId,
+  customs?: readonly CustomActivity[],
+): ActivityPreset | undefined =>
+  (ACTIVITIES as Record<string, ActivityPreset | undefined>)[id] ??
+  customs?.find((c) => c.id === id);
+
+export const isWinterActivity = (id: ActivityId, customs?: readonly CustomActivity[]): boolean =>
+  actOf(id, customs)?.snowBase != null;
 
 /** Everything the scoring engine needs to judge one activity. */
 export interface Criteria {
@@ -132,12 +183,13 @@ export interface Criteria {
   tMax: number;
 }
 
-/** Criteria from the preset, optionally overridden by saved user tuning. */
+/** Criteria from the preset (or custom activity), overridden by saved user tuning. */
 export function criteriaFrom(
   id: ActivityId,
   tune?: { w?: Partial<Weights>; tMin?: number; tMax?: number },
+  customs?: readonly CustomActivity[],
 ): Criteria {
-  const act = ACTIVITIES[id];
+  const act = actOf(id, customs) ?? GENERIC_ACT;
   const tMin = tune?.tMin;
   const tMax = tune?.tMax;
   return {

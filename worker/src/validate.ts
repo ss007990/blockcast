@@ -6,7 +6,8 @@ import type { StoredSub, StoredSession, StoredCriteria } from './types';
 
 const MAX_SESSIONS = 30;
 
-const isActivity = (v: unknown): v is ActivityId => typeof v === 'string' && v in ACTIVITIES;
+const isActivity = (v: unknown): v is ActivityId =>
+  typeof v === 'string' && (v in ACTIVITIES || /^c-[a-z0-9]{1,24}$/.test(v));
 const num = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 export function parseSubscribeBody(raw: unknown): StoredSub | null {
@@ -43,6 +44,7 @@ export function parseSubscribeBody(raw: unknown): StoredSub | null {
     sessions.push({
       id: num(s.id) ? (s.id as number) : Date.now(),
       activityId: s.activityId,
+      ...(typeof s.name === 'string' && s.name ? { name: s.name.slice(0, 60) } : {}),
       day: s.day,
       h: s.h as number,
       len: s.len as number,
@@ -61,7 +63,12 @@ export function parseSubscribeBody(raw: unknown): StoredSub | null {
       if (!isActivity(k) || typeof v !== 'object' || v === null) continue;
       const c = v as Record<string, unknown>;
       if (typeof c.w !== 'object' || c.w === null || !num(c.tMin) || !num(c.tMax)) continue;
-      criteria[k] = { w: c.w, tMin: c.tMin, tMax: c.tMax } as StoredCriteria;
+      criteria[k] = {
+        w: c.w,
+        tMin: c.tMin,
+        tMax: c.tMax,
+        ...(num(c.snowBase) ? { snowBase: c.snowBase } : {}),
+      } as StoredCriteria;
     }
   }
 

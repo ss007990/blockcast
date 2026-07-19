@@ -2,8 +2,11 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import {
   criteriaFrom,
+  newCustomActivity,
   type ActivityId,
   type Criteria,
+  type CustomActivity,
+  type Season,
   type Tolerance,
   type Weights,
 } from '../core/activities';
@@ -29,6 +32,8 @@ export interface SettingsState {
   hFrom: number;
   hTo: number;
   tune: Partial<Record<ActivityId, Tune>>;
+  /** User-created activities, shown in the rail alongside the presets. */
+  customActivities: CustomActivity[];
   lang: Lang;
   units: UnitSystem;
   clock: ClockFormat;
@@ -44,6 +49,9 @@ export interface SettingsState {
   setWeight: (act: ActivityId, k: keyof Weights, v: number) => void;
   setTempBand: (act: ActivityId, which: 'tMin' | 'tMax', v: number) => void;
   resetTune: (act: ActivityId) => void;
+  /** Create a custom activity, select it, and return its id. */
+  addActivity: (input: { name: string; emoji: string; cat: string; season: Season }) => ActivityId;
+  removeActivity: (id: ActivityId) => void;
   setLang: (l: Lang) => void;
   setUnits: (u: UnitSystem) => void;
   setClock: (c: ClockFormat) => void;
@@ -60,6 +68,7 @@ const defaults = {
   hFrom: v1.hFrom ?? 6,
   hTo: v1.hTo ?? 20,
   tune: v1.tune ?? {},
+  customActivities: [] as CustomActivity[],
   lang: v1.lang ?? detectLang(navigator.language),
   units: 'metric' as UnitSystem,
   clock: '24h' as ClockFormat,
@@ -95,6 +104,21 @@ export const useSettings = create<SettingsState>()(
           delete tune[act];
           return { tune };
         }),
+      addActivity: (input) => {
+        const a = newCustomActivity(input);
+        set((s) => ({ customActivities: [...s.customActivities, a], activity: a.id }));
+        return a.id;
+      },
+      removeActivity: (id) =>
+        set((s) => {
+          const tune = { ...s.tune };
+          delete tune[id];
+          return {
+            customActivities: s.customActivities.filter((c) => c.id !== id),
+            tune,
+            activity: s.activity === id ? 'tennis' : s.activity,
+          };
+        }),
       setLang: (lang) => set({ lang }),
       setUnits: (units) => set({ units }),
       setClock: (clock) => set({ clock }),
@@ -105,6 +129,6 @@ export const useSettings = create<SettingsState>()(
   ),
 );
 
-/** Criteria for any activity: preset merged with this user's saved tuning. */
+/** Criteria for any activity: preset or custom, merged with saved tuning. */
 export const critFor = (s: SettingsState, id: ActivityId): Criteria =>
-  criteriaFrom(id, s.tune[id]);
+  criteriaFrom(id, s.tune[id], s.customActivities);

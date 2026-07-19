@@ -2,7 +2,7 @@
 // set of activities and surface the best windows, plus event triggers like a
 // forecasted snowfall that makes skiing/snowmobiling worth a nudge.
 
-import type { ActivityId, Criteria } from './activities';
+import type { ActivityId, Criteria, CustomActivity } from './activities';
 import { isWinterActivity } from './activities';
 import type { ForecastData } from './forecast';
 import { forecastDayKeys, getBlock } from './forecast';
@@ -94,6 +94,7 @@ export function snowfallEvent(
   nowHour: number,
   candidates: ActivityId[],
   thresholdCm = 5,
+  customs?: readonly CustomActivity[],
 ): SnowfallEvent | null {
   const startKey = `${todayISO}T${String(nowHour).padStart(2, '0')}:00`;
   // timeIndex is insertion-ordered (chronological); find "now" or the first future hour
@@ -111,7 +112,7 @@ export function snowfallEvent(
   for (let i = start; i < Math.min(start + 48, data.snowfall.length); i++)
     total += data.snowfall[i] ?? 0;
   if (total < thresholdCm) return null;
-  const activities = candidates.filter(isWinterActivity);
+  const activities = candidates.filter((id) => isWinterActivity(id, customs));
   if (!activities.length) return null;
   return { totalCm: +total.toFixed(1), activities };
 }

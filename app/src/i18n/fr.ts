@@ -64,6 +64,23 @@ export const fr: Dict = {
     hourUnit: 'h',
     moreActs: '+{n} hors saison',
     lessActs: 'Moins',
+    addAct: 'Ajouter une activité',
+  },
+
+  add: {
+    title: 'Nouvelle activité',
+    name: 'Nom',
+    namePh: 'p. ex. Kayak',
+    emoji: 'Émoji',
+    cat: 'Catégorie',
+    newCat: '+ Nouvelle catégorie…',
+    newCatPh: 'Nom de la catégorie',
+    season: 'Saison',
+    seasonWarm: 'Saison chaude',
+    seasonWinter: 'Hiver',
+    seasonAll: 'Toute l’année',
+    create: 'Ajouter et ajuster les critères',
+    remove: 'Supprimer cette activité',
   },
 
   tune: {

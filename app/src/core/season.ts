@@ -2,7 +2,14 @@
 // winter sports first when snow is on the ground (and last in July).
 // Never hides activities; ordering only.
 
-import { ACTIVITIES, ACTIVITY_IDS, type ActivityId, type CategoryId } from './activities';
+import {
+  ACTIVITIES,
+  ACTIVITY_IDS,
+  actOf,
+  type ActivityId,
+  type CategoryId,
+  type CustomActivity,
+} from './activities';
 import type { ForecastData } from './forecast';
 import { forecastDayKeys } from './forecast';
 
@@ -48,8 +55,11 @@ export function seasonSignals(data: ForecastData, lat: number, todayISO: string)
 }
 
 /** True when the activity fits the current season ('all' always fits). */
-export const inSeason = (id: ActivityId, winter: boolean): boolean =>
-  ACTIVITIES[id].season !== (winter ? 'warm' : 'winter');
+export const inSeason = (
+  id: ActivityId,
+  winter: boolean,
+  customs?: readonly CustomActivity[],
+): boolean => actOf(id, customs)?.season !== (winter ? 'warm' : 'winter');
 
 // Category order per season: winter pulls snow up front, summer pushes it last.
 const CAT_ORDER: Record<'winter' | 'summer', readonly CategoryId[]> = {
@@ -58,28 +68,41 @@ const CAT_ORDER: Record<'winter' | 'summer', readonly CategoryId[]> = {
 };
 
 export interface ActivityGroup {
-  cat: CategoryId;
+  /** A preset CategoryId or a user-created category label. */
+  cat: string;
   /** Members that fit the season, in ACTIVITY_IDS order. */
   inSeason: ActivityId[];
   /** Members collapsed behind “more” until expanded. */
   offSeason: ActivityId[];
 }
 
-/** Rail structure: categories in seasonal order, groups with nothing in season last. */
-export function groupActivities(winter: boolean): ActivityGroup[] {
-  const groups = CAT_ORDER[winter ? 'winter' : 'summer'].map((cat) => {
-    const members = ACTIVITY_IDS.filter((id) => ACTIVITIES[id].cat === cat);
+/** Rail structure: categories in seasonal order (user categories after),
+ * groups with nothing in season last. */
+export function groupActivities(
+  winter: boolean,
+  customs: readonly CustomActivity[] = [],
+): ActivityGroup[] {
+  const cats: string[] = [...CAT_ORDER[winter ? 'winter' : 'summer']];
+  for (const c of customs) if (!cats.includes(c.cat)) cats.push(c.cat);
+  const groups = cats.map((cat) => {
+    const members: ActivityId[] = [
+      ...ACTIVITY_IDS.filter((id) => ACTIVITIES[id].cat === cat),
+      ...customs.filter((c) => c.cat === cat).map((c) => c.id),
+    ];
     return {
       cat,
-      inSeason: members.filter((id) => inSeason(id, winter)),
-      offSeason: members.filter((id) => !inSeason(id, winter)),
+      inSeason: members.filter((id) => inSeason(id, winter, customs)),
+      offSeason: members.filter((id) => !inSeason(id, winter, customs)),
     };
   });
   return groups.sort((a, b) => (b.inSeason.length ? 1 : 0) - (a.inSeason.length ? 1 : 0));
 }
 
 /** Flat picker order: in-season activities by group, off-season trailing. */
-export function orderActivities(winter: boolean): ActivityId[] {
-  const groups = groupActivities(winter);
+export function orderActivities(
+  winter: boolean,
+  customs: readonly CustomActivity[] = [],
+): ActivityId[] {
+  const groups = groupActivities(winter, customs);
   return [...groups.flatMap((g) => g.inSeason), ...groups.flatMap((g) => g.offSeason)];
 }
