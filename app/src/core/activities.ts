@@ -18,6 +18,7 @@ export const ACTIVITY_IDS = [
   'waterski',
   'pontoon',
   'pickleball',
+  'beach',
 ] as const;
 
 export type PresetActivityId = (typeof ACTIVITY_IDS)[number];
@@ -32,7 +33,9 @@ export type CategoryId = (typeof CATEGORY_IDS)[number];
 /** 'winter'/'warm' activities go off-season half the year; 'all' never do. */
 export type Season = 'winter' | 'warm' | 'all';
 
-export const FACTOR_KEYS = ['rain', 'wind', 'cold', 'heat', 'uv', 'snow', 'fresh'] as const;
+// swell/tide only ever score when the forecast location is coastal — inland
+// the marine feed is empty and their severities stay 0 (see scoring.ts).
+export const FACTOR_KEYS = ['rain', 'wind', 'cold', 'heat', 'uv', 'snow', 'fresh', 'swell', 'tide'] as const;
 export type FactorKey = (typeof FACTOR_KEYS)[number];
 export type Weights = Record<FactorKey, number>;
 
@@ -58,20 +61,22 @@ const w = (
   uv: number,
   snow = 0,
   fresh = 0,
-): Weights => ({ rain, wind, cold, heat, uv, snow, fresh });
+  swell = 0,
+  tide = 0,
+): Weights => ({ rain, wind, cold, heat, uv, snow, fresh, swell, tide });
 
 export const ACTIVITIES: Record<PresetActivityId, ActivityPreset> = {
   tennis: { emoji: '🎾', cat: 'court', season: 'warm', w: w(10, 6, 4, 5, 3), tMin: 10, tMax: 30 },
   cycling: { emoji: '🚴', cat: 'trail', season: 'all', w: w(8, 8, 6, 5, 4), tMin: 5, tMax: 32 },
   jogging: { emoji: '🏃', cat: 'trail', season: 'all', w: w(5, 3, 4, 8, 5), tMin: 0, tMax: 26 },
-  fishing: { emoji: '🎣', cat: 'water', season: 'all', w: w(2, 9, 5, 3, 4), tMin: 2, tMax: 32 },
+  fishing: { emoji: '🎣', cat: 'water', season: 'all', w: w(2, 9, 5, 3, 4, 0, 0, 5, 4), tMin: 2, tMax: 32 },
   golf: { emoji: '⛳', cat: 'court', season: 'warm', w: w(9, 6, 5, 4, 4), tMin: 8, tMax: 31 },
   hiking: { emoji: '🥾', cat: 'trail', season: 'all', w: w(6, 5, 6, 6, 6), tMin: 2, tMax: 28 },
   sailing: {
     emoji: '⛵',
     cat: 'water',
     season: 'warm',
-    w: w(3, 8, 5, 2, 5),
+    w: w(3, 8, 5, 2, 5, 0, 0, 4, 2),
     tMin: 5,
     tMax: 33,
     windIdeal: [9, 32],
@@ -108,11 +113,18 @@ export const ACTIVITIES: Record<PresetActivityId, ActivityPreset> = {
     emoji: '🚤',
     cat: 'water',
     season: 'warm',
-    w: w(6, 8, 7, 2, 6),
+    w: w(6, 8, 7, 2, 6, 0, 0, 7, 3),
     tMin: 18,
     tMax: 36,
   },
-  pontoon: { emoji: '⛴️', cat: 'water', season: 'warm', w: w(8, 7, 6, 3, 6), tMin: 15, tMax: 34 },
+  pontoon: {
+    emoji: '⛴️',
+    cat: 'water',
+    season: 'warm',
+    w: w(8, 7, 6, 3, 6, 0, 0, 6, 3),
+    tMin: 15,
+    tMax: 34,
+  },
   pickleball: {
     emoji: '🏓',
     cat: 'court',
@@ -120,6 +132,14 @@ export const ACTIVITIES: Record<PresetActivityId, ActivityPreset> = {
     w: w(10, 8, 4, 5, 3),
     tMin: 8,
     tMax: 30,
+  },
+  beach: {
+    emoji: '🏖️',
+    cat: 'water',
+    season: 'warm',
+    w: w(8, 6, 7, 2, 7, 0, 0, 6, 5),
+    tMin: 18,
+    tMax: 36,
   },
 };
 
@@ -194,7 +214,9 @@ export function criteriaFrom(
   const tMax = tune?.tMax;
   return {
     act,
-    weights: { ...act.w, ...tune?.w },
+    // zero-fill first: custom activities saved before newer factor keys
+    // existed (swell, tide) come out of storage without them
+    weights: { ...w(0, 0, 0, 0, 0), ...act.w, ...tune?.w },
     tMin: typeof tMin === 'number' && Number.isFinite(tMin) ? tMin : act.tMin,
     tMax: typeof tMax === 'number' && Number.isFinite(tMax) ? tMax : act.tMax,
   };

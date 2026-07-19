@@ -18,10 +18,12 @@ const ACTIVITY_NAME: Record<'en' | 'fr', Record<string, string>> = {
   en: {
     tennis: 'Tennis', cycling: 'Cycling', jogging: 'Jogging', fishing: 'Fishing', golf: 'Golf',
     hiking: 'Hiking', sailing: 'Sailing', picnic: 'Picnic', skiing: 'Skiing', snowmob: 'Snowmobiling',
+    beach: 'Hitting the Beach',
   },
   fr: {
     tennis: 'Tennis', cycling: 'Vélo', jogging: 'Course', fishing: 'Pêche', golf: 'Golf',
     hiking: 'Randonnée', sailing: 'Voile', picnic: 'Pique-nique', skiing: 'Ski', snowmob: 'Motoneige',
+    beach: 'À la plage',
   },
 };
 

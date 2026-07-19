@@ -57,6 +57,27 @@ describe('blockFactors', () => {
     expect(blockFactors([hour({ temp: -5 })], 0, crit('skiing')).sev.snow).toBe(1);
     expect(blockFactors([hour({ temp: -5, sdep: 0.5 })], 0, crit('skiing')).sev.snow).toBe(0);
   });
+  it('inland (no marine data): swell/tide severities stay 0 and factors undefined', () => {
+    const f = blockFactors([hour()], 0, crit('beach'));
+    expect(f.sev.swell).toBe(0);
+    expect(f.sev.tide).toBe(0);
+    expect(f.swell).toBeUndefined();
+    expect(f.tideNorm).toBeUndefined();
+  });
+  it('coastal: big swell maxes severity, calm sea does not', () => {
+    expect(blockFactors([hour({ swell: 3 })], 0, crit('beach')).sev.swell).toBe(1);
+    expect(blockFactors([hour({ swell: 0.3 })], 0, crit('beach')).sev.swell).toBe(0);
+  });
+  it('coastal: tide severity follows the block peak, trend follows the hours', () => {
+    const f = blockFactors(
+      [hour({ tide: 0.2 }), hour({ tide: 0.5 }), hour({ tide: 0.9 })],
+      0,
+      crit('beach'),
+    );
+    expect(f.sev.tide).toBe(0.9);
+    expect(f.tideNorm).toBeCloseTo(0.53, 2);
+    expect(f.tideTrend).toBeCloseTo(0.7, 2);
+  });
 });
 
 describe('riskScore', () => {

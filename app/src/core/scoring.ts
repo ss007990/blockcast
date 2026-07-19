@@ -22,6 +22,10 @@ export interface HourSlice {
   uv: number;
   /** Snow depth on the ground, metres. */
   sdep: number;
+  /** Ocean swell height, metres — only set for coastal locations. */
+  swell?: number;
+  /** Tide level normalized 0 (week's low) – 1 (week's high) — coastal only. */
+  tide?: number;
 }
 
 export type Severities = Record<FactorKey, number>;
@@ -38,6 +42,12 @@ export interface BlockFactors {
   depth: number;
   /** Fresh snowfall over the previous 48 h, cm. */
   fresh48: number;
+  /** Peak ocean swell, metres — undefined away from the coast. */
+  swell?: number;
+  /** Mean tide level over the block, 0–1 — undefined away from the coast. */
+  tideNorm?: number;
+  /** Tide direction over the block: last hour minus first hour. */
+  tideTrend?: number;
   sev: Severities;
 }
 
@@ -46,8 +56,8 @@ export const ramp = (v: number, lo: number, hi: number): number =>
 
 /** Aggregate hourly slices for one block into factor severities (0–1 each). */
 export function blockFactors(hours: HourSlice[], fresh48: number, crit: Criteria): BlockFactors {
-  const max = (k: keyof HourSlice) => Math.max(...hours.map((h) => h[k]));
-  const avg = (k: keyof HourSlice) => hours.reduce((a, h) => a + h[k], 0) / hours.length;
+  const max = (k: keyof HourSlice) => Math.max(...hours.map((h) => h[k] ?? 0));
+  const avg = (k: keyof HourSlice) => hours.reduce((a, h) => a + (h[k] ?? 0), 0) / hours.length;
   const { act } = crit;
 
   const rainProb = max('pprob');
@@ -59,6 +69,16 @@ export function blockFactors(hours: HourSlice[], fresh48: number, crit: Criteria
   const cloud = Math.round(avg('cloud'));
   const depth = Math.round(max('sdep') * 100);
 
+  const swells = hours.map((h) => h.swell).filter((v): v is number => v != null);
+  const tides = hours.map((h) => h.tide).filter((v): v is number => v != null);
+  const swell = swells.length ? +Math.max(...swells).toFixed(1) : undefined;
+  const tideNorm = tides.length
+    ? +(tides.reduce((a, v) => a + v, 0) / tides.length).toFixed(2)
+    : undefined;
+  const tideTrend = tides.length
+    ? +((tides.at(-1) ?? 0) - (tides[0] ?? 0)).toFixed(2)
+    : undefined;
+
   const baseCm = (act.snowBase ?? 0) * 100;
   const sev: Severities = {
     rain: Math.max(ramp(rainProb, 30, 75), ramp(rainSum, 0.4, 4)),
@@ -68,13 +88,16 @@ export function blockFactors(hours: HourSlice[], fresh48: number, crit: Criteria
     uv: ramp(uv, 6, 9.5),
     snow: baseCm ? ramp(baseCm - depth, 0, baseCm) : 0,
     fresh: 1 - ramp(fresh48, 0, 15),
+    // both stay 0 inland, so weights on water activities are inert there
+    swell: swell != null ? ramp(swell, 0.5, 2.5) : 0,
+    tide: tides.length ? Math.max(...tides) : 0,
   };
   // sailing-style: not enough wind is also bad
   if (act.windIdeal) {
     const [lo, hi] = act.windIdeal;
     sev.wind = Math.max(ramp(wind, hi, hi + 18), ramp(lo - wind, 0, lo));
   }
-  return { rainProb, rainSum, wind, gust, temp, uv, cloud, depth, fresh48, sev };
+  return { rainProb, rainSum, wind, gust, temp, uv, cloud, depth, fresh48, swell, tideNorm, tideTrend, sev };
 }
 
 /** One number 0–100. Worst weighted factor dominates; others add a little. */

@@ -5,6 +5,7 @@ import type { Criteria, FactorKey } from '../../core/activities';
 import type { BlockResult } from '../../core/forecast';
 import {
   formatDepth,
+  formatHeight,
   formatPrecip,
   formatSpeed,
   formatTemp,
@@ -57,6 +58,25 @@ export function FactorChips({ b, crit, tolMult, units, t }: Props) {
       val: units === 'imperial' ? formatSpeed(b.f.gust, units) : `${gustSpan} km/h`,
       eff: effOf('wind'),
     },
+    // marine chips: water activities only, and only where the ocean data exists
+    ...(crit.act.cat === 'water' && b.f.swell != null
+      ? [{ name: `🌊 ${t.detail.swell}`, val: formatHeight(b.f.swell, units), eff: effOf('swell') }]
+      : []),
+    ...(crit.act.cat === 'water' && b.f.tideNorm != null
+      ? [
+          {
+            name: `🌗 ${t.detail.tide}`,
+            val:
+              (b.f.tideNorm < 0.35
+                ? t.detail.tideLow
+                : b.f.tideNorm > 0.65
+                  ? t.detail.tideHigh
+                  : t.detail.tideMid) +
+              ((b.f.tideTrend ?? 0) > 0.05 ? ' ↑' : (b.f.tideTrend ?? 0) < -0.05 ? ' ↓' : ''),
+            eff: effOf('tide'),
+          },
+        ]
+      : []),
     { name: `🌡 ${t.detail.feels}`, val: tempVal, eff: Math.max(effOf('cold'), effOf('heat')) },
     { name: `☀️ ${t.detail.uv}`, val: String(b.f.uv), eff: effOf('uv') },
   ];

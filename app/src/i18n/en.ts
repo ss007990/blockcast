@@ -98,6 +98,10 @@ export const en = {
     heatS: 'Too hot above',
     uv: 'UV',
     uvS: 'Sun-exposure index',
+    swell: 'Swell',
+    swellS: 'Ocean swell height',
+    tide: 'Tide',
+    tideS: 'Risk when the tide runs high',
     reset: 'Reset to preset defaults',
   },
 
@@ -121,6 +125,11 @@ export const en = {
     wind: 'Wind',
     feels: 'Feels like',
     uv: 'UV',
+    swell: 'Swell',
+    tide: 'Tide',
+    tideLow: 'low',
+    tideMid: 'mid',
+    tideHigh: 'high',
     uvIdx: 'index',
     base: 'base',
     fresh48h: 'fresh/48 h',
@@ -207,6 +216,7 @@ export const en = {
     waterski: 'Waterskiing',
     pontoon: 'Pontooning',
     pickleball: 'Pickleball',
+    beach: 'Hitting the Beach',
   },
 
   cats: {

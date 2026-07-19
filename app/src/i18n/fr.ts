@@ -100,6 +100,10 @@ export const fr: Dict = {
     heatS: 'Trop chaud au-dessus de',
     uv: 'UV',
     uvS: 'Indice d’exposition au soleil',
+    swell: 'Houle',
+    swellS: 'Hauteur de la houle océanique',
+    tide: 'Marée',
+    tideS: 'Risque quand la marée est haute',
     reset: 'Revenir aux valeurs du préréglage',
   },
 
@@ -123,6 +127,11 @@ export const fr: Dict = {
     wind: 'Vent',
     feels: 'Ressenti',
     uv: 'UV',
+    swell: 'Houle',
+    tide: 'Marée',
+    tideLow: 'basse',
+    tideMid: 'mi-marée',
+    tideHigh: 'haute',
     uvIdx: 'indice',
     base: 'au sol',
     fresh48h: 'fraîche/48 h',
@@ -210,6 +219,7 @@ export const fr: Dict = {
     waterski: 'Ski nautique',
     pontoon: 'Ponton',
     pickleball: 'Pickleball',
+    beach: 'À la plage',
   },
 
   cats: {

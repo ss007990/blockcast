@@ -24,6 +24,12 @@ export const formatPrecip = (mm: number, u: UnitSystem): string =>
 export const formatDepth = (cm: number, u: UnitSystem): string =>
   u === 'imperial' ? `${+cmToIn(cm).toFixed(1)} in` : `${Math.round(cm)} cm`;
 
+export const mToFt = (m: number): number => m * 3.28084;
+
+/** Wave/swell heights: metres, or feet in imperial. */
+export const formatHeight = (m: number, u: UnitSystem): string =>
+  u === 'imperial' ? `${+mToFt(m).toFixed(1)} ft` : `${+m.toFixed(1)} m`;
+
 /** "14:00" or "2 PM". */
 export function formatHour(h: number, clock: ClockFormat): string {
   const hh = h >= 24 ? h - 24 : h;

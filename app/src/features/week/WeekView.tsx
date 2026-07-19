@@ -92,18 +92,25 @@ function Controls() {
   );
 }
 
-const SLIDER_DEFS: { k: FactorKey; snowOnly: boolean }[] = FACTOR_KEYS.map((k) => ({
-  k,
-  snowOnly: k === 'snow' || k === 'fresh',
-}));
+const SLIDER_DEFS: { k: FactorKey; snowOnly: boolean; marineOnly: boolean }[] = FACTOR_KEYS.map(
+  (k) => ({
+    k,
+    snowOnly: k === 'snow' || k === 'fresh',
+    marineOnly: k === 'swell' || k === 'tide',
+  }),
+);
 
 function TunePanel() {
   const t = useT();
   const st = useSettings();
   const nameOf = useActivityName();
   const tuneOpen = useUi((u) => u.tuneOpen);
+  const marine = useForecast((f) => f.data?.marine ?? null);
   const crit = critFor(st, st.activity);
   const isWinterAct = crit.act.snowBase != null;
+  // swell/tide only make sense for water sports where that ocean data exists
+  const showMarine = (k: FactorKey) =>
+    crit.act.cat === 'water' && (k === 'tide' ? !!marine?.tide : !!marine?.swell);
   const isCustom = st.customActivities.some((c) => c.id === st.activity);
 
   return (
@@ -122,7 +129,9 @@ function TunePanel() {
             </h3>
             <div className={s.tuneHint}>{t.tune.hint}</div>
             <div className={s.sliders}>
-              {SLIDER_DEFS.filter((d) => !d.snowOnly || isWinterAct).map(({ k }) => (
+              {SLIDER_DEFS.filter(
+                (d) => (!d.snowOnly || isWinterAct) && (!d.marineOnly || showMarine(d.k)),
+              ).map(({ k }) => (
                 <div className={s.srow} key={k}>
                   <label>
                     <span>{t.tune[k]}</span>
