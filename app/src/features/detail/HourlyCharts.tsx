@@ -1,15 +1,22 @@
-// Hand-rolled SVG micro-charts: felt-temp area curve, rain-probability bars,
-// wind line. Light, animated, theme-aware — no chart library.
+// The "Hour by hour" panel: one boxed module — a compact felt-temperature
+// curve with values written on the points, and a per-hour grid (rain, wind)
+// column-aligned with the curve. Numbers beat charts for 2–6 data points.
 
 import { motion } from 'framer-motion';
 import type { HourSlice } from '../../core/scoring';
-import { formatHour, formatSpeed, formatTemp, type ClockFormat, type UnitSystem } from '../../core/units';
+import {
+  cToF,
+  formatHour,
+  type ClockFormat,
+  type UnitSystem,
+} from '../../core/units';
 import type { Dict } from '../../i18n';
 import s from './detail.module.css';
 
 const W = 320;
-const H = 56;
-const PAD = 6;
+const H = 74;
+const TOP = 20; // room for the value labels above the curve
+const BOT = 8;
 
 interface ChartsProps {
   hours: { h: number; slice: HourSlice }[];
@@ -18,111 +25,85 @@ interface ChartsProps {
   t: Dict;
 }
 
-const x = (i: number, n: number) => PAD + (i * (W - 2 * PAD)) / Math.max(1, n - 1);
-
-function scaleY(values: number[], v: number, minSpan = 4): number {
-  const lo = Math.min(...values);
-  const hi = Math.max(...values);
-  const span = Math.max(minSpan, hi - lo);
-  const mid = (hi + lo) / 2;
-  const a = mid - span / 2;
-  return H - PAD - ((v - a) / span) * (H - 2 * PAD);
-}
-
 export function HourlyCharts({ hours, units, clock, t }: ChartsProps) {
   if (hours.length < 2) return null;
   const n = hours.length;
   const temps = hours.map((h) => h.slice.temp);
-  const winds = hours.map((h) => h.slice.wind);
-  const probs = hours.map((h) => h.slice.pprob);
+  const probs = hours.map((h) => Math.round(h.slice.pprob));
+  const winds = hours.map((h) => Math.round(h.slice.wind));
 
-  const tempPath = temps.map((v, i) => `${i ? 'L' : 'M'}${x(i, n)},${scaleY(temps, v)}`).join(' ');
-  const tempArea = `${tempPath} L${x(n - 1, n)},${H - 2} L${x(0, n)},${H - 2} Z`;
-  const windPath = winds
-    .map((v, i) => `${i ? 'L' : 'M'}${x(i, n)},${scaleY(winds, v, 10)}`)
-    .join(' ');
+  // points sit at column centers so the grid below lines up with the curve
+  const x = (i: number) => ((i + 0.5) * W) / n;
+  const lo = Math.min(...temps);
+  const hi = Math.max(...temps);
+  const span = Math.max(3, hi - lo);
+  const mid = (hi + lo) / 2;
+  const y = (v: number) => H - BOT - ((v - (mid - span / 2)) / span) * (H - TOP - BOT);
 
-  const barW = Math.min(18, (W - 2 * PAD) / n - 4);
+  const line = temps.map((v, i) => `${i ? 'L' : 'M'}${x(i)},${y(v)}`).join(' ');
+  const area = `${line} L${x(n - 1)},${H} L${x(0)},${H} Z`;
+  const deg = (c: number) => `${Math.round(units === 'imperial' ? cToF(c) : c)}°`;
+
+  const rainColor = (p: number) =>
+    p >= 60 ? 'var(--red)' : p >= 30 ? 'var(--amber)' : p > 0 ? 'var(--ink-2)' : 'var(--ink-3)';
+
+  const cols = { gridTemplateColumns: `repeat(${n}, 1fr)` };
 
   return (
-    <div>
-      <div className={s.chartsTitle}>{t.detail.hourly}</div>
+    <div className={s.panel}>
+      <div className={s.panelHead}>
+        <b>{t.detail.hourly}</b>
+        <span className="tnum">
+          {t.detail.rain} % · {t.detail.wind} {units === 'imperial' ? 'mph' : 'km/h'}
+        </span>
+      </div>
 
-      <div className={s.chartRow}>
-        <div className={s.chartLabel}>
-          <b>{t.detail.tempCurve}</b>
-          <span className="tnum">
-            {formatTemp(Math.min(...temps), units)} – {formatTemp(Math.max(...temps), units)}
+      <svg className={s.chart} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+        <path d={area} fill="var(--accent-soft)" />
+        <motion.path
+          d={line}
+          fill="none"
+          stroke="var(--accent)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 0.45, ease: 'easeOut' }}
+        />
+        {temps.map((v, i) => (
+          <g key={i}>
+            <circle cx={x(i)} cy={y(v)} r="2.6" fill="var(--accent)" />
+            <text
+              x={x(i)}
+              y={y(v) - 8}
+              textAnchor="middle"
+              fontSize="11"
+              fontWeight="650"
+              fill="var(--ink)"
+              style={{ fontVariantNumeric: 'tabular-nums' }}
+            >
+              {deg(v)}
+            </text>
+          </g>
+        ))}
+      </svg>
+
+      <div className={s.hgrid} style={cols}>
+        {hours.map(({ h }) => (
+          <span key={h} className={s.hHour}>
+            {formatHour(h, clock)}
           </span>
-        </div>
-        <svg className={s.chart} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
-          <motion.path
-            d={tempArea}
-            fill="var(--accent-soft)"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          />
-          <motion.path
-            d={tempPath}
-            fill="none"
-            stroke="var(--accent)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-          />
-        </svg>
-      </div>
-
-      <div className={s.chartRow}>
-        <div className={s.chartLabel}>
-          <b>{t.detail.rainCurve}</b>
-          <span className="tnum">{Math.max(...probs)}%</span>
-        </div>
-        <svg className={s.chart} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
-          {probs.map((p, i) => {
-            const bh = Math.max(2, (p / 100) * (H - 2 * PAD));
-            return (
-              <motion.rect
-                key={i}
-                x={x(i, n) - barW / 2}
-                width={barW}
-                rx={3}
-                fill={p >= 60 ? 'var(--red-vivid)' : p >= 30 ? 'var(--amber-vivid)' : 'var(--accent-2)'}
-                opacity={0.75}
-                initial={{ y: H - PAD, height: 0 }}
-                animate={{ y: H - PAD - bh, height: bh }}
-                transition={{ duration: 0.4, delay: i * 0.03 }}
-              />
-            );
-          })}
-        </svg>
-      </div>
-
-      <div className={s.chartRow}>
-        <div className={s.chartLabel}>
-          <b>{t.detail.windCurve}</b>
-          <span className="tnum">{formatSpeed(Math.max(...winds), units)}</span>
-        </div>
-        <svg className={s.chart} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
-          <motion.path
-            d={windPath}
-            fill="none"
-            stroke="var(--ink-3)"
-            strokeWidth="2"
-            strokeDasharray="1 0"
-            strokeLinecap="round"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-          />
-        </svg>
-      </div>
-
-      <div className={s.chartLabel} style={{ marginTop: 2 }}>
-        <span className="tnum">{formatHour(hours[0]!.h, clock)}</span>
-        <span className="tnum">{formatHour(hours[n - 1]!.h + 1, clock)}</span>
+        ))}
+        {probs.map((p, i) => (
+          <span key={`p${i}`} className={s.hCell} style={{ color: rainColor(p) }}>
+            💧 {p}%
+          </span>
+        ))}
+        {winds.map((w, i) => (
+          <span key={`w${i}`} className={s.hCell} style={{ color: 'var(--ink-2)' }}>
+            💨 {units === 'imperial' ? Math.round(w / 1.609344) : w}
+          </span>
+        ))}
       </div>
     </div>
   );
