@@ -9,8 +9,10 @@ import { endpointKey, parseSubscribeBody } from './validate';
 function corsHeaders(req: Request, env: Env): Record<string, string> {
   const origin = req.headers.get('Origin') ?? '';
   const allowed = env.ALLOWED_ORIGINS.split(',').map((s) => s.trim());
+  // any localhost port counts as dev — vite's autoPort makes the port unpredictable
+  const ok = allowed.includes(origin) || /^http:\/\/localhost(:\d+)?$/.test(origin);
   return {
-    'Access-Control-Allow-Origin': allowed.includes(origin) ? origin : allowed[0] ?? '',
+    'Access-Control-Allow-Origin': ok ? origin : allowed[0] ?? '',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'content-type',
     'Access-Control-Max-Age': '86400',
