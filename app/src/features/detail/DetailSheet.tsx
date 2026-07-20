@@ -1,17 +1,19 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { TOL_MULT } from '../../core/activities';
+import { PURPOSES, type PlannedSession, type Purpose } from '../../core/alerts';
 import { ActivityIcon } from '../../ui/ActivityIcon';
+import { AddToCalendar } from '../../ui/AddToCalendar';
 import { getBlock } from '../../core/forecast';
 import type { HourSlice } from '../../core/scoring';
 import { formatHour } from '../../core/units';
 import { useActivityName, useLocale, useT } from '../../hooks';
-import { downloadFile, sessionsToIcs } from '../../lib/download';
+import { sessionToIcsEvent } from '../../lib/download';
 import { fmtFull, fmtIsoTime } from '../../lib/format';
 import { useForecast } from '../../state/forecast';
 import { usePlanner } from '../../state/planner';
 import { critFor, useSettings } from '../../state/settings';
 import { useUi } from '../../state/ui';
-import { Button } from '../../ui/primitives';
+import { Button, uiCss } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 import { FactorChips } from './FactorChips';
 import { HourlyCharts } from './HourlyCharts';
@@ -33,6 +35,13 @@ export function DetailSheet() {
 
   const crit = useMemo(() => critFor(st, st.activity), [st]);
   const tolMult = TOL_MULT[st.tolerance];
+
+  const [purpose, setPurpose] = useState<Purpose | ''>('');
+  const [note, setNote] = useState('');
+  useEffect(() => {
+    setPurpose('');
+    setNote('');
+  }, [selected]);
 
   const block = useMemo(() => {
     if (!selected || !data) return null;
@@ -63,43 +72,22 @@ export function DetailSheet() {
   const sunrise = data.daily.sunrise?.[di];
   const sunset = data.daily.sunset?.[di];
 
-  const addToPlanner = () => {
-    planner.add({
-      id: Date.now(),
-      activityId: st.activity,
-      day,
-      h,
-      len,
-      locName: st.loc.name,
-      lat: st.loc.lat,
-      lon: st.loc.lon,
-      baseScore: b.score,
-      baseBand: b.band,
-    });
-  };
+  const session = (id: number): PlannedSession => ({
+    id,
+    activityId: st.activity,
+    day,
+    h,
+    len,
+    locName: st.loc.name,
+    lat: st.loc.lat,
+    lon: st.loc.lon,
+    baseScore: b.score,
+    baseBand: b.band,
+    ...(purpose ? { purpose } : {}),
+    ...(note.trim() ? { note: note.trim() } : {}),
+  });
 
-  const dlIcs = () => {
-    const ics = sessionsToIcs(
-      [
-        {
-          id: Date.now(),
-          activityId: st.activity,
-          day,
-          h,
-          len,
-          locName: st.loc.name,
-          lat: st.loc.lat,
-          lon: st.loc.lon,
-          baseScore: b.score,
-          baseBand: b.band,
-        },
-      ],
-      () => b,
-      t,
-      nameOf,
-    );
-    downloadFile(ics, 'blockcast-session.ics', 'text/calendar');
-  };
+  const addToPlanner = () => planner.add(session(Date.now()));
 
   return (
     <Sheet open={detailOpen} onClose={closeDetail} ariaLabel={t.detail.title}>
@@ -134,13 +122,33 @@ export function DetailSheet() {
         }
       />
 
+      <div className={s.planExtras}>
+        <select
+          className={uiCss.select}
+          value={purpose}
+          onChange={(e) => setPurpose(e.target.value as Purpose | '')}
+          aria-label={t.planner.purposeNone}
+        >
+          <option value="">{t.planner.purposeNone}</option>
+          {PURPOSES.map((k) => (
+            <option key={k} value={k}>
+              {t.planner.purposes[k]}
+            </option>
+          ))}
+        </select>
+        <input
+          className={`${uiCss.input} ${s.noteInput}`}
+          value={note}
+          placeholder={t.planner.notePh}
+          onChange={(e) => setNote(e.target.value)}
+        />
+      </div>
+
       <div className={s.actions}>
         <Button onClick={addToPlanner} disabled={already}>
           {already ? `✓ ${t.detail.inPlanner}` : `➕ ${t.detail.addPlanner}`}
         </Button>
-        <Button variant="ghost" onClick={dlIcs}>
-          ⬇ {t.detail.ics}
-        </Button>
+        <AddToCalendar dropUp event={sessionToIcsEvent(session(0), b, t, nameOf)} />
       </div>
     </Sheet>
   );

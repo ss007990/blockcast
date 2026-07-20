@@ -10,6 +10,7 @@ export interface PlannerState {
   sessions: PlannedSession[];
   add: (s: PlannedSession) => void;
   remove: (id: number) => void;
+  update: (id: number, patch: Partial<Pick<PlannedSession, 'purpose' | 'note'>>) => void;
   /** Drop sessions more than a day in the past (location wall clock). */
   prune: (cutKey: string) => void;
   /** Set the baseline band for sessions that don't have one yet. */
@@ -27,6 +28,10 @@ export const usePlanner = create<PlannerState>()(
           sessions: [...st.sessions, s].sort((a, b) => (planKey(a) < planKey(b) ? -1 : 1)),
         })),
       remove: (id) => set((st) => ({ sessions: st.sessions.filter((s) => s.id !== id) })),
+      update: (id, patch) =>
+        set((st) => ({
+          sessions: st.sessions.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+        })),
       prune: (cutKey) =>
         set((st) => {
           const sessions = st.sessions.filter((s) => planKey(s) > cutKey);

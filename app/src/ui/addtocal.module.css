@@ -1,0 +1,51 @@
+.wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.iconBtn {
+  color: var(--ink-3);
+  font-size: 15px;
+  padding: 6px;
+  border-radius: 50%;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.iconBtn:hover {
+  color: var(--ink);
+  background: var(--line);
+}
+
+.menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  box-shadow: var(--shadow-2);
+  min-width: 210px;
+  padding: 6px;
+  display: grid;
+}
+
+.menu button {
+  text-align: left;
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.menu button:hover {
+  background: var(--line);
+}
+
+.up {
+  top: auto;
+  bottom: calc(100% + 6px);
+}

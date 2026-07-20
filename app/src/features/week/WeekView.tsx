@@ -111,7 +111,7 @@ function HeatBoard() {
     );
   }
 
-  const dayKeys = forecastDayKeys(data);
+  const dayKeys = forecastDayKeys(data, st.planDays);
   const starts: number[] = [];
   for (let h = st.hFrom; h < st.hTo; h += st.blockLen) starts.push(h);
   const blockEnd = (h0: number) => Math.min(h0 + st.blockLen, st.hTo);
@@ -125,6 +125,14 @@ function HeatBoard() {
         <h2>
           {nameOf(st.activity)} {t.board.weekGlance}
         </h2>
+        <button
+          className={s.extendBtn}
+          onClick={() => st.setPlanDays(st.planDays === 7 ? 14 : 7)}
+          aria-pressed={st.planDays === 14}
+        >
+          {st.planDays === 7 ? t.board.nextWeek : t.board.backWeek}
+        </button>
+        {st.planDays === 14 && <span className={s.confNote}>{t.board.lowConf}</span>}
         <div className={s.legend}>
           <span>
             <span className={s.dot} style={{ background: 'var(--green-vivid)' }} />
@@ -143,13 +151,19 @@ function HeatBoard() {
 
       <div
         className={s.grid}
-        style={{ gridTemplateColumns: `76px repeat(${dayKeys.length}, minmax(0,1fr))` }}
+        style={{
+          gridTemplateColumns: `76px repeat(${dayKeys.length}, minmax(0,1fr))`,
+          minWidth: dayKeys.length > 7 ? 1080 : undefined,
+        }}
       >
         <div />
-        {dayKeys.map((d) => {
+        {dayKeys.map((d, i) => {
           const di = dailyIdx(d);
+          const cls = [s.gh, d === todayISO ? s.ghToday : '', i >= 7 ? s.ext : '']
+            .filter(Boolean)
+            .join(' ');
           return (
-            <div className={d === todayISO ? `${s.gh} ${s.ghToday}` : s.gh} key={d}>
+            <div className={cls} key={d}>
               <b>{d === todayISO ? t.common.today : fmtWeekdayShort(d, locale)}</b>
               <span className="ico" style={{ fontSize: 19, display: 'block', margin: '2px 0' }}>
                 {wmoIcon(data.daily.weather_code[di] ?? 0)}
@@ -171,7 +185,7 @@ function HeatBoard() {
               <div className={s.tlabel}>
                 {formatHour(h0, st.clock)} – {formatHour(end, st.clock)}
               </div>
-              {dayKeys.map((d) => {
+              {dayKeys.map((d, i) => {
                 const b = getBlock(data, d, h0, Math.max(1, end - h0), crit, tolMult);
                 if (!b) return <div key={d} className={`${s.cell} ${s.past}`} />;
                 const isPast = (d === todayISO && end <= now.getHours()) || d < todayISO;
@@ -184,6 +198,7 @@ function HeatBoard() {
                   b.band === 'g' ? s.rg : b.band === 'y' ? s.ry : s.rr,
                   isPast ? s.past : '',
                   isSel ? s.sel : '',
+                  i >= 7 ? s.ext : '',
                 ]
                   .filter(Boolean)
                   .join(' ');

@@ -29,13 +29,15 @@ async function fetchMarine(lat: number, lon: number): Promise<MarineResponse | n
   }
 }
 
+// 14 days for the two-week planner; the marine fetch stays at 7 — the wave
+// model's horizon is ~8 days, so week 2 scores without swell/tide factors.
 export async function fetchForecast(lat: number, lon: number): Promise<ForecastData> {
   const u = new URL('https://api.open-meteo.com/v1/forecast');
   u.search = new URLSearchParams({
     latitude: String(lat),
     longitude: String(lon),
     timezone: 'auto',
-    forecast_days: '7',
+    forecast_days: '14',
     past_days: String(PAST_DAYS),
     hourly:
       'temperature_2m,apparent_temperature,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,cloud_cover,uv_index,snowfall,snow_depth',

@@ -53,7 +53,7 @@ async function fetchForecast(lat: number, lon: number): Promise<ForecastData> {
     latitude: String(lat),
     longitude: String(lon),
     timezone: 'auto',
-    forecast_days: '7',
+    forecast_days: '14',
     past_days: '2',
     hourly:
       'temperature_2m,apparent_temperature,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,cloud_cover,uv_index,snowfall,snow_depth',

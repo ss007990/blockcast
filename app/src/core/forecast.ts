@@ -169,11 +169,11 @@ export function getBlock(
   return { f, score, band: riskBand(score) };
 }
 
-/** The forecast days to display: today plus the coming week. */
-export function forecastDayKeys(data: ForecastData): string[] {
+/** The forecast days to display: today plus the coming days (one week by default). */
+export function forecastDayKeys(data: ForecastData, days = 7): string[] {
   return Object.keys(data.days)
     .sort()
-    .slice(data.pastDays, data.pastDays + 7);
+    .slice(data.pastDays, data.pastDays + days);
 }
 
 /** Wall-clock "now" at the forecast location, given the browser's clock. */

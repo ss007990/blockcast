@@ -16,6 +16,7 @@ import { importV1, KEYS } from '../services/storage';
 
 export type ThemeChoice = 'system' | 'light' | 'dark';
 export type BlockLen = 2 | 3 | 4 | 6;
+export type PlanDays = 7 | 14;
 
 export interface Place {
   name: string;
@@ -28,6 +29,8 @@ type Tune = { w?: Partial<Weights>; tMin?: number; tMax?: number };
 export interface SettingsState {
   activity: ActivityId;
   blockLen: BlockLen;
+  /** Days shown on the week board: one week, or two for extended planning. */
+  planDays: PlanDays;
   tolerance: Tolerance;
   hFrom: number;
   hTo: number;
@@ -44,6 +47,7 @@ export interface SettingsState {
 
   setActivity: (a: ActivityId) => void;
   setBlockLen: (b: BlockLen) => void;
+  setPlanDays: (d: PlanDays) => void;
   setTolerance: (t: Tolerance) => void;
   setHours: (from: number, to: number) => void;
   setWeight: (act: ActivityId, k: keyof Weights, v: number) => void;
@@ -64,6 +68,7 @@ const v1 = importV1(localStorage);
 const defaults = {
   activity: v1.activity ?? ('tennis' as ActivityId),
   blockLen: v1.blockLen ?? (4 as BlockLen),
+  planDays: 7 as PlanDays,
   tolerance: v1.tolerance ?? ('balanced' as Tolerance),
   hFrom: v1.hFrom ?? 6,
   hTo: v1.hTo ?? 20,
@@ -84,6 +89,7 @@ export const useSettings = create<SettingsState>()(
 
       setActivity: (activity) => set({ activity }),
       setBlockLen: (blockLen) => set({ blockLen }),
+      setPlanDays: (planDays) => set({ planDays }),
       setTolerance: (tolerance) => set({ tolerance }),
       setHours: (hFrom, hTo) =>
         set(() =>

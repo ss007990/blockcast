@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { TOL_MULT } from '../../core/activities';
+import { PURPOSES, type Purpose } from '../../core/alerts';
 import { ActivityIcon } from '../../ui/ActivityIcon';
+import { AddToCalendar } from '../../ui/AddToCalendar';
 import { formatHour } from '../../core/units';
 import { useActivityName, useLocale, useT } from '../../hooks';
-import { downloadFile, sessionsToIcs } from '../../lib/download';
+import { downloadFile, sessionsToIcs, sessionToIcsEvent } from '../../lib/download';
 import { fmtWeekdayShort } from '../../lib/format';
 import { pushAvailability, subscribePush } from '../../services/push';
 import { useForecast } from '../../state/forecast';
@@ -19,7 +21,7 @@ export function PlannerView() {
   const nameOf = useActivityName();
   const st = useSettings();
   const { data, dataFor } = useForecast();
-  const { sessions, remove } = usePlanner();
+  const { sessions, remove, update } = usePlanner();
   const [pushState, setPushState] = useState<'idle' | 'busy' | 'on'>('idle');
 
   const checkOf = (p: (typeof sessions)[number]) =>
@@ -65,6 +67,29 @@ export function PlannerView() {
                     {formatHour(p.h, st.clock)}–{formatHour(Math.min(p.h + p.len, 24), st.clock)} ·{' '}
                     {p.locName}
                   </div>
+                  <div className={s.meta}>
+                    <select
+                      className={uiCss.select}
+                      value={p.purpose ?? ''}
+                      onChange={(e) =>
+                        update(p.id, { purpose: (e.target.value || undefined) as Purpose | undefined })
+                      }
+                      aria-label={t.planner.purposeNone}
+                    >
+                      <option value="">{t.planner.purposeNone}</option>
+                      {PURPOSES.map((k) => (
+                        <option key={k} value={k}>
+                          {t.planner.purposes[k]}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      className={`${uiCss.input} ${s.note}`}
+                      value={p.note ?? ''}
+                      placeholder={t.planner.notePh}
+                      onChange={(e) => update(p.id, { note: e.target.value || undefined })}
+                    />
+                  </div>
                 </div>
                 {b ? (
                   <BandChip band={b.band}>
@@ -73,6 +98,7 @@ export function PlannerView() {
                 ) : (
                   <BandChip band={null}>{t.common.noData}</BandChip>
                 )}
+                <AddToCalendar compact event={sessionToIcsEvent(p, b, t, nameOf)} />
                 <button
                   className={s.del}
                   onClick={() => remove(p.id)}
