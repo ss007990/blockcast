@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { TOL_MULT } from '../../core/activities';
 import { PURPOSES, type PlannedSession, type Purpose } from '../../core/alerts';
 import { ActivityIcon } from '../../ui/ActivityIcon';
@@ -38,10 +38,13 @@ export function DetailSheet() {
 
   const [purpose, setPurpose] = useState<Purpose | ''>('');
   const [note, setNote] = useState('');
-  useEffect(() => {
+  // purpose/note belong to one block: reset them when the selection moves
+  const [prevSel, setPrevSel] = useState(selected);
+  if (selected !== prevSel) {
+    setPrevSel(selected);
     setPurpose('');
     setNote('');
-  }, [selected]);
+  }
 
   const block = useMemo(() => {
     if (!selected || !data) return null;
