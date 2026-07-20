@@ -31,6 +31,20 @@ export interface Subscription {
   keys: { p256dh: string; auth: string };
 }
 
+/** One entry of a subscribable calendar feed: a planned session plus the
+ * calendar-facing extras (purpose tag, freeform note). */
+export interface FeedSession extends StoredSession {
+  purpose?: string;
+  note?: string;
+}
+
+/** A user's calendar feed, keyed in KV by `cal:<token>`. */
+export interface StoredFeed {
+  sessions: FeedSession[];
+  lang: 'en' | 'fr';
+  updatedAt: number;
+}
+
 export interface StoredSub {
   subscription: Subscription;
   sessions: StoredSession[];

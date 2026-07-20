@@ -169,6 +169,16 @@ export const fr: Dict = {
       travel: 'Voyage',
     },
     notePh: 'Ajouter une note — p. ex. « Tennis avec Jean, 9–10 »',
+    feedEnable: 'Synchroniser avec mon calendrier',
+    feedHint:
+      'Obtenez un lien de calendrier privé — abonnez-vous une fois et chaque séance planifiée apparaît automatiquement.',
+    feedOn: 'Synchronisation active — abonnez-vous dans votre app de calendrier :',
+    feedApple: 'Calendrier Apple',
+    feedCopy: 'Copier le lien',
+    feedCopied: '✓ Copié',
+    feedNote:
+      'Vos séances se synchronisent en quelques secondes. Google et Outlook actualisent les calendriers abonnés à leur propre rythme — quelques heures peuvent s’écouler avant l’apparition des nouvelles séances.',
+    feedOff: 'Désactiver la synchronisation',
     notifyMe: 'M’alerter si les prévisions changent',
     notifyDenied: 'Les notifications sont bloquées dans les réglages de votre navigateur.',
     notifyUnsupported:

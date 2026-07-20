@@ -41,9 +41,13 @@ export interface IcsEvent {
   description: string;
 }
 
-export function buildCalendar(events: IcsEvent[], nowIso: string): string {
+export function buildCalendar(events: IcsEvent[], nowIso: string, calName?: string): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   const stamp = nowIso.replace(/[-:]/g, '').slice(0, 15) + 'Z';
+  // subscription feeds get a display name and a refresh hint for polling clients
+  const head = calName
+    ? [`X-WR-CALNAME:${icsEsc(calName)}`, 'X-PUBLISHED-TTL:PT3H', 'REFRESH-INTERVAL;VALUE=DURATION:PT3H']
+    : [];
   const lines = events.flatMap((e) => {
     const d = e.day.replace(/-/g, '');
     return [
@@ -58,7 +62,7 @@ export function buildCalendar(events: IcsEvent[], nowIso: string): string {
       'END:VEVENT',
     ];
   });
-  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//BlockCast//EN', ...lines, 'END:VCALENDAR']
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//BlockCast//EN', ...head, ...lines, 'END:VCALENDAR']
     .map(foldIcs)
     .join('\r\n');
 }

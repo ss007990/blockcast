@@ -8,6 +8,7 @@ import { useActivityName, useLocale, useT } from '../../hooks';
 import { sessionToIcsEvent } from '../../lib/download';
 import { fmtWeekdayShort } from '../../lib/format';
 import { pushAvailability, subscribePush } from '../../services/push';
+import { CalendarFeed } from './CalendarFeed';
 import { useForecast } from '../../state/forecast';
 import { checkSession, usePlanner } from '../../state/planner';
 import { critFor, useSettings } from '../../state/settings';
@@ -119,6 +120,8 @@ export function PlannerView() {
           />
         </div>
       )}
+
+      <CalendarFeed />
 
       {sessions.length > 0 && (
         <div className={s.pushRow}>

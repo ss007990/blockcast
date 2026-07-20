@@ -44,6 +44,8 @@ export interface SettingsState {
   loc: Place;
   /** True once geolocation/v1 import decided the starting location. */
   locChosen: boolean;
+  /** Capability token for the subscribable calendar feed; null = feed off. */
+  calFeedToken: string | null;
 
   setActivity: (a: ActivityId) => void;
   setBlockLen: (b: BlockLen) => void;
@@ -61,6 +63,7 @@ export interface SettingsState {
   setClock: (c: ClockFormat) => void;
   setTheme: (t: ThemeChoice) => void;
   setLoc: (p: Place, chosen?: boolean) => void;
+  setCalFeedToken: (t: string | null) => void;
 }
 
 const v1 = importV1(localStorage);
@@ -80,6 +83,7 @@ const defaults = {
   theme: 'system' as ThemeChoice,
   loc: v1.loc ?? { name: 'Québec', lat: 46.8131, lon: -71.2075 },
   locChosen: v1.loc != null,
+  calFeedToken: null as string | null,
 };
 
 export const useSettings = create<SettingsState>()(
@@ -130,6 +134,7 @@ export const useSettings = create<SettingsState>()(
       setClock: (clock) => set({ clock }),
       setTheme: (theme) => set({ theme }),
       setLoc: (loc, chosen = true) => set({ loc, locChosen: chosen }),
+      setCalFeedToken: (calFeedToken) => set({ calFeedToken }),
     }),
     { name: KEYS.settings, version: 2 },
   ),

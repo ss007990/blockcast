@@ -2,7 +2,8 @@
 // subscribed sessions on a cron, pushing when a forecast band changes.
 
 import { runChecks } from './check';
-import type { Env } from './types';
+import { feedKey, feedToIcs, isFeedToken, parseFeedBody } from './feed';
+import type { Env, StoredFeed } from './types';
 import { endpointKey, parseSubscribeBody } from './validate';
 
 function corsHeaders(req: Request, env: Env): Record<string, string> {
@@ -10,7 +11,7 @@ function corsHeaders(req: Request, env: Env): Record<string, string> {
   const allowed = env.ALLOWED_ORIGINS.split(',').map((s) => s.trim());
   return {
     'Access-Control-Allow-Origin': allowed.includes(origin) ? origin : allowed[0] ?? '',
-    'Access-Control-Allow-Methods': 'POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'content-type',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
@@ -29,6 +30,52 @@ export default {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
 
     const url = new URL(req.url);
+
+    // /api/calendar/<token>[.ics] — the subscribable feed. GET serves the
+    // calendar (polled by Apple/Google/Outlook, no Origin header), PUT syncs
+    // the app's planner into KV, DELETE turns the feed off.
+    const cal = url.pathname.match(/^\/api\/calendar\/([a-f0-9]+)(\.ics)?$/);
+    if (cal) {
+      const token = cal[1]!;
+      if (!isFeedToken(token)) return json(404, { error: 'not found' }, cors);
+
+      if (req.method === 'GET') {
+        const feed = await env.SUBS.get<StoredFeed>(feedKey(token), 'json');
+        if (!feed) return json(404, { error: 'not found' }, cors);
+        return new Response(feedToIcs(feed), {
+          headers: {
+            'content-type': 'text/calendar; charset=utf-8',
+            'cache-control': 'no-store',
+            ...cors,
+          },
+        });
+      }
+
+      if (req.method === 'PUT') {
+        let raw: unknown;
+        try {
+          raw = await req.json();
+        } catch {
+          return json(400, { error: 'invalid JSON' }, cors);
+        }
+        const feed = parseFeedBody(raw);
+        if (!feed) return json(400, { error: 'invalid feed payload' }, cors);
+        await env.SUBS.put(feedKey(token), JSON.stringify(feed), {
+          // sessions live at most 14 days out; 90 d survives quiet spells,
+          // and every sync renews the clock
+          expirationTtl: 90 * 24 * 3600,
+        });
+        return json(200, { ok: true }, cors);
+      }
+
+      if (req.method === 'DELETE') {
+        await env.SUBS.delete(feedKey(token));
+        return json(200, { ok: true }, cors);
+      }
+
+      return json(405, { error: 'method not allowed' }, cors);
+    }
+
     if (url.pathname !== '/api/subscribe') return json(404, { error: 'not found' }, cors);
 
     if (req.method === 'POST') {

@@ -14,6 +14,7 @@ import { SettingsView } from './features/settings/SettingsView';
 import { WeekView } from './features/week/WeekView';
 import { Masthead, TabBar } from './shell/Header';
 import s from './shell/shell.module.css';
+import { syncFeed } from './services/calendarFeed';
 import { useAlerts } from './state/alerts';
 import { useForecast } from './state/forecast';
 import { checkSession, usePlanner } from './state/planner';
@@ -24,8 +25,9 @@ export function App() {
   useThemeEffect();
   const t = useT();
   const tab = useUi((u) => u.tab);
-  const { loc, locChosen, setLoc, lang } = useSettings();
+  const { loc, locChosen, setLoc, lang, calFeedToken, customActivities } = useSettings();
   const { data, dataFor, load } = useForecast();
+  const sessions = usePlanner((p) => p.sessions);
 
   // fetch a fresh forecast whenever the location changes
   useEffect(() => {
@@ -86,6 +88,16 @@ export function App() {
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
+
+  // calendar feed on: mirror every planner change to the worker (debounced)
+  useEffect(() => {
+    if (!calFeedToken) return;
+    const timer = setTimeout(
+      () => void syncFeed(calFeedToken, sessions, customActivities, lang),
+      1200,
+    );
+    return () => clearTimeout(timer);
+  }, [calFeedToken, sessions, customActivities, lang]);
 
   return (
     <>

@@ -81,6 +81,7 @@ export async function runChecks(env: Env): Promise<void> {
     cursor = page.list_complete ? undefined : page.cursor;
 
     for (const entry of page.keys) {
+      if (entry.name.startsWith('cal:')) continue; // calendar feeds, not push subs
       const sub = await env.SUBS.get<StoredSub>(entry.name, 'json');
       if (!sub) continue;
 
