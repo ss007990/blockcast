@@ -151,7 +151,7 @@ export function DetailSheet() {
         <Button onClick={addToPlanner} disabled={already}>
           {already ? `✓ ${t.detail.inPlanner}` : `➕ ${t.detail.addPlanner}`}
         </Button>
-        <AddToCalendar dropUp event={sessionToIcsEvent(session(0), b, t, nameOf)} />
+        <AddToCalendar dropUp items={[{ event: sessionToIcsEvent(session(0), b, t, nameOf) }]} />
       </div>
     </Sheet>
   );

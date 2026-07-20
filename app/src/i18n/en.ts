@@ -149,8 +149,10 @@ export const en = {
   planner: {
     title: 'My planner',
     empty: 'No sessions planned yet. Pick a green block!',
-    exportAll: 'Export all to calendar (.ics)',
     addCal: 'Add to calendar',
+    addAllCal: 'Add all to calendar',
+    calOpenEach: 'Click each session to add it',
+    calBack: '← Back',
     calGoogle: 'Google Calendar',
     calOutlook: 'Outlook.com',
     calOffice: 'Microsoft 365 (work/school)',

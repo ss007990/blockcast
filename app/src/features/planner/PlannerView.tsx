@@ -5,7 +5,7 @@ import { ActivityIcon } from '../../ui/ActivityIcon';
 import { AddToCalendar } from '../../ui/AddToCalendar';
 import { formatHour } from '../../core/units';
 import { useActivityName, useLocale, useT } from '../../hooks';
-import { downloadFile, sessionsToIcs, sessionToIcsEvent } from '../../lib/download';
+import { sessionToIcsEvent } from '../../lib/download';
 import { fmtWeekdayShort } from '../../lib/format';
 import { pushAvailability, subscribePush } from '../../services/push';
 import { useForecast } from '../../state/forecast';
@@ -26,10 +26,6 @@ export function PlannerView() {
 
   const checkOf = (p: (typeof sessions)[number]) =>
     checkSession(p, data, dataFor, critFor(st, p.activityId), TOL_MULT[st.tolerance]);
-
-  const exportAll = () => {
-    downloadFile(sessionsToIcs(sessions, checkOf, t, nameOf), 'blockcast-sessions.ics', 'text/calendar');
-  };
 
   const availability = pushAvailability();
   const enablePush = async () => {
@@ -98,7 +94,7 @@ export function PlannerView() {
                 ) : (
                   <BandChip band={null}>{t.common.noData}</BandChip>
                 )}
-                <AddToCalendar compact event={sessionToIcsEvent(p, b, t, nameOf)} />
+                <AddToCalendar compact items={[{ event: sessionToIcsEvent(p, b, t, nameOf) }]} />
                 <button
                   className={s.del}
                   onClick={() => remove(p.id)}
@@ -112,11 +108,17 @@ export function PlannerView() {
         </div>
       )}
 
-      <div className={s.foot}>
-        <Button onClick={exportAll} disabled={!sessions.length}>
-          ⬇ {t.planner.exportAll}
-        </Button>
-      </div>
+      {sessions.length > 0 && (
+        <div className={s.foot}>
+          <AddToCalendar
+            label={t.planner.addAllCal}
+            items={sessions.map((p) => ({
+              event: sessionToIcsEvent(p, checkOf(p), t, nameOf),
+              label: `${nameOf(p.activityId)} · ${fmtWeekdayShort(p.day, locale)} ${formatHour(p.h, st.clock)}`,
+            }))}
+          />
+        </div>
+      )}
 
       {sessions.length > 0 && (
         <div className={s.pushRow}>

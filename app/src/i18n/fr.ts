@@ -151,8 +151,10 @@ export const fr: Dict = {
   planner: {
     title: 'Mon planificateur',
     empty: 'Aucune séance planifiée. Choisissez un bloc vert!',
-    exportAll: 'Tout exporter au calendrier (.ics)',
     addCal: 'Ajouter au calendrier',
+    addAllCal: 'Tout ajouter au calendrier',
+    calOpenEach: 'Cliquez chaque séance pour l’ajouter',
+    calBack: '← Retour',
     calGoogle: 'Google Agenda',
     calOutlook: 'Outlook.com',
     calOffice: 'Microsoft 365 (travail/école)',
