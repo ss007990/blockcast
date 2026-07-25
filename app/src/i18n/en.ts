@@ -48,12 +48,12 @@ export const en = {
   },
 
   radar: {
-    title: 'Rain radar',
-    hint: 'Live radar around your spot — the last 2 h observed, plus a short projection when available.',
-    play: 'Play',
-    pause: 'Pause',
-    proj: 'projected',
-    unavailable: 'Radar unavailable — check your connection.',
+    title: 'Radar & next hours',
+    modeCast: 'Hours ahead',
+    modeObs: 'Observed radar',
+    hintCast:
+      'Model rain animation for the hours ahead — press play or scrub the timeline at the bottom.',
+    hintObs: 'What actually fell — the last hours of live radar.',
   },
 
   controls: {

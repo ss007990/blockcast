@@ -50,12 +50,12 @@ export const fr: Dict = {
   },
 
   radar: {
-    title: 'Radar des précipitations',
-    hint: 'Radar en direct autour de votre endroit — 2 dernières heures observées, plus une courte projection lorsque disponible.',
-    play: 'Lecture',
-    pause: 'Pause',
-    proj: 'projeté',
-    unavailable: 'Radar indisponible — vérifiez votre connexion.',
+    title: 'Radar et prochaines heures',
+    modeCast: 'Prochaines heures',
+    modeObs: 'Radar observé',
+    hintCast:
+      'Animation de pluie prévue pour les prochaines heures — lancez la lecture ou parcourez la ligne du temps en bas.',
+    hintObs: 'Ce qui est réellement tombé — les dernières heures de radar en direct.',
   },
 
   controls: {
