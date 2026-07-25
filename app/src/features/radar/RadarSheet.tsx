@@ -11,7 +11,13 @@ import { Segmented } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 import s from './radar.module.css';
 
-type Mode = 'cast' | 'obs';
+type Mode = 'rain' | 'wind' | 'obs';
+
+const OVERLAY: Record<Mode, string> = {
+  rain: '&overlay=rain&product=ecmwf',
+  wind: '&overlay=wind&product=ecmwf',
+  obs: '&overlay=radar&product=radar',
+};
 
 export function RadarSheet() {
   const { radarOpen, setRadarOpen } = useUi();
@@ -26,7 +32,7 @@ export function RadarSheet() {
 function RadarContent() {
   const t = useT();
   const st = useSettings();
-  const [mode, setMode] = useState<Mode>('cast');
+  const [mode, setMode] = useState<Mode>('rain');
   const { lat, lon } = st.loc;
   const metric = st.units !== 'imperial';
 
@@ -35,7 +41,10 @@ function RadarContent() {
     `?lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}` +
     '&zoom=8&level=surface&type=map&location=coordinates&marker=true&message=true&calendar=now' +
     `&metricWind=${metric ? 'km%2Fh' : 'mph'}&metricTemp=${metric ? '%C2%B0C' : '%C2%B0F'}` +
-    (mode === 'cast' ? '&overlay=rain&product=ecmwf' : '&overlay=radar&product=radar');
+    OVERLAY[mode];
+
+  const hint =
+    mode === 'rain' ? t.radar.hintRain : mode === 'wind' ? t.radar.hintWind : t.radar.hintObs;
 
   return (
     <div>
@@ -43,7 +52,8 @@ function RadarContent() {
       <div className={s.modes}>
         <Segmented<Mode>
           options={[
-            { value: 'cast', label: t.radar.modeCast },
+            { value: 'rain', label: t.radar.modeRain },
+            { value: 'wind', label: t.radar.modeWind },
             { value: 'obs', label: t.radar.modeObs },
           ]}
           value={mode}
@@ -51,7 +61,7 @@ function RadarContent() {
           ariaLabel={t.radar.title}
         />
       </div>
-      <div className={s.hint}>{mode === 'cast' ? t.radar.hintCast : t.radar.hintObs}</div>
+      <div className={s.hint}>{hint}</div>
       <iframe key={mode} className={s.frame} src={src} title={t.radar.title} loading="lazy" />
       <div className={s.credit}>
         <a href="https://www.windy.com/">Windy.com</a>

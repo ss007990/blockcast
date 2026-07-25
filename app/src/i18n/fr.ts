@@ -51,10 +51,13 @@ export const fr: Dict = {
 
   radar: {
     title: 'Radar et prochaines heures',
-    modeCast: 'Prochaines heures',
+    modeRain: 'Pluie à venir',
+    modeWind: 'Vent à venir',
     modeObs: 'Radar observé',
-    hintCast:
+    hintRain:
       'Animation de pluie prévue pour les prochaines heures — lancez la lecture ou parcourez la ligne du temps en bas.',
+    hintWind:
+      'Vitesse et direction du vent pour les prochaines heures — même ligne du temps, animée en flux.',
     hintObs: 'Ce qui est réellement tombé — les dernières heures de radar en direct.',
   },
 
