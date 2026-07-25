@@ -46,6 +46,16 @@ export const fr: Dict = {
     plan: 'Planifier',
     sunrise: 'Lever',
     sunset: 'Coucher',
+    radar: 'Radar',
+  },
+
+  radar: {
+    title: 'Radar des précipitations',
+    hint: 'Radar en direct autour de votre endroit — 2 dernières heures observées, plus une courte projection lorsque disponible.',
+    play: 'Lecture',
+    pause: 'Pause',
+    proj: 'projeté',
+    unavailable: 'Radar indisponible — vérifiez votre connexion.',
   },
 
   controls: {
@@ -206,6 +216,8 @@ export const fr: Dict = {
     mySpots: 'Mes endroits',
     saveSpot: 'Enregistrer',
     change: 'Changer d’emplacement…',
+    layerSat: 'Satellite',
+    layerMap: 'Carte',
   },
 
   settings: {

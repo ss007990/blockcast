@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import type { Map as LeafletMap, Marker } from 'leaflet';
+import type { Map as LeafletMap, Marker, TileLayer } from 'leaflet';
 import { distKm, parseLocQuery, rankLocResults, type GeoResult } from '../../core/geo';
 import { useT } from '../../hooks';
 import { reverseGeocode, searchCities } from '../../services/geocoding';
@@ -35,7 +35,20 @@ function LocationContent() {
   const mapDiv = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
+  const baseLayers = useRef<{ sat: TileLayer; osm: TileLayer } | null>(null);
   const [mapErr, setMapErr] = useState(false);
+  // satellite by default — terrain beats street names for spotting a trail
+  // head, a beach, a boat launch
+  const [base, setBase] = useState<'sat' | 'map'>('sat');
+
+  const switchBase = (b: 'sat' | 'map') => {
+    const ls = baseLayers.current;
+    const map = mapRef.current;
+    if (!ls || !map || b === base) return;
+    map.removeLayer(b === 'sat' ? ls.osm : ls.sat);
+    (b === 'sat' ? ls.sat : ls.osm).addTo(map);
+    setBase(b);
+  };
 
   const choose = (name: string, lat: number, lon: number) => {
     st.setLoc({ name, lat: +lat.toFixed(4), lon: +lon.toFixed(4) });
@@ -113,10 +126,16 @@ function LocationContent() {
         const L = (await import('leaflet')).default;
         if (disposed || !mapDiv.current || mapRef.current) return;
         const map = L.map(mapDiv.current).setView([st.loc.lat, st.loc.lon], 9);
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 17,
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        }).addTo(map);
+        });
+        const sat = L.tileLayer(
+          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          { maxZoom: 17, attribution: '&copy; Esri — Maxar, Earthstar Geographics' },
+        );
+        sat.addTo(map);
+        baseLayers.current = { sat, osm };
         map.on('click', (e) => void onPick(L, map, e.latlng.lat, e.latlng.lng));
         mapRef.current = map;
         setTimeout(() => map.invalidateSize(), 50);
@@ -222,7 +241,25 @@ function LocationContent() {
       {mapErr ? (
         <div className={uiCss.empty}>{t.location.mapUnavail}</div>
       ) : (
-        <div ref={mapDiv} className={s.map} />
+        <div className={s.mapWrap}>
+          <div ref={mapDiv} className={s.map} />
+          <div className={s.layerToggle} role="group" aria-label={t.location.layerSat}>
+            <button
+              className={base === 'sat' ? s.layerOn : undefined}
+              aria-pressed={base === 'sat'}
+              onClick={() => switchBase('sat')}
+            >
+              {t.location.layerSat}
+            </button>
+            <button
+              className={base === 'map' ? s.layerOn : undefined}
+              aria-pressed={base === 'map'}
+              onClick={() => switchBase('map')}
+            >
+              {t.location.layerMap}
+            </button>
+          </div>
+        </div>
       )}
 
       {pick && (

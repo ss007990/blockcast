@@ -9,6 +9,7 @@ import { DetailSheet } from './features/detail/DetailSheet';
 import { AddActivitySheet } from './ui/AddActivitySheet';
 import { TodayView } from './features/home/TodayView';
 import { LocationSheet } from './features/location/LocationSheet';
+import { RadarSheet } from './features/radar/RadarSheet';
 import { PlannerView } from './features/planner/PlannerView';
 import { SettingsView } from './features/settings/SettingsView';
 import { WeekView } from './features/week/WeekView';
@@ -123,6 +124,7 @@ export function App() {
       <TabBar />
       <DetailSheet />
       <LocationSheet />
+      <RadarSheet />
       <AlertsSheet />
       <AddActivitySheet />
     </>

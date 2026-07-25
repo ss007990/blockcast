@@ -15,6 +15,7 @@ export interface UiState {
   alertsOpen: boolean;
   tuneOpen: boolean;
   addActOpen: boolean;
+  radarOpen: boolean;
 
   setTab: (t: Tab) => void;
   select: (b: SelectedBlock | null) => void;
@@ -23,6 +24,7 @@ export interface UiState {
   setAlertsOpen: (v: boolean) => void;
   setTuneOpen: (v: boolean) => void;
   setAddActOpen: (v: boolean) => void;
+  setRadarOpen: (v: boolean) => void;
 }
 
 const TABS: Tab[] = ['today', 'week', 'planner', 'settings'];
@@ -40,6 +42,7 @@ export const useUi = create<UiState>()((set) => ({
   alertsOpen: false,
   tuneOpen: false,
   addActOpen: false,
+  radarOpen: false,
 
   setTab: (tab) => {
     history.replaceState(null, '', `#${tab}`);
@@ -51,4 +54,5 @@ export const useUi = create<UiState>()((set) => ({
   setAlertsOpen: (alertsOpen) => set({ alertsOpen }),
   setTuneOpen: (tuneOpen) => set({ tuneOpen }),
   setAddActOpen: (addActOpen) => set({ addActOpen }),
+  setRadarOpen: (radarOpen) => set({ radarOpen }),
 }));

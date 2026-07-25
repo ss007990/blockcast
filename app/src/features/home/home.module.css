@@ -207,6 +207,7 @@
 
 .skyFoot {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   margin-top: 14px;
@@ -218,6 +219,40 @@
   opacity: 0.92;
   position: relative;
   z-index: 1;
+}
+
+.footNow {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 8px;
+}
+
+/* radar lives here because its 3–4 h horizon is exactly this card's scope */
+.radarBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font);
+  font-size: 10.5px;
+  font-weight: 680;
+  letter-spacing: 0.02em;
+  padding: 3px 11px;
+  border-radius: 999px;
+  background: rgba(9, 12, 22, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: inherit;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.radarBtn:hover {
+  background: rgba(9, 12, 22, 0.55);
+  border-color: rgba(255, 255, 255, 0.55);
 }
 
 /* fine-print risk scale: 0–100 band bar so the numbers read as risk, not degrees */

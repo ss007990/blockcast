@@ -44,6 +44,16 @@ export const en = {
     plan: 'Plan it',
     sunrise: 'Sunrise',
     sunset: 'Sunset',
+    radar: 'Radar',
+  },
+
+  radar: {
+    title: 'Rain radar',
+    hint: 'Live radar around your spot — the last 2 h observed, plus a short projection when available.',
+    play: 'Play',
+    pause: 'Pause',
+    proj: 'projected',
+    unavailable: 'Radar unavailable — check your connection.',
   },
 
   controls: {
@@ -202,6 +212,8 @@ export const en = {
     mySpots: 'My spots',
     saveSpot: 'Save',
     change: 'Change location…',
+    layerSat: 'Satellite',
+    layerMap: 'Map',
   },
 
   settings: {

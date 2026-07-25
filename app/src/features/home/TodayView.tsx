@@ -44,7 +44,7 @@ export function TodayView() {
   const nameOf = useActivityName();
   const st = useSettings();
   const { data, status, error } = useForecast();
-  const { select, setLocOpen } = useUi();
+  const { select, setLocOpen, setRadarOpen } = useUi();
   const nowMs = useNowMs();
 
   const now = locNow(data, nowMs);
@@ -186,8 +186,11 @@ export function TodayView() {
         {sunrise && sunset && (
           <div className={s.skyFoot}>
             <span>🌅 {fmtIsoTime(sunrise, locale, st.clock)}</span>
-            <span>
+            <span className={s.footNow}>
               {t.home.now} · {t.home.feels} {cur ? formatTemp(cur.temp, st.units) : '–'}
+              <button className={s.radarBtn} onClick={() => setRadarOpen(true)}>
+                📡 {t.home.radar}
+              </button>
             </span>
             <span>🌇 {fmtIsoTime(sunset, locale, st.clock)}</span>
           </div>
