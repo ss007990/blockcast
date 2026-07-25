@@ -20,6 +20,7 @@ export function ActivityPicker() {
   const activity = useSettings((st) => st.activity);
   const setActivity = useSettings((st) => st.setActivity);
   const recents = useSettings((st) => st.recentActivities);
+  const removeRecent = useSettings((st) => st.removeRecentActivity);
   const customs = useSettings((st) => st.customActivities);
   const winter = useSeason();
   const setAddActOpen = useUi((u) => u.setAddActOpen);
@@ -134,17 +135,24 @@ export function ActivityPicker() {
         quick.map((id) => {
           const on = id === activity;
           return (
-            <button
-              key={id}
-              className={on ? `${s.quickChip} ${s.quickChipOn}` : s.quickChip}
-              aria-pressed={on}
-              onClick={() => setActivity(id)}
-            >
-              <span className={s.pickerIco} aria-hidden="true">
-                <ActivityIcon id={id} />
-              </span>
-              {nameOf(id)}
-            </button>
+            <span key={id} className={on ? `${s.quickChip} ${s.quickChipOn}` : s.quickChip}>
+              <button className={s.quickGo} aria-pressed={on} onClick={() => setActivity(id)}>
+                <span className={s.pickerIco} aria-hidden="true">
+                  <ActivityIcon id={id} />
+                </span>
+                {nameOf(id)}
+              </button>
+              {/* the current lens can't be dismissed — switch away first */}
+              {!on && (
+                <button
+                  className={s.quickX}
+                  aria-label={`${t.common.remove} ${nameOf(id)}`}
+                  onClick={() => removeRecent(id)}
+                >
+                  ×
+                </button>
+              )}
+            </span>
           );
         })}
     </div>

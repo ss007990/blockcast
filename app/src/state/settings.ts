@@ -52,6 +52,8 @@ export interface SettingsState {
   calFeedToken: string | null;
 
   setActivity: (a: ActivityId) => void;
+  /** Dismiss an activity from the quick-access chips. */
+  removeRecentActivity: (a: ActivityId) => void;
   setBlockLen: (b: BlockLen) => void;
   setPlanDays: (d: PlanDays) => void;
   setTolerance: (t: Tolerance) => void;
@@ -112,6 +114,8 @@ export const useSettings = create<SettingsState>()(
             ...s.recentActivities.filter((a) => a !== activity),
           ].slice(0, MAX_RECENT_ACTIVITIES),
         })),
+      removeRecentActivity: (id) =>
+        set((s) => ({ recentActivities: s.recentActivities.filter((a) => a !== id) })),
       setBlockLen: (blockLen) => set({ blockLen }),
       setPlanDays: (planDays) => set({ planDays }),
       setTolerance: (tolerance) => set({ tolerance }),
