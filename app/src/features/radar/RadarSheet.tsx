@@ -11,11 +11,12 @@ import { Segmented } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 import s from './radar.module.css';
 
-type Mode = 'rain' | 'wind' | 'obs';
+type Mode = 'rain' | 'wind' | 'waves' | 'obs';
 
 const OVERLAY: Record<Mode, string> = {
   rain: '&overlay=rain&product=ecmwf',
   wind: '&overlay=wind&product=ecmwf',
+  waves: '&overlay=waves',
   obs: '&overlay=radar&product=radar',
 };
 
@@ -43,8 +44,12 @@ function RadarContent() {
     `&metricWind=${metric ? 'km%2Fh' : 'mph'}&metricTemp=${metric ? '%C2%B0C' : '%C2%B0F'}` +
     OVERLAY[mode];
 
-  const hint =
-    mode === 'rain' ? t.radar.hintRain : mode === 'wind' ? t.radar.hintWind : t.radar.hintObs;
+  const hint = {
+    rain: t.radar.hintRain,
+    wind: t.radar.hintWind,
+    waves: t.radar.hintWaves,
+    obs: t.radar.hintObs,
+  }[mode];
 
   return (
     <div>
@@ -54,6 +59,7 @@ function RadarContent() {
           options={[
             { value: 'rain', label: t.radar.modeRain },
             { value: 'wind', label: t.radar.modeWind },
+            { value: 'waves', label: t.radar.modeWaves },
             { value: 'obs', label: t.radar.modeObs },
           ]}
           value={mode}

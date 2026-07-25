@@ -49,14 +49,17 @@ export const en = {
 
   radar: {
     title: 'Radar & next hours',
-    modeRain: 'Rain ahead',
-    modeWind: 'Wind ahead',
-    modeObs: 'Observed radar',
+    modeRain: 'Rain',
+    modeWind: 'Wind',
+    modeWaves: 'Waves',
+    modeObs: 'Radar',
     hintRain:
       'Model rain animation for the hours ahead — press play or scrub the timeline at the bottom.',
     hintWind:
       'Wind speed and direction for the hours ahead — the same timeline, animated as flow.',
-    hintObs: 'What actually fell — the last hours of live radar.',
+    hintWaves:
+      'Swell height and direction for the hours ahead — the surfer’s and sailor’s view. Open water only.',
+    hintObs: 'Observed radar — what actually fell over the last hours.',
   },
 
   controls: {
