@@ -125,6 +125,36 @@
   font-weight: 640;
 }
 
+/* a saved-spot row: switch button + un-save × side by side */
+.locRow {
+  display: flex;
+  align-items: center;
+}
+
+.locRow .locItem {
+  flex: 1;
+  min-width: 0;
+}
+
+.locX {
+  color: var(--ink-3);
+  font-size: 15px;
+  line-height: 1;
+  padding: 9px 10px;
+  border-radius: var(--radius-s);
+  transition: color 0.12s ease;
+}
+
+.locX:hover {
+  color: var(--red);
+}
+
+.locItemSave {
+  color: var(--accent);
+  font-weight: 640;
+  white-space: nowrap;
+}
+
 .bell {
   position: relative;
   width: 36px;

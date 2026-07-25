@@ -24,6 +24,7 @@ function LocSwitch() {
   const loc = useSettings((st) => st.loc);
   const saved = useSettings((st) => st.savedPlaces);
   const setLoc = useSettings((st) => st.setLoc);
+  const toggleSavedPlace = useSettings((st) => st.toggleSavedPlace);
   const setLocOpen = useUi((u) => u.setLocOpen);
 
   const [open, setOpen] = useState(false);
@@ -74,20 +75,38 @@ function LocSwitch() {
       {open && (
         <div className={s.locMenu} role="menu" aria-label={t.location.mySpots}>
           {saved.map((p) => (
-            <button
-              key={`${p.lat}-${p.lon}`}
-              role="menuitemradio"
-              aria-checked={isCur(p)}
-              className={isCur(p) ? `${s.locItem} ${s.locItemOn}` : s.locItem}
-              onClick={() => {
-                setLoc(p);
-                setOpen(false);
-              }}
-            >
-              <span className={s.locItemName}>{p.name}</span>
-              {isCur(p) && <span aria-hidden="true">✓</span>}
-            </button>
+            <span key={`${p.lat}-${p.lon}`} className={s.locRow}>
+              <button
+                role="menuitemradio"
+                aria-checked={isCur(p)}
+                className={isCur(p) ? `${s.locItem} ${s.locItemOn}` : s.locItem}
+                onClick={() => {
+                  setLoc(p);
+                  setOpen(false);
+                }}
+              >
+                <span className={s.locItemName}>{p.name}</span>
+                {isCur(p) && <span aria-hidden="true">✓</span>}
+              </button>
+              {/* un-save without switching; the menu stays open to show the result */}
+              <button
+                className={s.locX}
+                aria-label={`${t.common.remove} ${p.name}`}
+                onClick={() => toggleSavedPlace(p)}
+              >
+                ×
+              </button>
+            </span>
           ))}
+          {!saved.some(isCur) && (
+            <button
+              role="menuitem"
+              className={`${s.locItem} ${s.locItemSave}`}
+              onClick={() => toggleSavedPlace(loc)}
+            >
+              ☆ {t.location.saveSpot} — <span className={s.locItemName}>{loc.name}</span>
+            </button>
+          )}
           <button
             role="menuitem"
             className={`${s.locItem} ${s.locItemChange}`}
