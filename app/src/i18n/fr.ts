@@ -206,7 +206,26 @@ export const fr: Dict = {
 
   location: {
     set: 'Choisissez votre emplacement',
-    searchPh: 'Cherchez une ville… p. ex. Québec, Genève, Auckland',
+    searchPh: 'Cherchez une ville ou un endroit… p. ex. Québec, Le Valinouët, Genève',
+    kinds: {
+      resort: 'Station',
+      ski: 'Domaine skiable',
+      peak: 'Sommet',
+      lake: 'Lac',
+      river: 'Rivière',
+      falls: 'Chute',
+      beach: 'Plage',
+      bay: 'Baie',
+      island: 'Île',
+      park: 'Parc / réserve',
+      golf: 'Golf',
+      marina: 'Marina',
+      camp: 'Camping',
+      hut: 'Refuge',
+      viewpoint: 'Point de vue',
+      forest: 'Forêt',
+      pass: 'Col',
+    },
     mapHint:
       '…ou touchez la carte pour choisir un endroit précis — un sentier, un lac, une montagne. Glissez l’épingle pour ajuster.',
     namePh: 'Nommez cet endroit',

@@ -115,4 +115,11 @@ describe('rankLocResults', () => {
       'CA',
     ]);
   });
+  it('floats "Le Valinouët" as an exact match for "valinouet"', () => {
+    const spots: GeoResult[] = [
+      { name: 'Val-David', latitude: 46.03, longitude: -74.22, population: 5000 },
+      { name: 'Le Valinouët', latitude: 48.62, longitude: -70.94, kind: 'resort' },
+    ];
+    expect(rankLocResults(spots, 'valinouet', '', sherbrooke)[0]?.name).toBe('Le Valinouët');
+  });
 });

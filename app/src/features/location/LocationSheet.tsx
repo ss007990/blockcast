@@ -2,7 +2,7 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { Map as LeafletMap, Marker, TileLayer } from 'leaflet';
 import { distKm, parseLocQuery, rankLocResults, type GeoResult } from '../../core/geo';
 import { useT } from '../../hooks';
-import { reverseGeocode, searchCities } from '../../services/geocoding';
+import { reverseGeocode, searchPlaces } from '../../services/geocoding';
 import { useSettings } from '../../state/settings';
 import { useUi } from '../../state/ui';
 import { Button, uiCss } from '../../ui/primitives';
@@ -66,7 +66,7 @@ function LocationContent() {
         }
         const { name, qual } = parseLocQuery(query);
         try {
-          const raw = await searchCities(name, st.lang);
+          const raw = await searchPlaces(name, st.lang);
           setResults(rankLocResults(raw, name, qual, st.loc).slice(0, 8));
         } catch {
           setResults([]);
@@ -212,19 +212,25 @@ function LocationContent() {
           {results.length === 0 ? (
             <div className={uiCss.empty}>{t.location.noMatch}</div>
           ) : (
-            results.map((x) => (
-              <button
-                key={`${x.latitude}-${x.longitude}`}
-                className={s.res}
-                onClick={() => choose(x.name, x.latitude, x.longitude)}
-              >
-                {x.name}
-                <small>
-                  {[x.admin1, x.country].filter(Boolean).join(', ')} ·{' '}
-                  {Math.round(distKm(st.loc, { lat: x.latitude, lon: x.longitude }))} km
-                </small>
-              </button>
-            ))
+            results.map((x) => {
+              const kind = x.kind
+                ? (t.location.kinds as Record<string, string | undefined>)[x.kind]
+                : undefined;
+              return (
+                <button
+                  key={`${x.latitude}-${x.longitude}`}
+                  className={s.res}
+                  onClick={() => choose(x.name, x.latitude, x.longitude)}
+                >
+                  {x.name}
+                  {kind && <span className={s.resKind}>{kind}</span>}
+                  <small>
+                    {[x.admin1, x.country].filter(Boolean).join(', ')} ·{' '}
+                    {Math.round(distKm(st.loc, { lat: x.latitude, lon: x.longitude }))} km
+                  </small>
+                </button>
+              );
+            })
           )}
         </div>
       )}

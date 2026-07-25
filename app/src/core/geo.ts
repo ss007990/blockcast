@@ -17,6 +17,8 @@ export interface GeoResult {
   admin2?: string;
   country?: string;
   country_code?: string;
+  /** POI kind id (ski resort, peak, lake…) — unset for plain localities. */
+  kind?: string;
 }
 
 export const normTxt = (s: string): string =>
@@ -96,11 +98,17 @@ export function rankLocResults(
     if (m.length) out = m;
   }
   const names = new Set([normTxt(name), normTxt(expandLocAbbrev(name))]);
+  // "valinouet" should float "Le Valinouët" — compare with articles stripped
+  const stripArticle = (s: string) => s.replace(/^(le |la |les |l'|the )/, '');
+  const isExact = (x: GeoResult) => {
+    const n = normTxt(x.name);
+    return names.has(n) || names.has(stripArticle(n));
+  };
   const score = (x: GeoResult) =>
     Math.log10((x.population ?? 0) + 1) -
     (ref ? distKm(ref, { lat: x.latitude, lon: x.longitude }) / 1000 : 0);
   return out
-    .map((x, i) => ({ x, exact: names.has(normTxt(x.name)) ? 0 : 1, s: -score(x), i }))
+    .map((x, i) => ({ x, exact: isExact(x) ? 0 : 1, s: -score(x), i }))
     .sort((a, b) => a.exact - b.exact || a.s - b.s || a.i - b.i)
     .map((o) => o.x);
 }

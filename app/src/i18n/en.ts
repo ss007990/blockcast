@@ -202,7 +202,26 @@ export const en = {
 
   location: {
     set: 'Set your location',
-    searchPh: 'Search a city… e.g. Geneva, Cape Town, Auckland',
+    searchPh: 'Search a city or spot… e.g. Geneva, Le Valinouët, Lake Placid',
+    kinds: {
+      resort: 'Resort',
+      ski: 'Ski area',
+      peak: 'Peak',
+      lake: 'Lake',
+      river: 'River',
+      falls: 'Falls',
+      beach: 'Beach',
+      bay: 'Bay',
+      island: 'Island',
+      park: 'Park / reserve',
+      golf: 'Golf',
+      marina: 'Marina',
+      camp: 'Campground',
+      hut: 'Hut',
+      viewpoint: 'Viewpoint',
+      forest: 'Forest',
+      pass: 'Mountain pass',
+    },
     mapHint:
       '…or tap the map to pick a precise spot — a trail head, a lake, a mountain. Drag the pin to fine-tune.',
     namePh: 'Name this spot',
