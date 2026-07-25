@@ -49,6 +49,8 @@ export interface ActivityPreset {
   tMax: number;
   /** km/h band [lo, hi]: below lo is as bad as above hi (sailing). */
   windIdeal?: readonly [number, number];
+  /** Swell band [lo, hi] in metres: a surfer's flat day is a risk too. */
+  swellIdeal?: readonly [number, number];
   /** Metres of snow cover under which the ground is considered bare. */
   snowBase?: number;
 }
@@ -201,23 +203,58 @@ export interface Criteria {
   weights: Weights;
   tMin: number;
   tMax: number;
+  /** km/h [lo, hi] — null keeps the generic more-wind-more-risk curve. */
+  windBand: [number, number] | null;
+  /** metres [lo, hi] — null keeps the generic bigger-swell-more-risk curve. */
+  swellBand: [number, number] | null;
 }
+
+/** Saved per-activity tuning overrides. */
+export interface CritTune {
+  w?: Partial<Weights>;
+  tMin?: number;
+  tMax?: number;
+  windLo?: number;
+  windHi?: number;
+  swellLo?: number;
+  swellHi?: number;
+}
+
+// Display defaults when the user tunes one side of a band the preset never
+// had: where the generic curves start counting risk today.
+export const WIND_HI_DEFAULT = 20;
+export const SWELL_HI_DEFAULT = 0.5;
+
+const num = (v: number | undefined): v is number => typeof v === 'number' && Number.isFinite(v);
+
+/** Resolve a min–max band: user tuning wins, then the preset, else none. */
+const bandFrom = (
+  lo: number | undefined,
+  hi: number | undefined,
+  preset: readonly [number, number] | undefined,
+  defHi: number,
+): [number, number] | null => {
+  if (!num(lo) && !num(hi)) return preset ? [preset[0], preset[1]] : null;
+  const h = num(hi) ? hi : (preset?.[1] ?? defHi);
+  const l = num(lo) ? lo : (preset?.[0] ?? 0);
+  return [Math.min(l, h), h];
+};
 
 /** Criteria from the preset (or custom activity), overridden by saved user tuning. */
 export function criteriaFrom(
   id: ActivityId,
-  tune?: { w?: Partial<Weights>; tMin?: number; tMax?: number },
+  tune?: CritTune,
   customs?: readonly CustomActivity[],
 ): Criteria {
   const act = actOf(id, customs) ?? GENERIC_ACT;
-  const tMin = tune?.tMin;
-  const tMax = tune?.tMax;
   return {
     act,
     // zero-fill first: custom activities saved before newer factor keys
     // existed (swell, tide) come out of storage without them
     weights: { ...w(0, 0, 0, 0, 0), ...act.w, ...tune?.w },
-    tMin: typeof tMin === 'number' && Number.isFinite(tMin) ? tMin : act.tMin,
-    tMax: typeof tMax === 'number' && Number.isFinite(tMax) ? tMax : act.tMax,
+    tMin: num(tune?.tMin) ? tune.tMin : act.tMin,
+    tMax: num(tune?.tMax) ? tune.tMax : act.tMax,
+    windBand: bandFrom(tune?.windLo, tune?.windHi, act.windIdeal, WIND_HI_DEFAULT),
+    swellBand: bandFrom(tune?.swellLo, tune?.swellHi, act.swellIdeal, SWELL_HI_DEFAULT),
   };
 }

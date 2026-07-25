@@ -1,7 +1,12 @@
 // Per-activity criteria sliders. Shared by Today (under the block-by-block
 // header) and Week (under the controls card); open state lives in ui state.
 import { AnimatePresence, motion } from 'framer-motion';
-import { FACTOR_KEYS, type FactorKey } from '../../core/activities';
+import {
+  FACTOR_KEYS,
+  SWELL_HI_DEFAULT,
+  WIND_HI_DEFAULT,
+  type FactorKey,
+} from '../../core/activities';
 import { useActivityName, useT } from '../../hooks';
 import { useForecast } from '../../state/forecast';
 import { critFor, useSettings } from '../../state/settings';
@@ -27,6 +32,40 @@ const SLIDER_DEFS: { k: FactorKey; snowOnly: boolean; marineOnly: boolean }[] = 
     marineOnly: k === 'swell' || k === 'tide',
   }),
 );
+
+// Ideal min–max for wind (km/h) and swell (m): outside the band, risk rises
+// on both sides — a surfer's flat sea or a kiter's dead calm is a no-go too.
+function BandInputs({ k }: { k: 'wind' | 'swell' }) {
+  const t = useT();
+  const st = useSettings();
+  const crit = critFor(st, st.activity);
+  const [lo, hi] =
+    k === 'wind'
+      ? (crit.windBand ?? [0, WIND_HI_DEFAULT])
+      : (crit.swellBand ?? [0, SWELL_HI_DEFAULT]);
+
+  const input = (which: 'Lo' | 'Hi', value: number) => (
+    <input
+      type="number"
+      className={s.tnum}
+      min={0}
+      step={k === 'wind' ? 1 : 0.1}
+      value={value}
+      aria-label={`${t.tune[k]} ${which === 'Lo' ? t.tune.min : t.tune.max}`}
+      onChange={(e) => {
+        const v = +e.target.value;
+        if (Number.isFinite(v) && v >= 0) st.setCritNum(st.activity, `${k}${which}`, v);
+      }}
+    />
+  );
+
+  return (
+    <small>
+      {t.tune[`${k}S`]} · {t.tune.ideal} {input('Lo', lo)} – {input('Hi', hi)}{' '}
+      {k === 'wind' ? 'km/h' : 'm'}
+    </small>
+  );
+}
 
 export function TunePanel() {
   const t = useT();
@@ -82,7 +121,7 @@ export function TunePanel() {
                         value={crit.tMin}
                         onChange={(e) => {
                           const v = +e.target.value;
-                          if (Number.isFinite(v)) st.setTempBand(st.activity, 'tMin', v);
+                          if (Number.isFinite(v)) st.setCritNum(st.activity, 'tMin', v);
                         }}
                       />{' '}
                       °C
@@ -96,11 +135,13 @@ export function TunePanel() {
                         value={crit.tMax}
                         onChange={(e) => {
                           const v = +e.target.value;
-                          if (Number.isFinite(v)) st.setTempBand(st.activity, 'tMax', v);
+                          if (Number.isFinite(v)) st.setCritNum(st.activity, 'tMax', v);
                         }}
                       />{' '}
                       °C
                     </small>
+                  ) : k === 'wind' || k === 'swell' ? (
+                    <BandInputs k={k} />
                   ) : (
                     <small>{t.tune[`${k}S`]}</small>
                   )}

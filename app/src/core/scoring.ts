@@ -92,10 +92,15 @@ export function blockFactors(hours: HourSlice[], fresh48: number, crit: Criteria
     swell: swell != null ? ramp(swell, 0.5, 2.5) : 0,
     tide: tides.length ? Math.max(...tides) : 0,
   };
-  // sailing-style: not enough wind is also bad
-  if (act.windIdeal) {
-    const [lo, hi] = act.windIdeal;
-    sev.wind = Math.max(ramp(wind, hi, hi + 18), ramp(lo - wind, 0, lo));
+  // banded factors: outside [lo, hi] risk rises on BOTH sides — a sailor's
+  // dead calm or a surfer's flat sea is as much a no-go as a storm
+  if (crit.windBand) {
+    const [lo, hi] = crit.windBand;
+    sev.wind = Math.max(ramp(wind, hi, hi + 18), lo > 0 ? ramp(lo - wind, 0, lo) : 0);
+  }
+  if (crit.swellBand && swell != null) {
+    const [lo, hi] = crit.swellBand;
+    sev.swell = Math.max(ramp(swell, hi, hi + 2), lo > 0 ? ramp(lo - swell, 0, Math.max(lo, 0.3)) : 0);
   }
   return { rainProb, rainSum, wind, gust, temp, uv, cloud, depth, fresh48, swell, tideNorm, tideTrend, sev };
 }

@@ -88,7 +88,10 @@ export const en = {
 
   tune: {
     critFor: 'Criteria for',
-    hint: 'How much should each factor matter? 0 = ignore, 10 = critical. Presets fill these in — adjust to make it yours.',
+    hint: 'How much should each factor matter? 0 = ignore, 10 = critical. Presets fill these in — adjust to make it yours. Wind and swell also take an ideal min–max: below the min is a risk too (surf needs waves, sailing needs wind).',
+    ideal: 'ideal',
+    min: 'min',
+    max: 'max',
     rain: 'Rain',
     rainS: 'Chance & amount of precipitation',
     snow: 'Snow base',

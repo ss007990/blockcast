@@ -90,7 +90,10 @@ export const fr: Dict = {
 
   tune: {
     critFor: 'Critères pour',
-    hint: 'Quelle importance donner à chaque facteur? 0 = ignorer, 10 = critique. Les préréglages remplissent ces valeurs — ajustez-les à votre goût.',
+    hint: 'Quelle importance donner à chaque facteur? 0 = ignorer, 10 = critique. Les préréglages remplissent ces valeurs — ajustez-les à votre goût. Le vent et la houle prennent aussi une plage idéale min–max : sous le min, c’est risqué aussi (le surf veut des vagues, la voile veut du vent).',
+    ideal: 'idéal',
+    min: 'min',
+    max: 'max',
     rain: 'Pluie',
     rainS: 'Probabilité et quantité de précipitations',
     snow: 'Base de neige',

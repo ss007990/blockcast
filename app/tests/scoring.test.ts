@@ -68,6 +68,21 @@ describe('blockFactors', () => {
     expect(blockFactors([hour({ swell: 3 })], 0, crit('beach')).sev.swell).toBe(1);
     expect(blockFactors([hour({ swell: 0.3 })], 0, crit('beach')).sev.swell).toBe(0);
   });
+  it('tuned wind min: a dead calm is a risk (kitesurf-style)', () => {
+    const c = criteriaFrom('fishing', { windLo: 15, windHi: 40 });
+    expect(blockFactors([hour({ wind: 0, gust: 0 })], 0, c).sev.wind).toBe(1);
+    expect(blockFactors([hour({ wind: 25, gust: 30 })], 0, c).sev.wind).toBe(0);
+  });
+  it('tuned swell min: a flat sea is a risk (surf-style), in-band is not', () => {
+    const c = criteriaFrom('beach', { swellLo: 1, swellHi: 3 });
+    expect(blockFactors([hour({ swell: 0 })], 0, c).sev.swell).toBe(1);
+    expect(blockFactors([hour({ swell: 2 })], 0, c).sev.swell).toBe(0);
+    expect(blockFactors([hour({ swell: 5 })], 0, c).sev.swell).toBe(1);
+  });
+  it('tuning one side of a band keeps the preset for the other (sailing)', () => {
+    const c = criteriaFrom('sailing', { windHi: 40 });
+    expect(c.windBand).toEqual([9, 40]);
+  });
   it('coastal: tide severity follows the block peak, trend follows the hours', () => {
     const f = blockFactors(
       [hour({ tide: 0.2 }), hour({ tide: 0.5 }), hour({ tide: 0.9 })],

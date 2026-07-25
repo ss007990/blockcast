@@ -5,6 +5,7 @@ import {
   newCustomActivity,
   type ActivityId,
   type Criteria,
+  type CritTune,
   type CustomActivity,
   type Season,
   type Tolerance,
@@ -24,7 +25,8 @@ export interface Place {
   lon: number;
 }
 
-type Tune = { w?: Partial<Weights>; tMin?: number; tMax?: number };
+/** Numeric criteria thresholds tunable per activity. */
+export type CritNumKey = 'tMin' | 'tMax' | 'windLo' | 'windHi' | 'swellLo' | 'swellHi';
 
 export interface SettingsState {
   activity: ActivityId;
@@ -36,7 +38,7 @@ export interface SettingsState {
   tolerance: Tolerance;
   hFrom: number;
   hTo: number;
-  tune: Partial<Record<ActivityId, Tune>>;
+  tune: Partial<Record<ActivityId, CritTune>>;
   /** User-created activities, shown in the rail alongside the presets. */
   customActivities: CustomActivity[];
   lang: Lang;
@@ -59,7 +61,7 @@ export interface SettingsState {
   setTolerance: (t: Tolerance) => void;
   setHours: (from: number, to: number) => void;
   setWeight: (act: ActivityId, k: keyof Weights, v: number) => void;
-  setTempBand: (act: ActivityId, which: 'tMin' | 'tMax', v: number) => void;
+  setCritNum: (act: ActivityId, which: CritNumKey, v: number) => void;
   resetTune: (act: ActivityId) => void;
   /** Create a custom activity, select it, and return its id. */
   addActivity: (input: { name: string; emoji: string; cat: string; season: Season }) => ActivityId;
@@ -130,7 +132,7 @@ export const useSettings = create<SettingsState>()(
             [act]: { ...s.tune[act], w: { ...s.tune[act]?.w, [k]: v } },
           },
         })),
-      setTempBand: (act, which, v) =>
+      setCritNum: (act, which, v) =>
         set((s) => ({ tune: { ...s.tune, [act]: { ...s.tune[act], [which]: v } } })),
       resetTune: (act) =>
         set((s) => {
