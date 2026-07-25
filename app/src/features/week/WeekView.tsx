@@ -8,18 +8,20 @@ import { useForecast } from '../../state/forecast';
 import { usePlanner } from '../../state/planner';
 import { critFor, useSettings, type BlockLen } from '../../state/settings';
 import { useUi } from '../../state/ui';
-import { ActivityRail } from '../../ui/ActivityRail';
+import { ActivityPicker } from '../../ui/ActivityPicker';
 import { TunePanel, TuneToggle } from '../tune/TunePanel';
 import { Card, Field, Segmented, uiCss } from '../../ui/primitives';
 import s from './week.module.css';
 
+// Order matters: the heat map is the landing content — the activity lens
+// above it for quick toggling, the criteria card demoted below the fold.
 export function WeekView() {
   return (
     <>
-      <ActivityRail />
+      <ActivityPicker />
+      <HeatBoard />
       <Controls />
       <TunePanel />
-      <HeatBoard />
     </>
   );
 }

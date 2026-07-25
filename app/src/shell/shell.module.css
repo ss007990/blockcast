@@ -60,6 +60,71 @@
   color: var(--bg);
 }
 
+.locChevron {
+  font-size: 9px;
+  opacity: 0.7;
+}
+
+/* saved-spots switcher — anchored to the masthead chip */
+.locWrap {
+  position: relative;
+  min-width: 0;
+}
+
+.locMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 80;
+  min-width: 190px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-3);
+  padding: 6px;
+}
+
+.locItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 570;
+  color: var(--ink-2);
+  padding: 9px 10px;
+  border-radius: var(--radius-s);
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.locItem:hover {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.locItemOn {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.locItemName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.locItemChange {
+  border-top: 1px dashed var(--line-strong);
+  margin-top: 4px;
+  color: var(--accent);
+  font-weight: 640;
+}
+
 .bell {
   position: relative;
   width: 36px;

@@ -30,10 +30,6 @@ export const en = {
     now: 'Right now',
     feels: 'feels like',
     hiLo: 'H:{hi} L:{lo}',
-    verdictGreat: 'A fine day for {activity}.',
-    verdictOk: '{activity} works today — pick your moment.',
-    verdictBad: 'Not much of a {activity} day.',
-    verdictDone: 'That’s a wrap for today.',
     verdictSub: 'Best window {range} · risk {score}',
     verdictBadSub: 'Scout the Week tab for a better window.',
     verdictDoneSub: 'Tomorrow is already scored on the Week tab.',
@@ -60,8 +56,7 @@ export const en = {
     tolerant: 'Tolerant',
     tune: 'Tune criteria',
     hourUnit: 'h',
-    moreActs: '+{n} off-season',
-    lessActs: 'Fewer',
+    offSeason: 'off-season',
     addAct: 'Add activity',
   },
 
@@ -204,6 +199,9 @@ export const en = {
     myLoc: 'My location',
     mapUnavail: 'Map unavailable (couldn’t load Leaflet) — use the search above.',
     useMyLoc: 'Use my current position',
+    mySpots: 'My spots',
+    saveSpot: 'Save',
+    change: 'Change location…',
   },
 
   settings: {

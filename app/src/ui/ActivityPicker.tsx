@@ -1,0 +1,152 @@
+// The activity "lens" — a compact dropdown grouped by category, plus quick
+// chips for the last activities used so switching back and forth is one tap.
+// Shared by Today and Week; re-scores the whole app when switched.
+// Off-season activities sit dimmed inside their category instead of hiding.
+// Ends with "Add activity" — users grow the list with their own sports.
+
+import { useEffect, useRef, useState } from 'react';
+import { groupActivities, inSeason } from '../core/season';
+import { ActivityIcon } from './ActivityIcon';
+import { useSeason } from '../features/home/useSeason';
+import { useActivityName, useLocale, useT } from '../hooks';
+import { MAX_RECENT_ACTIVITIES, useSettings } from '../state/settings';
+import { useUi } from '../state/ui';
+import s from './ui.module.css';
+
+export function ActivityPicker() {
+  const t = useT();
+  const locale = useLocale();
+  const nameOf = useActivityName();
+  const activity = useSettings((st) => st.activity);
+  const setActivity = useSettings((st) => st.setActivity);
+  const recents = useSettings((st) => st.recentActivities);
+  const customs = useSettings((st) => st.customActivities);
+  const winter = useSeason();
+  const setAddActOpen = useUi((u) => u.setAddActOpen);
+
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  // close on outside click or Escape
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  // preset categories are localized; user-created ones display as typed
+  const catLabel = (cat: string) => (t.cats as Record<string, string | undefined>)[cat] ?? cat;
+
+  // alphabetical by the label the user actually sees, so FR and EN each sort naturally
+  const groups = groupActivities(winter, customs)
+    .filter((g) => g.inSeason.length + g.offSeason.length > 0)
+    .sort((a, b) => catLabel(a.cat).localeCompare(catLabel(b.cat), locale));
+
+  const pick = (id: string) => {
+    setActivity(id);
+    setOpen(false);
+  };
+
+  // quick chips: the current activity plus the ones used just before it,
+  // in stable alphabetical order so toggling never shuffles their positions
+  const quick = [...new Set([activity, ...recents])]
+    .slice(0, MAX_RECENT_ACTIVITIES)
+    .sort((a, b) => nameOf(a).localeCompare(nameOf(b), locale));
+
+  return (
+    <div className={s.picker}>
+      <div className={s.pickerWrap} ref={wrapRef}>
+        <button
+          className={s.pickerBtn}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-label={t.controls.activity}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span className={s.pickerIco} aria-hidden="true">
+            <ActivityIcon id={activity} />
+          </span>
+          {nameOf(activity)}
+          <span className={s.pickerChevron} data-open={open || undefined} aria-hidden="true">
+            ▾
+          </span>
+        </button>
+
+        {open && (
+          <div className={s.pickerMenu} role="listbox" aria-label={t.controls.activity}>
+            {groups.map((g) => (
+              <div key={g.cat} className={s.pickerGroup}>
+                <div className={s.pickerCat} aria-hidden="true">
+                  {catLabel(g.cat)}
+                </div>
+                {[...g.inSeason, ...g.offSeason].map((id) => {
+                  const off = !inSeason(id, winter, customs);
+                  const on = id === activity;
+                  return (
+                    <button
+                      key={id}
+                      role="option"
+                      aria-selected={on}
+                      className={[s.pickerOpt, on && s.pickerOptOn, off && s.pickerOptOff]
+                        .filter(Boolean)
+                        .join(' ')}
+                      onClick={() => pick(id)}
+                    >
+                      <span className={s.pickerIco} aria-hidden="true">
+                        <ActivityIcon id={id} />
+                      </span>
+                      {nameOf(id)}
+                      {off && <i className={s.pickerOffTag}>{t.controls.offSeason}</i>}
+                      {on && (
+                        <span className={s.pickerCheck} aria-hidden="true">
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+            <button
+              className={s.pickerAddOpt}
+              onClick={() => {
+                setOpen(false);
+                setAddActOpen(true);
+              }}
+            >
+              ＋ {t.controls.addAct}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {quick.length > 1 &&
+        quick.map((id) => {
+          const on = id === activity;
+          return (
+            <button
+              key={id}
+              className={on ? `${s.quickChip} ${s.quickChipOn}` : s.quickChip}
+              aria-pressed={on}
+              onClick={() => setActivity(id)}
+            >
+              <span className={s.pickerIco} aria-hidden="true">
+                <ActivityIcon id={id} />
+              </span>
+              {nameOf(id)}
+            </button>
+          );
+        })}
+    </div>
+  );
+}

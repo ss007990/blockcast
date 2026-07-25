@@ -28,6 +28,8 @@ type Tune = { w?: Partial<Weights>; tMin?: number; tMax?: number };
 
 export interface SettingsState {
   activity: ActivityId;
+  /** Last activities used, most recent first (includes the current one). */
+  recentActivities: ActivityId[];
   blockLen: BlockLen;
   /** Days shown on the week board: one week, or two for extended planning. */
   planDays: PlanDays;
@@ -44,6 +46,8 @@ export interface SettingsState {
   loc: Place;
   /** True once geolocation/v1 import decided the starting location. */
   locChosen: boolean;
+  /** Favourite places for one-tap switching (max 3). */
+  savedPlaces: Place[];
   /** Capability token for the subscribable calendar feed; null = feed off. */
   calFeedToken: string | null;
 
@@ -63,13 +67,21 @@ export interface SettingsState {
   setClock: (c: ClockFormat) => void;
   setTheme: (t: ThemeChoice) => void;
   setLoc: (p: Place, chosen?: boolean) => void;
+  /** Save a place as a favourite, or un-save it if already saved. */
+  toggleSavedPlace: (p: Place) => void;
   setCalFeedToken: (t: string | null) => void;
 }
+
+const samePlace = (a: Place, b: Place) => a.lat === b.lat && a.lon === b.lon;
+
+export const MAX_SAVED_PLACES = 3;
+export const MAX_RECENT_ACTIVITIES = 3;
 
 const v1 = importV1(localStorage);
 
 const defaults = {
   activity: v1.activity ?? ('tennis' as ActivityId),
+  recentActivities: [v1.activity ?? ('tennis' as ActivityId)],
   blockLen: v1.blockLen ?? (4 as BlockLen),
   planDays: 7 as PlanDays,
   tolerance: v1.tolerance ?? ('balanced' as Tolerance),
@@ -83,6 +95,7 @@ const defaults = {
   theme: 'system' as ThemeChoice,
   loc: v1.loc ?? { name: 'Québec', lat: 46.8131, lon: -71.2075 },
   locChosen: v1.loc != null,
+  savedPlaces: [] as Place[],
   calFeedToken: null as string | null,
 };
 
@@ -91,7 +104,14 @@ export const useSettings = create<SettingsState>()(
     (set) => ({
       ...defaults,
 
-      setActivity: (activity) => set({ activity }),
+      setActivity: (activity) =>
+        set((s) => ({
+          activity,
+          recentActivities: [
+            activity,
+            ...s.recentActivities.filter((a) => a !== activity),
+          ].slice(0, MAX_RECENT_ACTIVITIES),
+        })),
       setBlockLen: (blockLen) => set({ blockLen }),
       setPlanDays: (planDays) => set({ planDays }),
       setTolerance: (tolerance) => set({ tolerance }),
@@ -127,6 +147,7 @@ export const useSettings = create<SettingsState>()(
             customActivities: s.customActivities.filter((c) => c.id !== id),
             tune,
             activity: s.activity === id ? 'tennis' : s.activity,
+            recentActivities: s.recentActivities.filter((a) => a !== id),
           };
         }),
       setLang: (lang) => set({ lang }),
@@ -134,6 +155,12 @@ export const useSettings = create<SettingsState>()(
       setClock: (clock) => set({ clock }),
       setTheme: (theme) => set({ theme }),
       setLoc: (loc, chosen = true) => set({ loc, locChosen: chosen }),
+      toggleSavedPlace: (p) =>
+        set((s) =>
+          s.savedPlaces.some((x) => samePlace(x, p))
+            ? { savedPlaces: s.savedPlaces.filter((x) => !samePlace(x, p)) }
+            : { savedPlaces: [...s.savedPlaces, p].slice(-MAX_SAVED_PLACES) },
+        ),
       setCalFeedToken: (calFeedToken) => set({ calFeedToken }),
     }),
     { name: KEYS.settings, version: 2 },

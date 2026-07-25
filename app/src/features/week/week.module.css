@@ -1,15 +1,17 @@
 /* Week — the block mosaic. Timetable typography, stamped risk blocks. */
 
+/* criteria card — sits below the board; the heat map is the landing content */
 .controls {
   display: flex;
   flex-wrap: wrap;
   gap: 16px 24px;
   align-items: flex-end;
   padding: 16px 20px;
+  margin-top: 18px;
 }
 
 .board {
-  margin-top: 18px;
+  margin-top: 6px;
   overflow-x: auto;
 }
 

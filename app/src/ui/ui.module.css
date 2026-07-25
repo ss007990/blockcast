@@ -92,22 +92,166 @@
   font-weight: 600;
 }
 
-/* activity rail — the lens selector */
-.rail {
+/* activity picker — the lens selector: one dropdown, quick chips beside it */
+.picker {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
-  overflow-x: auto;
-  padding: 2px 2px 10px;
-  margin-bottom: 8px;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+  padding: 2px;
+  margin-bottom: 12px;
 }
 
-.rail::-webkit-scrollbar {
-  display: none;
+.pickerWrap {
+  position: relative;
 }
 
-.railBtn {
+.pickerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 9px 15px 9px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.pickerBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.pickerBtn:active {
+  transform: scale(0.97);
+}
+
+.pickerChevron {
+  font-size: 10px;
+  color: var(--ink-3);
+  transition: transform 0.16s ease;
+}
+
+.pickerChevron[data-open] {
+  transform: rotate(180deg);
+}
+
+.pickerIco {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* the dropdown panel — categories as stamped headers, options beneath */
+.pickerMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 80;
+  min-width: 240px;
+  max-height: min(430px, 62vh);
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-3);
+  padding: 6px;
+}
+
+.pickerGroup + .pickerGroup {
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.pickerCat {
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 7px 10px 3px;
+}
+
+.pickerOpt {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  font-size: 13.5px;
+  font-weight: 570;
+  color: var(--ink-2);
+  padding: 8px 10px;
+  border-radius: var(--radius-s);
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.pickerOpt:hover {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.pickerOptOn {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* off-season option — reachable but visibly resting */
+.pickerOptOff {
+  opacity: 0.55;
+}
+
+.pickerOffTag {
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  margin-left: auto;
+}
+
+.pickerCheck {
+  margin-left: auto;
+  font-size: 12px;
+}
+
+.pickerOffTag + .pickerCheck {
+  margin-left: 8px;
+}
+
+/* trailing "add activity" row — dashed rule above, accent-inked */
+.pickerAddOpt {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 640;
+  color: var(--accent);
+  padding: 9px 10px;
+  border-radius: var(--radius-s);
+  border-top: 1px dashed var(--line-strong);
+  margin-top: 4px;
+  transition: background 0.12s ease;
+}
+
+.pickerAddOpt:hover {
+  background: var(--accent-soft);
+}
+
+/* quick chips — the last activities used, one tap to switch back */
+.quickChip {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -127,67 +271,20 @@
     transform 0.16s ease;
 }
 
-.railBtn:hover {
+.quickChip:hover {
   border-color: var(--accent);
   color: var(--ink);
 }
 
-.railBtn:active {
+.quickChip:active {
   transform: scale(0.96);
 }
 
-.railOn {
+.quickChipOn {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
   font-weight: 680;
-}
-
-.railIco {
-  font-size: 16px;
-  line-height: 1;
-}
-
-/* category cluster inside the rail */
-.railGroup {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.railGroup + .railGroup {
-  border-left: 1px solid var(--line-strong);
-  padding-left: 10px;
-  margin-left: 2px;
-}
-
-.railCat {
-  font-size: 10.5px;
-  font-weight: 640;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  line-height: 1;
-  white-space: nowrap;
-}
-
-/* off-season pill — reachable but visibly resting */
-.railOff {
-  opacity: 0.55;
-  border-style: dashed;
-}
-
-.railMore {
-  border-style: dashed;
-  color: var(--ink-3);
-}
-
-/* trailing "add activity" pill — dashed like "more", accent-inked */
-.railAdd {
-  border-style: dashed;
-  color: var(--accent);
-  font-weight: 640;
 }
 
 /* stamped chip — mono value, tinted ink */

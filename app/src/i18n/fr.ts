@@ -32,10 +32,6 @@ export const fr: Dict = {
     now: 'En ce moment',
     feels: 'ressenti',
     hiLo: 'Max {hi} Min {lo}',
-    verdictGreat: 'Belle journée pour : {activity}.',
-    verdictOk: '{activity} se tente aujourd’hui — choisissez votre moment.',
-    verdictBad: 'Journée peu propice — {activity}.',
-    verdictDone: 'La journée est jouée.',
     verdictSub: 'Meilleure fenêtre {range} · risque {score}',
     verdictBadSub: 'Explorez l’onglet Semaine pour une meilleure fenêtre.',
     verdictDoneSub: 'Demain est déjà noté dans l’onglet Semaine.',
@@ -62,8 +58,7 @@ export const fr: Dict = {
     tolerant: 'Tolérant',
     tune: 'Ajuster les critères',
     hourUnit: 'h',
-    moreActs: '+{n} hors saison',
-    lessActs: 'Moins',
+    offSeason: 'hors saison',
     addAct: 'Ajouter une activité',
   },
 
@@ -208,6 +203,9 @@ export const fr: Dict = {
     myLoc: 'Ma position',
     mapUnavail: 'Carte indisponible (Leaflet n’a pas pu charger) — utilisez la recherche ci-dessus.',
     useMyLoc: 'Utiliser ma position actuelle',
+    mySpots: 'Mes endroits',
+    saveSpot: 'Enregistrer',
+    change: 'Changer d’emplacement…',
   },
 
   settings: {

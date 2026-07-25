@@ -19,7 +19,7 @@ import { fmtFull, fmtIsoTime } from '../../lib/format';
 import { useForecast } from '../../state/forecast';
 import { critFor, useSettings } from '../../state/settings';
 import { useUi } from '../../state/ui';
-import { ActivityRail } from '../../ui/ActivityRail';
+import { ActivityPicker } from '../../ui/ActivityPicker';
 import { Icon } from '../../ui/Icon';
 import { uiCss } from '../../ui/primitives';
 import { FactorChips } from '../detail/FactorChips';
@@ -104,14 +104,6 @@ export function TodayView() {
     (a, b) => (a == null || b.score < a.score ? b : a),
     null,
   );
-  const activityName = nameOf(st.activity);
-  const headline = !best
-    ? t.home.verdictDone
-    : best.band === 'g'
-      ? fill(t.home.verdictGreat, { activity: activityName })
-      : best.band === 'y'
-        ? fill(t.home.verdictOk, { activity: activityName })
-        : fill(t.home.verdictBad, { activity: activityName });
   const verdictSub = !best
     ? t.home.verdictDoneSub
     : best.band === 'r'
@@ -132,7 +124,7 @@ export function TodayView() {
 
   return (
     <div>
-      <ActivityRail />
+      <ActivityPicker />
 
       <motion.header
         key={`${st.activity}-${best?.band ?? 'x'}`}
@@ -141,7 +133,6 @@ export function TodayView() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: 'easeOut' }}
       >
-        <h1 className={s.headline}>{headline}</h1>
         <div className={s.ledeSub}>
           <button className={s.ledeLoc} onClick={() => setLocOpen(true)}>
             <Icon name="pin" size={12} /> {st.loc.name}

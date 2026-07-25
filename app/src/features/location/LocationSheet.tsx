@@ -141,9 +141,45 @@ function LocationContent() {
     );
   };
 
+  const curSaved = st.savedPlaces.some((p) => p.lat === st.loc.lat && p.lon === st.loc.lon);
+
   return (
     <div>
       <div className={s.title}>{t.location.set}</div>
+
+      <div className={s.spots}>
+        <span className={s.spotsLabel}>{t.location.mySpots}</span>
+        {st.savedPlaces.map((p) => {
+          const cur = p.lat === st.loc.lat && p.lon === st.loc.lon;
+          return (
+            <span key={`${p.lat}-${p.lon}`} className={cur ? `${s.spot} ${s.spotOn}` : s.spot}>
+              <button
+                className={s.spotGo}
+                aria-current={cur || undefined}
+                onClick={() => {
+                  st.setLoc(p);
+                  setLocOpen(false);
+                }}
+              >
+                📍 {p.name}
+              </button>
+              <button
+                className={s.spotX}
+                aria-label={`${t.common.remove} ${p.name}`}
+                onClick={() => st.toggleSavedPlace(p)}
+              >
+                ×
+              </button>
+            </span>
+          );
+        })}
+        {!curSaved && (
+          <button className={s.spotSave} onClick={() => st.toggleSavedPlace(st.loc)}>
+            ☆ {t.location.saveSpot} — {st.loc.name}
+          </button>
+        )}
+      </div>
+
       <input
         className={uiCss.input}
         value={q}
