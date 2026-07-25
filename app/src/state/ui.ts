@@ -26,9 +26,10 @@ export interface UiState {
 }
 
 const TABS: Tab[] = ['today', 'week', 'planner', 'settings'];
+// the Week heat map is the landing view — this is a planning tool first
 const initialTab = (): Tab => {
   const h = window.location.hash.replace('#', '') as Tab;
-  return TABS.includes(h) ? h : 'today';
+  return TABS.includes(h) ? h : 'week';
 };
 
 export const useUi = create<UiState>()((set) => ({
