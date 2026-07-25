@@ -7,8 +7,10 @@ export type ClockFormat = '12h' | '24h';
 export const cToF = (c: number): number => (c * 9) / 5 + 32;
 export const fToC = (f: number): number => ((f - 32) * 5) / 9;
 export const kmhToMph = (k: number): number => k / 1.609344;
+export const mphToKmh = (m: number): number => m * 1.609344;
 export const mmToIn = (mm: number): number => mm / 25.4;
 export const cmToIn = (cm: number): number => cm / 2.54;
+export const ftToM = (ft: number): number => ft / 3.28084;
 
 export const formatTemp = (c: number, u: UnitSystem): string =>
   `${Math.round(u === 'imperial' ? cToF(c) : c)}°`;

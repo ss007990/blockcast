@@ -7,6 +7,15 @@ import {
   WIND_HI_DEFAULT,
   type FactorKey,
 } from '../../core/activities';
+import {
+  cToF,
+  fToC,
+  formatTempUnit,
+  ftToM,
+  kmhToMph,
+  mphToKmh,
+  mToFt,
+} from '../../core/units';
 import { useActivityName, useT } from '../../hooks';
 import { useForecast } from '../../state/forecast';
 import { critFor, useSettings } from '../../state/settings';
@@ -33,28 +42,35 @@ const SLIDER_DEFS: { k: FactorKey; snowOnly: boolean; marineOnly: boolean }[] = 
   }),
 );
 
-// Ideal min–max for wind (km/h) and swell (m): outside the band, risk rises
-// on both sides — a surfer's flat sea or a kiter's dead calm is a no-go too.
+// Ideal min–max for wind and swell: outside the band, risk rises on both
+// sides — a surfer's flat sea or a kiter's dead calm is a no-go too.
+// Shown and typed in the user's unit system; stored metric like everything.
 function BandInputs({ k }: { k: 'wind' | 'swell' }) {
   const t = useT();
   const st = useSettings();
   const crit = critFor(st, st.activity);
+  const imp = st.units === 'imperial';
   const [lo, hi] =
     k === 'wind'
       ? (crit.windBand ?? [0, WIND_HI_DEFAULT])
       : (crit.swellBand ?? [0, SWELL_HI_DEFAULT]);
 
-  const input = (which: 'Lo' | 'Hi', value: number) => (
+  const disp = (metric: number) =>
+    k === 'wind' ? Math.round(imp ? kmhToMph(metric) : metric) : +(imp ? mToFt(metric) : metric).toFixed(1);
+  const store = (typed: number) =>
+    +(k === 'wind' ? (imp ? mphToKmh(typed) : typed) : imp ? ftToM(typed) : typed).toFixed(2);
+
+  const input = (which: 'Lo' | 'Hi', metric: number) => (
     <input
       type="number"
       className={s.tnum}
       min={0}
       step={k === 'wind' ? 1 : 0.1}
-      value={value}
+      value={disp(metric)}
       aria-label={`${t.tune[k]} ${which === 'Lo' ? t.tune.min : t.tune.max}`}
       onChange={(e) => {
         const v = +e.target.value;
-        if (Number.isFinite(v) && v >= 0) st.setCritNum(st.activity, `${k}${which}`, v);
+        if (Number.isFinite(v) && v >= 0) st.setCritNum(st.activity, `${k}${which}`, store(v));
       }}
     />
   );
@@ -62,7 +78,37 @@ function BandInputs({ k }: { k: 'wind' | 'swell' }) {
   return (
     <small>
       {t.tune[`${k}S`]} · {t.tune.ideal} {input('Lo', lo)} – {input('Hi', hi)}{' '}
-      {k === 'wind' ? 'km/h' : 'm'}
+      {k === 'wind' ? (imp ? 'mph' : 'km/h') : imp ? 'ft' : 'm'}
+    </small>
+  );
+}
+
+// Comfort thresholds, shown in the user's temperature unit, stored °C.
+function TempInput({
+  which,
+  label,
+  metric,
+}: {
+  which: 'tMin' | 'tMax';
+  label: string;
+  metric: number;
+}) {
+  const st = useSettings();
+  const imp = st.units === 'imperial';
+  return (
+    <small>
+      {label}{' '}
+      <input
+        type="number"
+        className={s.tnum}
+        value={Math.round(imp ? cToF(metric) : metric)}
+        onChange={(e) => {
+          const v = +e.target.value;
+          if (Number.isFinite(v))
+            st.setCritNum(st.activity, which, +(imp ? fToC(v) : v).toFixed(2));
+        }}
+      />{' '}
+      {formatTempUnit(st.units)}
     </small>
   );
 }
@@ -113,33 +159,9 @@ export function TunePanel() {
                     onChange={(e) => st.setWeight(st.activity, k, +e.target.value)}
                   />
                   {k === 'cold' ? (
-                    <small>
-                      {t.tune.coldS}{' '}
-                      <input
-                        type="number"
-                        className={s.tnum}
-                        value={crit.tMin}
-                        onChange={(e) => {
-                          const v = +e.target.value;
-                          if (Number.isFinite(v)) st.setCritNum(st.activity, 'tMin', v);
-                        }}
-                      />{' '}
-                      °C
-                    </small>
+                    <TempInput which="tMin" label={t.tune.coldS} metric={crit.tMin} />
                   ) : k === 'heat' ? (
-                    <small>
-                      {t.tune.heatS}{' '}
-                      <input
-                        type="number"
-                        className={s.tnum}
-                        value={crit.tMax}
-                        onChange={(e) => {
-                          const v = +e.target.value;
-                          if (Number.isFinite(v)) st.setCritNum(st.activity, 'tMax', v);
-                        }}
-                      />{' '}
-                      °C
-                    </small>
+                    <TempInput which="tMax" label={t.tune.heatS} metric={crit.tMax} />
                   ) : k === 'wind' || k === 'swell' ? (
                     <BandInputs k={k} />
                   ) : (
