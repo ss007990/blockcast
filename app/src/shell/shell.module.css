@@ -7,7 +7,7 @@
   width: 100%;
   max-width: 1180px;
   margin: 0 auto;
-  padding: 18px clamp(16px, 4vw, 32px) 0;
+  padding: calc(18px + env(safe-area-inset-top)) clamp(16px, 4vw, 32px) 0;
 }
 
 .logo {
@@ -280,6 +280,21 @@
   color: var(--bg);
   font-size: 13.5px;
   padding: 12px 18px;
+  line-height: 1.5;
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+}
+
+.stale {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--amber-bg);
+  color: var(--amber);
+  border: 1.5px solid var(--amber-vivid);
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 10px 16px;
   line-height: 1.5;
   border-radius: var(--radius);
   margin-bottom: 20px;

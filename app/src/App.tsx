@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { TOL_MULT } from './core/activities';
 import { detectChanges, type PlannedSession } from './core/alerts';
 import { isoDate, locNow } from './core/forecast';
-import { useT, useThemeEffect } from './hooks';
+import { useLocale, useT, useThemeEffect } from './hooks';
 import { AlertsSheet } from './features/alerts/AlertsSheet';
 import { DetailSheet } from './features/detail/DetailSheet';
 import { AddActivitySheet } from './ui/AddActivitySheet';
@@ -105,6 +105,7 @@ export function App() {
       <Masthead />
       <main className={s.main}>
         <IntroBanner />
+        <StaleBanner />
         <motion.div
           key={tab}
           initial={{ opacity: 0, y: 8 }}
@@ -128,6 +129,24 @@ export function App() {
       <AlertsSheet />
       <AddActivitySheet />
     </>
+  );
+}
+
+function StaleBanner() {
+  const t = useT();
+  const locale = useLocale();
+  const { status, updatedAt } = useForecast();
+  if (status !== 'stale' || updatedAt == null) return null;
+  const when = new Date(updatedAt).toLocaleTimeString(locale, {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  return (
+    <div className={s.stale} role="status">
+      <span>
+        ⚠️ {t.common.staleBanner} {when}. {t.common.staleBanner2}
+      </span>
+    </div>
   );
 }
 

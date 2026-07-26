@@ -384,7 +384,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  max-height: 88dvh;
+  max-height: calc(88dvh - env(safe-area-inset-top));
   overflow-y: auto;
   background: var(--surface);
   border-top: 1px solid var(--line-strong);

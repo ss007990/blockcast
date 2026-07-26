@@ -32,15 +32,19 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // GoatCounter analytics (privacy-friendly, no cookies).
+      // GoatCounter analytics (privacy-friendly, no cookies) — website only.
+      // The native app skips it entirely so its App Privacy label stays
+      // "Data Not Collected" (Capacitor serves from capacitor://localhost).
       // Visit the site once with #skipgc in the URL to exclude your own device.
       if (window.location.hash === '#skipgc') localStorage.setItem('skipgc', 't');
-      window.goatcounter = { no_onload: localStorage.getItem('skipgc') === 't' };
+      if (window.location.protocol.startsWith('http')) {
+        window.goatcounter = { no_onload: localStorage.getItem('skipgc') === 't' };
+        var gc = document.createElement('script');
+        gc.async = true;
+        gc.src = 'https://gc.zgo.at/count.js';
+        gc.setAttribute('data-goatcounter', 'https://blockcast.goatcounter.com/count');
+        document.body.appendChild(gc);
+      }
     </script>
-    <script
-      data-goatcounter="https://blockcast.goatcounter.com/count"
-      async
-      src="//gc.zgo.at/count.js"
-    ></script>
   </body>
 </html>

@@ -10,9 +10,12 @@ export const en = {
     loading: 'Loading live forecast…',
     updated: 'updated',
     liveForecast: 'Live forecast',
+    cachedForecast: 'Saved forecast',
     fetching: 'Fetching live forecast for',
     loadErr: 'Could not load forecast:',
     checkConn: '— check your connection and reload.',
+    staleBanner: 'Offline — showing the forecast saved at',
+    staleBanner2: 'It may be out of date.',
     today: 'Today',
     risk: 'Risk',
   },
@@ -261,6 +264,7 @@ export const en = {
     aboutBody:
       'BlockCast scores every block of your week for your sport — green means go. Live data from Open-Meteo; maps by Leaflet & OpenStreetMap contributors. Settings and plans stay on your device.',
     version: 'Version',
+    privacy: 'Privacy policy',
   },
 
   intro:

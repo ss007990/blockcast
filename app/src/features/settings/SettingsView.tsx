@@ -78,6 +78,10 @@ export function SettingsView() {
           ·{' '}
           <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
             OpenStreetMap
+          </a>{' '}
+          ·{' '}
+          <a href="/privacy.html" target="_blank" rel="noreferrer">
+            {t.settings.privacy}
           </a>
         </p>
       </Card>

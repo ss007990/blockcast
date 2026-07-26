@@ -234,7 +234,7 @@ function HeatBoard() {
         style={{ padding: '10px 0 0', fontSize: 11, fontFamily: 'var(--font-mono)' }}
       >
         {updatedAt
-          ? `${t.common.liveForecast} · ${st.loc.name} · ${t.common.updated} ${new Date(updatedAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}`
+          ? `${status === 'stale' ? t.common.cachedForecast : t.common.liveForecast} · ${st.loc.name} · ${t.common.updated} ${new Date(updatedAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}`
           : null}
       </div>
     </Card>

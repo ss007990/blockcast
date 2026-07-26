@@ -12,9 +12,12 @@ export const fr: Dict = {
     loading: 'Chargement des prévisions en direct…',
     updated: 'mise à jour',
     liveForecast: 'Prévisions en direct',
+    cachedForecast: 'Prévisions enregistrées',
     fetching: 'Chargement des prévisions pour',
     loadErr: 'Impossible de charger les prévisions :',
     checkConn: '— vérifiez votre connexion et rechargez.',
+    staleBanner: 'Hors ligne — prévisions enregistrées à',
+    staleBanner2: 'Elles peuvent être périmées.',
     today: 'Aujourd’hui',
     risk: 'Risque',
   },
@@ -265,6 +268,7 @@ export const fr: Dict = {
     aboutBody:
       'BlockCast note chaque bloc de votre semaine pour votre sport — vert = allez-y. Données en direct d’Open-Meteo; cartes par Leaflet et les contributeurs OpenStreetMap. Réglages et séances restent sur votre appareil.',
     version: 'Version',
+    privacy: 'Politique de confidentialité',
   },
 
   intro:
