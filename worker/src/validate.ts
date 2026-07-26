@@ -14,15 +14,19 @@ export function parseSubscribeBody(raw: unknown): StoredSub | null {
   if (typeof raw !== 'object' || raw === null) return null;
   const b = raw as Record<string, unknown>;
 
-  const sub = b.subscription as { endpoint?: unknown; keys?: { p256dh?: unknown; auth?: unknown } };
-  if (
-    !sub ||
-    typeof sub.endpoint !== 'string' ||
-    !sub.endpoint.startsWith('https://') ||
-    typeof sub.keys?.p256dh !== 'string' ||
-    typeof sub.keys?.auth !== 'string'
-  )
-    return null;
+  // exactly one transport: a Web Push subscription or an APNs device token
+  const sub = b.subscription as
+    | { endpoint?: unknown; keys?: { p256dh?: unknown; auth?: unknown } }
+    | undefined;
+  const apnsToken = (b.apns as { token?: unknown } | undefined)?.token;
+  const webOk =
+    !!sub &&
+    typeof sub.endpoint === 'string' &&
+    sub.endpoint.startsWith('https://') &&
+    typeof sub.keys?.p256dh === 'string' &&
+    typeof sub.keys?.auth === 'string';
+  const apnsOk = typeof apnsToken === 'string' && /^[a-f0-9]{16,200}$/i.test(apnsToken);
+  if (!webOk && !apnsOk) return null;
 
   if (!Array.isArray(b.sessions) || b.sessions.length === 0) return null;
   const sessions: StoredSession[] = [];
@@ -73,11 +77,15 @@ export function parseSubscribeBody(raw: unknown): StoredSub | null {
   }
 
   return {
-    subscription: {
-      endpoint: sub.endpoint,
-      expirationTime: null,
-      keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth },
-    },
+    ...(webOk
+      ? {
+          subscription: {
+            endpoint: sub!.endpoint as string,
+            expirationTime: null,
+            keys: { p256dh: sub!.keys!.p256dh as string, auth: sub!.keys!.auth as string },
+          },
+        }
+      : { apns: { token: (apnsToken as string).toLowerCase() } }),
     sessions,
     criteria,
     tolMult: num(b.tolMult) && (b.tolMult as number) > 0 && (b.tolMult as number) < 3 ? (b.tolMult as number) : 1,
@@ -90,4 +98,11 @@ export function parseSubscribeBody(raw: unknown): StoredSub | null {
 export async function endpointKey(endpoint: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(endpoint));
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** KV key for a stored sub, whatever its transport. APNs tokens are prefixed
+ * before hashing so they can never collide with an endpoint hash. */
+export async function subKey(sub: Pick<StoredSub, 'subscription' | 'apns'>): Promise<string> {
+  if (sub.subscription) return endpointKey(sub.subscription.endpoint);
+  return endpointKey(`apns:${sub.apns!.token}`);
 }

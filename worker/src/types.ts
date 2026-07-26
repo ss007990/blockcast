@@ -46,7 +46,10 @@ export interface StoredFeed {
 }
 
 export interface StoredSub {
-  subscription: Subscription;
+  /** Web Push subscription — present for browser subscribers. */
+  subscription?: Subscription;
+  /** APNs device token — present for native iOS subscribers. */
+  apns?: { token: string };
   sessions: StoredSession[];
   criteria: Partial<Record<ActivityId, StoredCriteria>>;
   tolMult: number;
@@ -61,4 +64,10 @@ export interface Env {
   VAPID_PUBLIC_KEY: string;
   VAPID_PRIVATE_KEY: string;
   VAPID_SUBJECT: string;
+  /** APNs (native iOS push) — all optional; native push is off until set. */
+  APNS_PRIVATE_KEY?: string;
+  APNS_KEY_ID?: string;
+  APNS_TEAM_ID?: string;
+  APNS_TOPIC?: string;
+  APNS_ENV?: 'sandbox' | 'production';
 }

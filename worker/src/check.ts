@@ -3,6 +3,7 @@
 // core scoring the app uses — one source of truth.
 
 import { buildPushPayload } from '@block65/webcrypto-web-push';
+import { sendApns } from './apns';
 import { criteriaFrom, TOL_MULT, type CustomActivity } from '../../app/src/core/activities';
 import { planKey } from '../../app/src/core/alerts';
 import { getBlock, reshapeForecast, type ForecastData, type OpenMeteoResponse } from '../../app/src/core/forecast';
@@ -132,16 +133,27 @@ export async function runChecks(env: Env): Promise<void> {
           if (b.band === s.baseBand) continue;
 
           const { title, body } = alertText(s, b.band, b.score, sub.lang);
-          const payload = await buildPushPayload(
-            { data: JSON.stringify({ title, body, url: 'https://blockcast.ca/#planner', tag: `bc-${s.id}` }) },
-            sub.subscription,
-            vapid,
-          );
-          const res = await fetch(sub.subscription.endpoint, payload);
-          if (res.status === 404 || res.status === 410) {
-            await env.SUBS.delete(entry.name); // subscription expired
-            dirty = false;
-            break;
+          if (sub.apns) {
+            const result = await sendApns(env, sub.apns.token, { title, body }, `bc-${s.id}`);
+            if (result === 'gone') {
+              await env.SUBS.delete(entry.name); // device token is dead
+              dirty = false;
+              break;
+            }
+          } else if (sub.subscription) {
+            const payload = await buildPushPayload(
+              { data: JSON.stringify({ title, body, url: 'https://blockcast.ca/#planner', tag: `bc-${s.id}` }) },
+              sub.subscription,
+              vapid,
+            );
+            const res = await fetch(sub.subscription.endpoint, payload);
+            if (res.status === 404 || res.status === 410) {
+              await env.SUBS.delete(entry.name); // subscription expired
+              dirty = false;
+              break;
+            }
+          } else {
+            continue; // no transport — nothing to notify
           }
           s.baseBand = b.band;
           s.baseScore = b.score;

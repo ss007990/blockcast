@@ -4,7 +4,7 @@
 import { runChecks } from './check';
 import { feedKey, feedToIcs, isFeedToken, parseFeedBody } from './feed';
 import type { Env, StoredFeed } from './types';
-import { endpointKey, parseSubscribeBody } from './validate';
+import { endpointKey, parseSubscribeBody, subKey } from './validate';
 
 function corsHeaders(req: Request, env: Env): Record<string, string> {
   const origin = req.headers.get('Origin') ?? '';
@@ -89,7 +89,7 @@ export default {
       }
       const sub = parseSubscribeBody(raw);
       if (!sub) return json(400, { error: 'invalid subscription payload' }, cors);
-      await env.SUBS.put(await endpointKey(sub.subscription.endpoint), JSON.stringify(sub), {
+      await env.SUBS.put(await subKey(sub), JSON.stringify(sub), {
         // self-expire: sessions are at most 7 days out; 30 d covers re-subscribes
         expirationTtl: 30 * 24 * 3600,
       });
@@ -97,14 +97,19 @@ export default {
     }
 
     if (req.method === 'DELETE') {
-      let body: { endpoint?: unknown };
+      let body: { endpoint?: unknown; apnsToken?: unknown };
       try {
-        body = (await req.json()) as { endpoint?: unknown };
+        body = (await req.json()) as { endpoint?: unknown; apnsToken?: unknown };
       } catch {
         return json(400, { error: 'invalid JSON' }, cors);
       }
-      if (typeof body.endpoint !== 'string') return json(400, { error: 'endpoint required' }, cors);
-      await env.SUBS.delete(await endpointKey(body.endpoint));
+      if (typeof body.endpoint === 'string') {
+        await env.SUBS.delete(await endpointKey(body.endpoint));
+      } else if (typeof body.apnsToken === 'string') {
+        await env.SUBS.delete(await endpointKey(`apns:${body.apnsToken.toLowerCase()}`));
+      } else {
+        return json(400, { error: 'endpoint or apnsToken required' }, cors);
+      }
       return json(200, { ok: true }, cors);
     }
 

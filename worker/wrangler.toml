@@ -14,9 +14,15 @@ kv_namespaces = [
 crons = ["0 */3 * * *"]
 
 [vars]
-ALLOWED_ORIGINS = "https://blockcast.ca,http://localhost:5173"
+ALLOWED_ORIGINS = "https://blockcast.ca,http://localhost:5173,capacitor://localhost"
+APNS_TOPIC = "ca.blockcast.app"
+# "sandbox" for dev/TestFlight-internal device tokens, "production" for App Store.
+APNS_ENV = "production"
 
 # Secrets (set with `npx wrangler secret put <NAME>`):
 #   VAPID_PUBLIC_KEY   — base64url public key  (npx web-push generate-vapid-keys)
 #   VAPID_PRIVATE_KEY  — base64url private key
 #   VAPID_SUBJECT      — e.g. "mailto:sandy.p.scullion@gmail.com"
+#   APNS_PRIVATE_KEY   — contents of the AuthKey_<KEYID>.p8 from developer.apple.com
+#   APNS_KEY_ID        — the key's 10-char id
+#   APNS_TEAM_ID       — Apple Developer Team ID (membership page)

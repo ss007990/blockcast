@@ -1,11 +1,14 @@
-// Web Push subscription against the BlockCast worker. The app is fully
-// functional without the worker deployed — everything degrades to in-app
-// alerts when push is unavailable.
+// Push subscription against the BlockCast worker — Web Push in browsers,
+// APNs via the Capacitor plugin in the native iOS shell (nativePush.ts).
+// The app is fully functional without the worker deployed — everything
+// degrades to in-app alerts when push is unavailable.
 
+import { Capacitor } from '@capacitor/core';
 import type { ActivityId, Criteria, CustomActivity } from '../core/activities';
 import type { PlannedSession } from '../core/alerts';
 import type { Lang } from '../i18n';
 import type { UnitSystem } from '../core/units';
+import { subscribeNativePush, unsubscribeNativePush } from './nativePush';
 
 const API = import.meta.env.VITE_PUSH_API as string | undefined;
 const VAPID_PUBLIC = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
@@ -13,6 +16,11 @@ const VAPID_PUBLIC = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
 export type PushAvailability = 'ok' | 'unsupported' | 'unconfigured' | 'denied';
 
 export function pushAvailability(): PushAvailability {
+  if (Capacitor.isNativePlatform()) {
+    // native needs only the worker URL; permission denial surfaces when
+    // subscribing (the OS prompt/settings own that state, not the page)
+    return API ? 'ok' : 'unconfigured';
+  }
   if (!API || !VAPID_PUBLIC) return 'unconfigured';
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window))
     return 'unsupported';
@@ -39,15 +47,8 @@ export interface PushContext {
   units: UnitSystem;
 }
 
-export async function subscribePush(ctx: PushContext): Promise<boolean> {
-  if (pushAvailability() !== 'ok') return false;
-  const perm = await Notification.requestPermission();
-  if (perm !== 'granted') return false;
-  const reg = await navigator.serviceWorker.ready;
-  const sub = await reg.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC!).buffer as ArrayBuffer,
-  });
+/** The transport-independent part of the subscribe body. */
+export function buildSubscribeBody(ctx: PushContext): Record<string, unknown> {
   const criteria: Record<
     string,
     { w: Criteria['weights']; tMin: number; tMax: number; snowBase?: number }
@@ -63,22 +64,35 @@ export async function subscribePush(ctx: PushContext): Promise<boolean> {
     };
   }
   const customName = (id: ActivityId) => ctx.customs?.find((c) => c.id === id)?.name;
+  return {
+    sessions: ctx.sessions.map((s) => ({ ...s, name: customName(s.activityId) })),
+    criteria,
+    tolMult: ctx.tolMult,
+    lang: ctx.lang,
+    units: ctx.units,
+  };
+}
+
+export async function subscribePush(ctx: PushContext): Promise<boolean> {
+  if (Capacitor.isNativePlatform()) return subscribeNativePush(buildSubscribeBody(ctx));
+  if (pushAvailability() !== 'ok') return false;
+  const perm = await Notification.requestPermission();
+  if (perm !== 'granted') return false;
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC!).buffer as ArrayBuffer,
+  });
   const res = await fetch(`${API}/api/subscribe`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      subscription: sub.toJSON(),
-      sessions: ctx.sessions.map((s) => ({ ...s, name: customName(s.activityId) })),
-      criteria,
-      tolMult: ctx.tolMult,
-      lang: ctx.lang,
-      units: ctx.units,
-    }),
+    body: JSON.stringify({ subscription: sub.toJSON(), ...buildSubscribeBody(ctx) }),
   });
   return res.ok;
 }
 
 export async function unsubscribePush(): Promise<void> {
+  if (Capacitor.isNativePlatform()) return unsubscribeNativePush();
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.ready;
   const sub = await reg.pushManager.getSubscription();
