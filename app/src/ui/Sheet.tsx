@@ -3,7 +3,7 @@
 // for modals, so every dialog animates the same way.
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { useIsMobile } from '../hooks';
 import s from './ui.module.css';
 
@@ -31,6 +31,16 @@ const spring = { type: 'spring', stiffness: 380, damping: 34 } as const;
 export function Sheet({ open, onClose, children, ariaLabel }: SheetProps) {
   const mobile = useIsMobile();
   useScrollLock(open);
+  // iOS WKWebView retargets the tap's synthesized click to the scrim that
+  // renders under the finger mid-tap, closing the sheet as it opens — ignore
+  // scrim clicks until the open is old enough to be a real second tap.
+  const openedAt = useRef(0);
+  useEffect(() => {
+    if (open) openedAt.current = performance.now();
+  }, [open]);
+  const closeFromScrim = () => {
+    if (performance.now() - openedAt.current > 400) onClose();
+  };
   return (
     <AnimatePresence>
       {open && (
@@ -41,7 +51,7 @@ export function Sheet({ open, onClose, children, ariaLabel }: SheetProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            onClick={onClose}
+            onClick={closeFromScrim}
           />
           {mobile ? (
             <motion.div
