@@ -8,3 +8,6 @@ dev-dist/
 .env
 .env.*
 coverage/
+
+# Apple private keys — never commit
+*.p8
