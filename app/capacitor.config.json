@@ -1,0 +1,9 @@
+{
+  "appId": "ca.blockcast.app",
+  "appName": "BlockCast",
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#f1f1ec"
+  }
+}
