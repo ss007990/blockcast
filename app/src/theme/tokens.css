@@ -12,10 +12,11 @@
   --surface-glass: rgba(241, 241, 236, 0.85);
   --overlay: rgba(12, 13, 14, 0.5);
 
-  /* ink — carbon */
+  /* ink — carbon. Small print (--ink-3) deliberately matches --ink-2: lighter
+     shades proved unreadable on the chalk surfaces. */
   --ink: #131417;
   --ink-2: #55575c;
-  --ink-3: #96979b;
+  --ink-3: var(--ink-2);
   --line: #dfdfd7;
   --line-strong: #c2c2b9;
 
@@ -69,7 +70,6 @@
 
   --ink: #f2f2ef;
   --ink-2: #a4a5a8;
-  --ink-3: #626366;
   --line: #26272b;
   --line-strong: #3b3d42;
 
