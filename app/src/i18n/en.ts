@@ -173,7 +173,8 @@ export const en = {
     calGoogle: 'Google Calendar',
     calOutlook: 'Outlook.com',
     calOffice: 'Microsoft 365 (work/school)',
-    calIcs: 'Apple / calendar file (.ics)',
+    calIcs: 'Calendar file (.ics)',
+    calIcsHint: 'One-time copy — it won’t update if your plans change.',
     purposeNone: 'Purpose…',
     purposes: {
       training: 'Training',
@@ -184,12 +185,18 @@ export const en = {
       travel: 'Travel',
     },
     notePh: 'Add a note — e.g. “Tennis with John, 9–10”',
-    feedEnable: 'Auto-sync to my calendar',
-    feedHint: 'Get a private calendar link — subscribe once and every session you plan shows up automatically.',
-    feedOn: 'Auto-sync is on — subscribe in your calendar app:',
+    feedEnable: 'Sync to my calendar',
+    feedHint:
+      'Easiest option — set up once and every session you plan lands in your calendar automatically, updates included.',
+    feedBusy: 'Setting up your calendar link…',
+    feedError: 'Couldn’t reach the sync server. Check your connection and try again.',
+    feedOn: 'Auto-sync is on — one last step: subscribe in your calendar.',
+    feedAppleSteps:
+      'Tap Apple Calendar below, then tap Subscribe when Calendar asks. That’s it — new sessions appear on their own.',
     feedApple: 'Apple Calendar',
     feedCopy: 'Copy link',
     feedCopied: '✓ Copied',
+    feedCopyManual: 'Select and copy the link:',
     feedNote:
       'Your sessions sync within seconds. Google and Outlook refresh subscribed calendars on their own schedule — new sessions can take a few hours to appear there.',
     feedOff: 'Turn off auto-sync',

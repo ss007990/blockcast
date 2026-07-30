@@ -109,9 +109,12 @@ export function PlannerView() {
         </div>
       )}
 
+      <CalendarFeed />
+
       {sessions.length > 0 && (
         <div className={s.foot}>
           <AddToCalendar
+            dropUp
             label={t.planner.addAllCal}
             items={sessions.map((p) => ({
               event: sessionToIcsEvent(p, checkOf(p), t, nameOf),
@@ -120,8 +123,6 @@ export function PlannerView() {
           />
         </div>
       )}
-
-      <CalendarFeed />
 
       {sessions.length > 0 && (
         <div className={s.pushRow}>

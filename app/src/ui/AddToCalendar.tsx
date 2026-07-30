@@ -115,6 +115,7 @@ export function AddToCalendar({ items, label, compact, dropUp }: Props) {
               <button role="menuitem" onClick={dlIcs}>
                 {t.planner.calIcs}
               </button>
+              <div className={s.hint}>{t.planner.calIcsHint}</div>
             </>
           ) : (
             <>

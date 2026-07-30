@@ -175,7 +175,8 @@ export const fr: Dict = {
     calGoogle: 'Google Agenda',
     calOutlook: 'Outlook.com',
     calOffice: 'Microsoft 365 (travail/école)',
-    calIcs: 'Apple / fichier calendrier (.ics)',
+    calIcs: 'Fichier calendrier (.ics)',
+    calIcsHint: 'Copie unique — elle ne se mettra pas à jour si vos plans changent.',
     purposeNone: 'Objectif…',
     purposes: {
       training: 'Entraînement',
@@ -188,11 +189,16 @@ export const fr: Dict = {
     notePh: 'Ajouter une note — p. ex. « Tennis avec Jean, 9–10 »',
     feedEnable: 'Synchroniser avec mon calendrier',
     feedHint:
-      'Obtenez un lien de calendrier privé — abonnez-vous une fois et chaque séance planifiée apparaît automatiquement.',
-    feedOn: 'Synchronisation active — abonnez-vous dans votre app de calendrier :',
+      'L’option la plus simple — configurez une fois et chaque séance planifiée s’ajoute automatiquement à votre calendrier, mises à jour comprises.',
+    feedBusy: 'Création de votre lien de calendrier…',
+    feedError: 'Impossible de joindre le serveur de synchronisation. Vérifiez votre connexion et réessayez.',
+    feedOn: 'Synchronisation active — dernière étape : abonnez-vous dans votre calendrier.',
+    feedAppleSteps:
+      'Touchez Calendrier Apple ci-dessous, puis « S’abonner » quand Calendrier le demande. C’est tout — les nouvelles séances apparaîtront d’elles-mêmes.',
     feedApple: 'Calendrier Apple',
     feedCopy: 'Copier le lien',
     feedCopied: '✓ Copié',
+    feedCopyManual: 'Sélectionnez et copiez le lien :',
     feedNote:
       'Vos séances se synchronisent en quelques secondes. Google et Outlook actualisent les calendriers abonnés à leur propre rythme — quelques heures peuvent s’écouler avant l’apparition des nouvelles séances.',
     feedOff: 'Désactiver la synchronisation',

@@ -74,3 +74,11 @@
 .done {
   color: var(--ink-3);
 }
+
+.hint {
+  font-size: 11px;
+  color: var(--ink-3);
+  padding: 4px 12px 6px;
+  max-width: 230px;
+  white-space: normal;
+}
