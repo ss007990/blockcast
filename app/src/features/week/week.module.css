@@ -106,6 +106,9 @@
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ghToday b {

@@ -11,3 +11,4 @@ coverage/
 
 # Apple private keys — never commit
 *.p8
+DerivedData/

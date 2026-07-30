@@ -18,7 +18,7 @@ export const fr: Dict = {
     checkConn: '— vérifiez votre connexion et rechargez.',
     staleBanner: 'Hors ligne — prévisions enregistrées à',
     staleBanner2: 'Elles peuvent être périmées.',
-    today: 'Aujourd’hui',
+    today: 'Auj.',
     risk: 'Risque',
   },
 

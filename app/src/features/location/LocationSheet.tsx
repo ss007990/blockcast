@@ -1,7 +1,7 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { Map as LeafletMap, Marker, TileLayer } from 'leaflet';
 import { distKm, parseLocQuery, rankLocResults, type GeoResult } from '../../core/geo';
-import { useT } from '../../hooks';
+import { useIsMobile, useT } from '../../hooks';
 import { reverseGeocode, searchPlaces } from '../../services/geocoding';
 import { useSettings } from '../../state/settings';
 import { useUi } from '../../state/ui';
@@ -23,6 +23,10 @@ function LocationContent() {
   const t = useT();
   const st = useSettings();
   const setLocOpen = useUi((u) => u.setLocOpen);
+  // On phones, autofocusing the search field pops the keyboard the moment the
+  // sheet opens — iOS then pans the sheet to keep the input above the keyboard,
+  // landing the user on the map instead of the title and saved spots.
+  const mobile = useIsMobile();
 
   const [q, setQ] = useState('');
   const [results, setResults] = useState<GeoResult[] | null>(null);
@@ -205,7 +209,7 @@ function LocationContent() {
         onChange={(e) => setQ(e.target.value)}
         placeholder={t.location.searchPh}
         autoComplete="off"
-        autoFocus
+        autoFocus={!mobile}
       />
       {results && (
         <div className={s.results}>
