@@ -263,7 +263,7 @@ export const fr: Dict = {
     clock: 'Horloge',
     about: 'À propos',
     aboutBody:
-      'BlockCast note chaque bloc de votre semaine pour votre sport — vert = allez-y. Données en direct d’Open-Meteo; cartes par Leaflet et les contributeurs OpenStreetMap. Réglages et séances restent sur votre appareil.',
+      'BlockCast note chaque bloc de votre semaine pour votre sport — vert = allez-y. Données en direct d’Open-Meteo; radar par Windy.com; cartes par Leaflet et les contributeurs OpenStreetMap. Réglages et séances restent sur votre appareil.',
     version: 'Version',
     privacy: 'Politique de confidentialité',
   },

@@ -260,7 +260,7 @@ export const en = {
     clock: 'Clock',
     about: 'About',
     aboutBody:
-      'BlockCast scores every block of your week for your sport — green means go. Live data from Open-Meteo; maps by Leaflet & OpenStreetMap contributors. Settings and plans stay on your device.',
+      'BlockCast scores every block of your week for your sport — green means go. Live data from Open-Meteo; radar by Windy.com; maps by Leaflet & OpenStreetMap contributors. Settings and plans stay on your device.',
     version: 'Version',
     privacy: 'Privacy policy',
   },

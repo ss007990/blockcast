@@ -76,6 +76,10 @@ export function SettingsView() {
             Open-Meteo
           </a>{' '}
           ·{' '}
+          <a href="https://www.windy.com" target="_blank" rel="noreferrer">
+            Windy.com
+          </a>{' '}
+          ·{' '}
           <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
             OpenStreetMap
           </a>{' '}
