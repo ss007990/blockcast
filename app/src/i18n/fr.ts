@@ -177,15 +177,6 @@ export const fr: Dict = {
     calOffice: 'Microsoft 365 (travail/école)',
     calIcs: 'Fichier calendrier (.ics)',
     calIcsHint: 'Copie unique — elle ne se mettra pas à jour si vos plans changent.',
-    purposeNone: 'Objectif…',
-    purposes: {
-      training: 'Entraînement',
-      match: 'Match',
-      social: 'Social',
-      family: 'Famille',
-      work: 'Travail',
-      travel: 'Voyage',
-    },
     notePh: 'Ajouter une note — p. ex. « Tennis avec Jean, 9–10 »',
     feedEnable: 'Synchroniser avec mon calendrier',
     feedHint:

@@ -10,7 +10,7 @@ export interface PlannerState {
   sessions: PlannedSession[];
   add: (s: PlannedSession) => void;
   remove: (id: number) => void;
-  update: (id: number, patch: Partial<Pick<PlannedSession, 'purpose' | 'note'>>) => void;
+  update: (id: number, patch: Partial<Pick<PlannedSession, 'note'>>) => void;
   /** Drop sessions more than a day in the past (location wall clock). */
   prune: (cutKey: string) => void;
   /** Set the baseline band for sessions that don't have one yet. */

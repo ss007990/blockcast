@@ -32,9 +32,8 @@ export interface Subscription {
 }
 
 /** One entry of a subscribable calendar feed: a planned session plus the
- * calendar-facing extras (purpose tag, freeform note). */
+ * calendar-facing freeform note. */
 export interface FeedSession extends StoredSession {
-  purpose?: string;
   note?: string;
 }
 

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { TOL_MULT } from '../../core/activities';
-import { PURPOSES, type PlannedSession, type Purpose } from '../../core/alerts';
+import { type PlannedSession } from '../../core/alerts';
 import { ActivityIcon } from '../../ui/ActivityIcon';
 import { AddToCalendar } from '../../ui/AddToCalendar';
 import { getBlock } from '../../core/forecast';
@@ -36,13 +36,11 @@ export function DetailSheet() {
   const crit = useMemo(() => critFor(st, st.activity), [st]);
   const tolMult = TOL_MULT[st.tolerance];
 
-  const [purpose, setPurpose] = useState<Purpose | ''>('');
   const [note, setNote] = useState('');
-  // purpose/note belong to one block: reset them when the selection moves
+  // the note belongs to one block: reset it when the selection moves
   const [prevSel, setPrevSel] = useState(selected);
   if (selected !== prevSel) {
     setPrevSel(selected);
-    setPurpose('');
     setNote('');
   }
 
@@ -86,7 +84,6 @@ export function DetailSheet() {
     lon: st.loc.lon,
     baseScore: b.score,
     baseBand: b.band,
-    ...(purpose ? { purpose } : {}),
     ...(note.trim() ? { note: note.trim() } : {}),
   });
 
@@ -126,19 +123,6 @@ export function DetailSheet() {
       />
 
       <div className={s.planExtras}>
-        <select
-          className={uiCss.select}
-          value={purpose}
-          onChange={(e) => setPurpose(e.target.value as Purpose | '')}
-          aria-label={t.planner.purposeNone}
-        >
-          <option value="">{t.planner.purposeNone}</option>
-          {PURPOSES.map((k) => (
-            <option key={k} value={k}>
-              {t.planner.purposes[k]}
-            </option>
-          ))}
-        </select>
         <input
           className={`${uiCss.input} ${s.noteInput}`}
           value={note}

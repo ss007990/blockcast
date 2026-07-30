@@ -6,10 +6,6 @@
 import type { ActivityId } from './activities';
 import type { Band } from './scoring';
 
-/** Calendar purposes a session can be tagged with; labels live in i18n. */
-export const PURPOSES = ['training', 'match', 'social', 'family', 'work', 'travel'] as const;
-export type Purpose = (typeof PURPOSES)[number];
-
 export interface PlannedSession {
   id: number;
   activityId: ActivityId;
@@ -23,7 +19,6 @@ export interface PlannedSession {
   /** Score/band at planning time (or when the user last saw an alert). */
   baseScore: number | null;
   baseBand: Band | null;
-  purpose?: Purpose;
   /** Freeform note, e.g. "Playing tennis with John from 9–10". */
   note?: string;
 }

@@ -12,7 +12,6 @@ const body = () => ({
       lat: 46.8,
       lon: -71.2,
       locName: 'Québec',
-      purpose: 'match',
       note: 'Playing with John from 6-8',
     },
   ],
@@ -29,10 +28,9 @@ describe('isFeedToken', () => {
 });
 
 describe('parseFeedBody', () => {
-  it('accepts a valid payload with purpose and note', () => {
+  it('accepts a valid payload with a note', () => {
     const feed = parseFeedBody(body());
     expect(feed).not.toBeNull();
-    expect(feed!.sessions[0]!.purpose).toBe('match');
     expect(feed!.sessions[0]!.note).toBe('Playing with John from 6-8');
     expect(feed!.lang).toBe('en');
   });
@@ -49,16 +47,16 @@ describe('parseFeedBody', () => {
 });
 
 describe('feedToIcs', () => {
-  it('serves a named calendar with purpose in the summary and note in the description', () => {
+  it('serves a named calendar with the note in the description', () => {
     const ics = feedToIcs(parseFeedBody(body())!);
     expect(ics).toContain('X-WR-CALNAME:BlockCast');
-    expect(ics).toContain('SUMMARY:Tennis — Match / game');
+    expect(ics).toContain('SUMMARY:Tennis — BlockCast');
     expect(ics).toContain('DTSTART:20260725T180000');
     expect(ics).toContain('DESCRIPTION:Playing with John from 6-8\\nPlanned with BlockCast');
   });
-  it('localizes labels for French feeds', () => {
+  it('localizes activity names for French feeds', () => {
     const ics = feedToIcs(parseFeedBody({ ...body(), lang: 'fr' })!);
-    expect(ics).toContain('SUMMARY:Tennis — Match');
+    expect(ics).toContain('SUMMARY:Tennis — BlockCast');
   });
 
   it('emits UTC times when the payload carries a zone (18:00 EDT = 22:00Z)', () => {

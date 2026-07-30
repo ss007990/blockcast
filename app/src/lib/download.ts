@@ -19,9 +19,7 @@ export function sessionToIcsEvent(
     day: p.day,
     h: p.h,
     len: p.len,
-    summary: p.purpose
-      ? `${nameOf(p.activityId)} — ${t.planner.purposes[p.purpose]}`
-      : `${nameOf(p.activityId)} — BlockCast`,
+    summary: `${nameOf(p.activityId)} — BlockCast`,
     location: p.locName,
     description: p.note ? `${p.note}\n${forecast}` : forecast,
   };

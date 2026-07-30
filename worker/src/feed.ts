@@ -54,7 +54,6 @@ export function parseFeedBody(raw: unknown): StoredFeed | null {
       locName: typeof s.locName === 'string' ? s.locName.slice(0, 120) : '',
       baseBand: null,
       baseScore: null,
-      ...(typeof s.purpose === 'string' && s.purpose ? { purpose: s.purpose.slice(0, 20) } : {}),
       ...(typeof s.note === 'string' && s.note ? { note: s.note.slice(0, 500) } : {}),
     });
   }
@@ -109,7 +108,6 @@ const utcStamp = (d: Date): string => d.toISOString().replace(/[-:]/g, '').slice
 
 export function feedToIcs(feed: StoredFeed): string {
   const dict = feed.lang === 'fr' ? fr : en;
-  const purposes = dict.planner.purposes as Record<string, string>;
   // With a known zone, emit UTC instants; without one (old app versions,
   // bogus zone strings) fall back to floating local times.
   let toUtc: ((day: string, hour: number) => string) | undefined;
@@ -125,7 +123,6 @@ export function feedToIcs(feed: StoredFeed): string {
   const events: IcsEvent[] = feed.sessions.map((s: FeedSession) => {
     const name =
       (dict.activities as Record<string, string>)[s.activityId] ?? s.name ?? s.activityId;
-    const purposeLabel = s.purpose ? purposes[s.purpose] : undefined;
     return {
       uid: `${s.id}-${s.day.replace(/-/g, '')}${String(s.h).padStart(2, '0')}@blockcast`,
       day: s.day,
@@ -134,7 +131,7 @@ export function feedToIcs(feed: StoredFeed): string {
       ...(toUtc
         ? { startUtc: toUtc(s.day, s.h), endUtc: toUtc(s.day, Math.min(s.h + s.len, 24)) }
         : {}),
-      summary: purposeLabel ? `${name} — ${purposeLabel}` : `${name} — BlockCast`,
+      summary: `${name} — BlockCast`,
       location: s.locName,
       description: s.note ? `${s.note}\nPlanned with BlockCast` : 'Planned with BlockCast',
     };

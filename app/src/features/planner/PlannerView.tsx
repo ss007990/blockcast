@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { TOL_MULT } from '../../core/activities';
-import { PURPOSES, type Purpose } from '../../core/alerts';
 import { ActivityIcon } from '../../ui/ActivityIcon';
 import { AddToCalendar } from '../../ui/AddToCalendar';
 import { formatHour } from '../../core/units';
@@ -65,21 +64,13 @@ export function PlannerView() {
                     {p.locName}
                   </div>
                   <div className={s.meta}>
-                    <select
-                      className={uiCss.select}
-                      value={p.purpose ?? ''}
-                      onChange={(e) =>
-                        update(p.id, { purpose: (e.target.value || undefined) as Purpose | undefined })
-                      }
-                      aria-label={t.planner.purposeNone}
-                    >
-                      <option value="">{t.planner.purposeNone}</option>
-                      {PURPOSES.map((k) => (
-                        <option key={k} value={k}>
-                          {t.planner.purposes[k]}
-                        </option>
-                      ))}
-                    </select>
+                    {b ? (
+                      <BandChip band={b.band}>
+                        {t.risk[`${b.band}Short`]} · {b.score}
+                      </BandChip>
+                    ) : (
+                      <BandChip band={null}>{t.common.noData}</BandChip>
+                    )}
                     <input
                       className={`${uiCss.input} ${s.note}`}
                       value={p.note ?? ''}
@@ -88,13 +79,6 @@ export function PlannerView() {
                     />
                   </div>
                 </div>
-                {b ? (
-                  <BandChip band={b.band}>
-                    {t.risk[`${b.band}Short`]} · {b.score}
-                  </BandChip>
-                ) : (
-                  <BandChip band={null}>{t.common.noData}</BandChip>
-                )}
                 <AddToCalendar compact items={[{ event: sessionToIcsEvent(p, b, t, nameOf) }]} />
                 <button
                   className={s.del}

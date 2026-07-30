@@ -175,15 +175,6 @@ export const en = {
     calOffice: 'Microsoft 365 (work/school)',
     calIcs: 'Calendar file (.ics)',
     calIcsHint: 'One-time copy — it won’t update if your plans change.',
-    purposeNone: 'Purpose…',
-    purposes: {
-      training: 'Training',
-      match: 'Match / game',
-      social: 'Social',
-      family: 'Family',
-      work: 'Work',
-      travel: 'Travel',
-    },
     notePh: 'Add a note — e.g. “Tennis with John, 9–10”',
     feedEnable: 'Sync to my calendar',
     feedHint:
