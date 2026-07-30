@@ -200,7 +200,7 @@ export const fr: Dict = {
     feedCopied: '✓ Copié',
     feedCopyManual: 'Sélectionnez et copiez le lien :',
     feedNote:
-      'Vos séances se synchronisent en quelques secondes. Google et Outlook actualisent les calendriers abonnés à leur propre rythme — quelques heures peuvent s’écouler avant l’apparition des nouvelles séances.',
+      'Vos changements — suppressions comprises — mettent le lien à jour en quelques secondes. Calendrier Apple le relit toutes les quelques heures; Google et Outlook le font à leur propre rythme, ce qui peut prendre des heures (parfois jusqu’à un jour), même après un réabonnement.',
     feedOff: 'Désactiver la synchronisation',
     notifyMe: 'M’alerter si les prévisions changent',
     notifyDenied: 'Les notifications sont bloquées dans les réglages de votre navigateur.',

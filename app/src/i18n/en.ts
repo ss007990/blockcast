@@ -198,7 +198,7 @@ export const en = {
     feedCopied: '✓ Copied',
     feedCopyManual: 'Select and copy the link:',
     feedNote:
-      'Your sessions sync within seconds. Google and Outlook refresh subscribed calendars on their own schedule — new sessions can take a few hours to appear there.',
+      'Changes — including deletions — update your private link within seconds. Apple Calendar re-checks it every few hours; Google and Outlook re-read it on their own schedule, which can take hours (sometimes up to a day), even after re-subscribing.',
     feedOff: 'Turn off auto-sync',
     notifyMe: 'Alert me if the forecast changes',
     notifyDenied: 'Notifications are blocked in your browser settings.',

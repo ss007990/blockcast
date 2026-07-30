@@ -36,6 +36,9 @@ export async function syncFeed(
   try {
     const res = await fetch(`${API}/api/calendar/${token}`, {
       method: 'PUT',
+      // keepalive lets the request finish even if the page is being torn
+      // down — the sync is often flushed right as the app goes to background
+      keepalive: true,
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         sessions: sessions.map((s) => ({ ...s, name: customName(s.activityId) })),

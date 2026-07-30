@@ -90,14 +90,28 @@ export function App() {
     document.documentElement.lang = lang;
   }, [lang]);
 
-  // calendar feed on: mirror every planner change to the worker (debounced)
+  // calendar feed on: mirror every planner change to the worker (debounced;
+  // flushed immediately if the app is backgrounded before the debounce fires,
+  // so a delete followed by an app switch still reaches the feed)
   useEffect(() => {
     if (!calFeedToken) return;
-    const timer = setTimeout(
-      () => void syncFeed(calFeedToken, sessions, customActivities, lang),
-      1200,
-    );
-    return () => clearTimeout(timer);
+    let synced = false;
+    const flush = () => {
+      if (synced) return;
+      synced = true;
+      void syncFeed(calFeedToken, sessions, customActivities, lang);
+    };
+    const timer = setTimeout(flush, 1200);
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', flush);
+    };
   }, [calFeedToken, sessions, customActivities, lang]);
 
   return (
