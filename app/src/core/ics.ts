@@ -36,6 +36,11 @@ export interface IcsEvent {
   h: number;
   /** Length in hours. */
   len: number;
+  /** Preformatted UTC stamps ("20260801T150000Z"). When set they replace the
+   * floating day/h rendering — the subscribed feed needs them because Google
+   * misreads floating times as UTC and shifts events by the viewer's offset. */
+  startUtc?: string;
+  endUtc?: string;
   summary: string;
   location: string;
   description: string;
@@ -54,8 +59,8 @@ export function buildCalendar(events: IcsEvent[], nowIso: string, calName?: stri
       'BEGIN:VEVENT',
       `UID:${e.uid}`,
       `DTSTAMP:${stamp}`,
-      `DTSTART:${d}T${pad(e.h)}0000`,
-      `DTEND:${d}T${e.h + e.len >= 24 ? '235959' : pad(e.h + e.len) + '0000'}`,
+      `DTSTART:${e.startUtc ?? `${d}T${pad(e.h)}0000`}`,
+      `DTEND:${e.endUtc ?? `${d}T${e.h + e.len >= 24 ? '235959' : pad(e.h + e.len) + '0000'}`}`,
       `SUMMARY:${icsEsc(e.summary)}`,
       `LOCATION:${icsEsc(e.location)}`,
       `DESCRIPTION:${icsEsc(e.description)}`,

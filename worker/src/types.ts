@@ -42,6 +42,9 @@ export interface FeedSession extends StoredSession {
 export interface StoredFeed {
   sessions: FeedSession[];
   lang: 'en' | 'fr';
+  /** IANA zone of the planning device, e.g. "America/Toronto". Lets the feed
+   * emit UTC times — Google reads floating times as UTC and shifts them. */
+  tz?: string;
   updatedAt: number;
 }
 

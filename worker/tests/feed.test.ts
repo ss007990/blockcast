@@ -60,4 +60,33 @@ describe('feedToIcs', () => {
     const ics = feedToIcs(parseFeedBody({ ...body(), lang: 'fr' })!);
     expect(ics).toContain('SUMMARY:Tennis — Match');
   });
+
+  it('emits UTC times when the payload carries a zone (18:00 EDT = 22:00Z)', () => {
+    const ics = feedToIcs(parseFeedBody({ ...body(), tz: 'America/Toronto' })!);
+    expect(ics).toContain('DTSTART:20260725T220000Z');
+    expect(ics).toContain('DTEND:20260726T000000Z');
+  });
+
+  it('respects standard time outside DST (18:00 EST = 23:00Z)', () => {
+    const b = body();
+    b.sessions[0]!.day = '2026-01-10';
+    const ics = feedToIcs(parseFeedBody({ ...b, tz: 'America/Toronto' })!);
+    expect(ics).toContain('DTSTART:20260110T230000Z');
+  });
+
+  it('clamps past-midnight ends in UTC too', () => {
+    const b = body();
+    b.sessions[0]!.h = 22;
+    b.sessions[0]!.len = 6;
+    const ics = feedToIcs(parseFeedBody({ ...b, tz: 'America/Toronto' })!);
+    // wall end min(22+6, 24) = next midnight EDT = 04:00Z
+    expect(ics).toContain('DTEND:20260726T040000Z');
+  });
+
+  it('falls back to floating times for a bogus or missing zone', () => {
+    expect(feedToIcs(parseFeedBody({ ...body(), tz: 'Not/AZone' })!)).toContain(
+      'DTSTART:20260725T180000\r\n',
+    );
+    expect(feedToIcs(parseFeedBody(body())!)).toContain('DTSTART:20260725T180000\r\n');
+  });
 });

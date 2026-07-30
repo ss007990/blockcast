@@ -62,13 +62,66 @@ export function parseFeedBody(raw: unknown): StoredFeed | null {
   return {
     sessions,
     lang: b.lang === 'fr' ? 'fr' : 'en',
+    ...(typeof b.tz === 'string' && b.tz.length > 0 && b.tz.length <= 64 ? { tz: b.tz } : {}),
     updatedAt: Date.now(),
   };
 }
 
+/** Offset of an IANA zone at a given instant, in ms (positive = east of UTC). */
+function tzOffsetMs(at: Date, tz: string): number {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      hour12: false,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+      .formatToParts(at)
+      .map((p) => [p.type, p.value]),
+  ) as Record<string, string>;
+  const wall = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour) % 24,
+    Number(parts.minute),
+    Number(parts.second),
+  );
+  return wall - at.getTime();
+}
+
+/** Wall-clock day+hour in an IANA zone → UTC instant. The second pass settles
+ * instants near a DST transition, where the first guess lands on the wrong
+ * side of the switch. */
+function zonedTimeToUtc(day: string, hour: number, tz: string): Date {
+  const [y, m, d] = day.split('-').map(Number);
+  const wall = Date.UTC(y ?? 0, (m ?? 1) - 1, d ?? 1, hour);
+  let ts = wall;
+  for (let i = 0; i < 2; i++) ts = wall - tzOffsetMs(new Date(ts), tz);
+  return new Date(ts);
+}
+
+const utcStamp = (d: Date): string => d.toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+
 export function feedToIcs(feed: StoredFeed): string {
   const dict = feed.lang === 'fr' ? fr : en;
   const purposes = dict.planner.purposes as Record<string, string>;
+  // With a known zone, emit UTC instants; without one (old app versions,
+  // bogus zone strings) fall back to floating local times.
+  let toUtc: ((day: string, hour: number) => string) | undefined;
+  if (feed.tz) {
+    try {
+      const tz = feed.tz;
+      new Intl.DateTimeFormat('en-US', { timeZone: tz });
+      toUtc = (day, hour) => utcStamp(zonedTimeToUtc(day, hour, tz));
+    } catch {
+      // unknown zone — keep floating times
+    }
+  }
   const events: IcsEvent[] = feed.sessions.map((s: FeedSession) => {
     const name =
       (dict.activities as Record<string, string>)[s.activityId] ?? s.name ?? s.activityId;
@@ -78,6 +131,9 @@ export function feedToIcs(feed: StoredFeed): string {
       day: s.day,
       h: s.h,
       len: s.len,
+      ...(toUtc
+        ? { startUtc: toUtc(s.day, s.h), endUtc: toUtc(s.day, Math.min(s.h + s.len, 24)) }
+        : {}),
       summary: purposeLabel ? `${name} — ${purposeLabel}` : `${name} — BlockCast`,
       location: s.locName,
       description: s.note ? `${s.note}\nPlanned with BlockCast` : 'Planned with BlockCast',

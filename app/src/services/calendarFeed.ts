@@ -43,6 +43,8 @@ export async function syncFeed(
       body: JSON.stringify({
         sessions: sessions.map((s) => ({ ...s, name: customName(s.activityId) })),
         lang,
+        // lets the feed emit real UTC times — Google reads zoneless times as UTC
+        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
       }),
     });
     return res.ok;
