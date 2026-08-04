@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { TOL_MULT } from './core/activities';
 import { detectChanges, type PlannedSession } from './core/alerts';
 import { isoDate, locNow } from './core/forecast';
+import { distKm } from './core/geo';
 import { useLocale, useT, useThemeEffect } from './hooks';
 import { AlertsSheet } from './features/alerts/AlertsSheet';
 import { DetailSheet } from './features/detail/DetailSheet';
@@ -17,6 +18,7 @@ import { Masthead, TabBar } from './shell/Header';
 import s from './shell/shell.module.css';
 import { syncFeed } from './services/calendarFeed';
 import { useAlerts } from './state/alerts';
+import { useExtras } from './state/extras';
 import { useForecast } from './state/forecast';
 import { checkSession, usePlanner } from './state/planner';
 import { critFor, useSettings } from './state/settings';
@@ -30,9 +32,10 @@ export function App() {
   const { data, dataFor, load } = useForecast();
   const sessions = usePlanner((p) => p.sessions);
 
-  // fetch a fresh forecast whenever the location changes
+  // fetch a fresh forecast (+ AQHI and ECCC alerts) whenever the location changes
   useEffect(() => {
     void load(loc);
+    void useExtras.getState().load(loc);
   }, [load, loc]);
 
   // first run without a saved location: try browser geolocation once
@@ -44,11 +47,46 @@ export function App() {
           name: t.location.myLoc,
           lat: +pos.coords.latitude.toFixed(3),
           lon: +pos.coords.longitude.toFixed(3),
+          follow: true,
         }),
       () => {},
       { timeout: 4000 },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // a followed location tracks the user: re-check coordinates on launch and
+  // whenever the app returns to the foreground. The pin only moves past 2 km
+  // so GPS jitter never triggers a refetch; picking a searched or saved spot
+  // clears `follow` and stops the tracking.
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    let lastCheck = 0;
+    const recheck = () => {
+      if (!useSettings.getState().loc.follow) return;
+      const now = Date.now();
+      if (now - lastCheck < 5 * 60_000) return;
+      lastCheck = now;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const cur = useSettings.getState().loc;
+          const next = {
+            lat: +pos.coords.latitude.toFixed(3),
+            lon: +pos.coords.longitude.toFixed(3),
+          };
+          if (!cur.follow || distKm(cur, next) < 2) return;
+          useSettings.getState().setLoc({ ...cur, ...next });
+        },
+        () => {},
+        { timeout: 8000, maximumAge: 60_000 },
+      );
+    };
+    recheck();
+    const onVis = () => {
+      if (document.visibilityState === 'visible') recheck();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
   }, []);
 
   // every fresh forecast: prune past sessions, baseline new ones, detect changes

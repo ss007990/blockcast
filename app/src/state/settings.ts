@@ -23,6 +23,9 @@ export interface Place {
   name: string;
   lat: number;
   lon: number;
+  /** Set when the place came from device geolocation: coordinates are
+   * re-checked on launch/foreground so the forecast follows the user. */
+  follow?: boolean;
 }
 
 /** Numeric criteria thresholds tunable per activity. */

@@ -372,30 +372,18 @@
   white-space: nowrap;
 }
 
-/* block-by-block: one card per block — score, chips, hour-by-hour graphs.
-   Stacked on mobile; on wide screens the cards sit side by side, one column
-   under each block of the sky timeline (same 20px inset and 7px gap). */
-.details {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+/* wrapping variant: a legend line under a section title, safe on phones */
+.sectionCaption {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+  margin: -8px 0 10px;
+  line-height: 1.5;
 }
 
-@media (min-width: 880px) {
-  .details {
-    flex-direction: row;
-    align-items: stretch;
-    gap: 7px;
-    padding: 0 20px;
-  }
-
-  .detailCard {
-    flex: 1;
-    min-width: 0;
-  }
-}
-
-.detailCard {
+/* the best-window verdict card (reuses the detailHead/detailGauge anatomy) */
+.bestCard {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -403,30 +391,24 @@
   padding: 14px 16px;
 }
 
-/* past blocks: shaded out — the hours are gone, the card is history */
-.detailCard[data-past] {
-  background: color-mix(in srgb, var(--surface-2) 82%, var(--ink-3));
-  border-color: color-mix(in srgb, var(--ink-3) 45%, var(--line));
-  opacity: 0.8;
-  filter: saturate(0.2);
+.bestPlan {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-radius: 999px;
+  padding: 6px 13px;
+  white-space: nowrap;
 }
 
-/* on mobile, past cards collapse to just the header row */
-@media (max-width: 879px) {
-  .detailCard[data-past] {
-    padding: 10px 16px;
-  }
-
-  .detailCard[data-past] > :not(.detailHead) {
-    display: none;
-  }
-}
-
-.detailCard[data-now] {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent),
-    var(--shadow-1);
+.bestNone {
+  font-size: 13px;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  padding: 13px 16px;
 }
 
 .detailHead {
@@ -487,20 +469,6 @@
   margin-top: 2px;
 }
 
-.detailArrow {
-  color: var(--ink-3);
-  font-size: 15px;
-  flex-shrink: 0;
-  transition:
-    transform 0.15s ease,
-    color 0.15s ease;
-}
-
-.detailHead:hover .detailArrow {
-  transform: translateX(3px);
-  color: var(--accent);
-}
-
 /* fresh-snow dispatch */
 .snowCard {
   display: flex;
@@ -541,4 +509,480 @@
   font-size: 13px;
   opacity: 0.92;
   margin-top: 3px;
+}
+
+/* ── ECCC alert banner ──────────────────────────────────────────────── */
+
+.alertBanner {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 9px 13px;
+  border-radius: var(--radius);
+  text-align: left;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+}
+
+.alertBanner b {
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.alertBanner span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-2);
+}
+
+.alertBanner[data-type='warning'] {
+  background: var(--red-bg);
+  border-color: color-mix(in srgb, var(--red) 55%, transparent);
+}
+
+.alertBanner[data-type='warning'] b {
+  color: var(--red);
+}
+
+.alertBanner[data-type='watch'] {
+  background: var(--amber-bg);
+  border-color: color-mix(in srgb, var(--amber) 55%, transparent);
+}
+
+.alertBanner[data-type='watch'] b {
+  color: var(--amber);
+}
+
+.alertText {
+  margin: -6px 0 12px;
+  padding: 11px 13px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  white-space: pre-line;
+  color: var(--ink-2);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+/* ── hero additions ─────────────────────────────────────────────────── */
+
+.skyTempWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.skyFeels {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  opacity: 0.9;
+}
+
+/* the day's story in one line, frosted over the painted sky */
+.narrative {
+  position: relative;
+  z-index: 1;
+  margin: 14px 0 0;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  border-radius: var(--radius-s);
+  background: rgba(9, 12, 22, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.narrative b {
+  font-weight: 700;
+}
+
+/* ── 24-hour rail ───────────────────────────────────────────────────── */
+
+.rail {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  padding: 10px 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+  scrollbar-width: none;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+.railHour {
+  flex-shrink: 0;
+  min-width: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 2px;
+  border-radius: var(--radius-s);
+  text-align: center;
+}
+
+.railHour:disabled {
+  opacity: 0.55;
+}
+
+.railHour[data-now] {
+  background: var(--accent-soft);
+}
+
+.railH {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-2);
+}
+
+.railIco {
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.railT {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.railP {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.railP[data-wet] {
+  color: #2f6fd0;
+  font-weight: 700;
+}
+
+.railSun {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 44px;
+  padding: 6px 2px;
+  border-left: 1px dashed var(--line-strong);
+  border-right: 1px dashed var(--line-strong);
+}
+
+.railSunTime {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-2);
+}
+
+/* ── nowcast ────────────────────────────────────────────────────────── */
+
+.nowcast {
+  margin-top: 16px;
+  padding: 13px 16px 11px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+}
+
+.nowcastTitle {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-variation-settings: 'wdth' 86;
+  font-size: 15px;
+}
+
+.nowcastChart {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.nowcastPlotCol {
+  flex: 1;
+  min-width: 0;
+}
+
+.nowcastBars {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 38px;
+}
+
+.nowcastBars i {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  background: #5b9bd9;
+  opacity: 0.9;
+}
+
+.nowcastBars[data-snow] i {
+  background: #8fb6dd;
+}
+
+.nowcastFoot {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-3);
+  margin-top: 4px;
+}
+
+/* peak accumulation label, top-aligned with the tallest bar */
+.nowcastScale {
+  min-width: 42px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+  line-height: 1;
+}
+
+.nowcastTotal {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-2);
+  margin-top: 8px;
+}
+
+/* ── 7/14-day list ──────────────────────────────────────────────────── */
+
+.daily {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+  padding: 4px 14px 8px;
+}
+
+.dayRow {
+  display: grid;
+  grid-template-columns: 52px 24px 40px 1fr 40px 34px;
+  gap: 9px;
+  align-items: center;
+  width: 100%;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.dayRow:disabled {
+  opacity: 0.6;
+}
+
+.dayName {
+  font-weight: 650;
+  font-size: 13px;
+}
+
+.dayIco {
+  font-size: 16px;
+  text-align: center;
+}
+
+.dayLo,
+.dayHi {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+.dayHi {
+  color: var(--ink);
+  text-align: right;
+}
+
+/* shared-scale range bar: the gradient spans the whole 14-day scale and each
+   row's fill clips its own [lo, hi] window out of it */
+.dayBar {
+  position: relative;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line);
+}
+
+.dayBar i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+  background-image: linear-gradient(90deg, #4a90d9, #f2b544, var(--accent));
+  background-repeat: no-repeat;
+}
+
+.dayDot {
+  position: absolute;
+  top: -2.5px;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 2px solid var(--surface);
+}
+
+.dayChip {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  border-radius: var(--radius-s);
+  padding: 3px 0;
+}
+
+.dayChip[data-band='g'] {
+  color: var(--green);
+  background: var(--green-bg);
+}
+
+.dayChip[data-band='y'] {
+  color: var(--amber);
+  background: var(--amber-bg);
+}
+
+.dayChip[data-band='r'] {
+  color: var(--red);
+  background: var(--red-bg);
+}
+
+.dayChip[data-band='none'] {
+  color: var(--ink-3);
+}
+
+.dayMore {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 10px 0 6px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--accent);
+}
+
+/* ── radar preview ──────────────────────────────────────────────────── */
+
+.radarCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-top: 16px;
+  padding: 15px 18px;
+  border-radius: var(--radius);
+  color: #eef2f9;
+  background: linear-gradient(150deg, #20304a, #2c3f5e 62%, #1d2a40);
+  box-shadow: var(--shadow-2);
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+}
+
+.radarCard[data-wet] {
+  background:
+    radial-gradient(140px 70px at 72% 30%, rgba(91, 155, 217, 0.5), transparent 70%),
+    radial-gradient(90px 55px at 85% 75%, rgba(110, 63, 180, 0.38), transparent 70%),
+    linear-gradient(150deg, #20304a, #2c3f5e 62%, #1d2a40);
+}
+
+.radarCard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--grain);
+  opacity: 0.12;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+.radarCap {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-variation-settings: 'wdth' 86;
+  font-size: 14.5px;
+}
+
+.radarOpen {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  font-weight: 650;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  padding: 5px 12px;
+}
+
+/* ── detail tiles ───────────────────────────────────────────────────── */
+
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+@media (min-width: 880px) {
+  .tiles {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+  padding: 11px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tile[data-alert] {
+  grid-column: 1 / -1;
+  border-color: color-mix(in srgb, var(--red) 45%, var(--line));
+  background: var(--red-bg);
+}
+
+.tileLbl {
+  font-size: 9.5px;
+  font-weight: 750;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.tileVal {
+  font-family: var(--font-mono);
+  font-size: 15.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.tileSub {
+  font-size: 11px;
+  color: var(--ink-2);
+  line-height: 1.4;
 }

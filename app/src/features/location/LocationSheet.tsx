@@ -158,7 +158,15 @@ function LocationContent() {
 
   const useMyLocation = () => {
     navigator.geolocation?.getCurrentPosition(
-      (pos) => choose(t.location.myLoc, pos.coords.latitude, pos.coords.longitude),
+      (pos) => {
+        st.setLoc({
+          name: t.location.myLoc,
+          lat: +pos.coords.latitude.toFixed(4),
+          lon: +pos.coords.longitude.toFixed(4),
+          follow: true,
+        });
+        setLocOpen(false);
+      },
       () => {},
       { timeout: 6000 },
     );
