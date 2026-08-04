@@ -16,9 +16,9 @@ crons = ["0 */3 * * *"]
 [vars]
 ALLOWED_ORIGINS = "https://blockcast.ca,http://localhost:5173,capacitor://localhost"
 APNS_TOPIC = "ca.blockcast.app"
-# "sandbox" for Xcode development builds; MUST flip to "production" before the
-# first TestFlight build (TestFlight device tokens are production-environment).
-APNS_ENV = "sandbox"
+# "production" for TestFlight/App Store builds (their device tokens are
+# production-environment). Flip back to "sandbox" only for local Xcode dev pushes.
+APNS_ENV = "production"
 
 # Secrets (set with `npx wrangler secret put <NAME>`):
 #   VAPID_PUBLIC_KEY   — base64url public key  (npx web-push generate-vapid-keys)
