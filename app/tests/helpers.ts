@@ -56,6 +56,7 @@ export function makeForecast(specs: DaySpec[], pastDays = 0): ForecastData {
     timeIndex,
     snowfall,
     pastDays,
+    minutely: null,
     marine: null,
   };
 }

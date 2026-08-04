@@ -8,6 +8,8 @@ import type { Criteria, FactorKey, Weights } from './activities';
 export interface HourSlice {
   /** Felt (apparent) temperature, °C. */
   temp: number;
+  /** Actual air temperature, °C — undefined when not fetched. */
+  air?: number;
   /** Precipitation probability, %. */
   pprob: number;
   /** Precipitation amount, mm. */
@@ -22,6 +24,14 @@ export interface HourSlice {
   uv: number;
   /** Snow depth on the ground, metres. */
   sdep: number;
+  /** WMO weather code — undefined on data fetched without it (worker). */
+  code?: number;
+  /** True between sunrise and sunset — undefined when not fetched. */
+  isDay?: boolean;
+  /** Relative humidity, % — undefined when not fetched. */
+  rh?: number;
+  /** Dew point, °C — undefined when not fetched. */
+  dew?: number;
   /** Ocean swell height, metres — only set for coastal locations. */
   swell?: number;
   /** Tide level normalized 0 (week's low) – 1 (week's high) — coastal only. */
@@ -55,9 +65,14 @@ export const ramp = (v: number, lo: number, hi: number): number =>
   v <= lo ? 0 : v >= hi ? 1 : (v - lo) / (hi - lo);
 
 /** Aggregate hourly slices for one block into factor severities (0–1 each). */
+/** Keys of HourSlice whose values are numeric (excludes isDay). */
+type NumKey = {
+  [K in keyof HourSlice]-?: HourSlice[K] extends number | undefined ? K : never;
+}[keyof HourSlice];
+
 export function blockFactors(hours: HourSlice[], fresh48: number, crit: Criteria): BlockFactors {
-  const max = (k: keyof HourSlice) => Math.max(...hours.map((h) => h[k] ?? 0));
-  const avg = (k: keyof HourSlice) => hours.reduce((a, h) => a + (h[k] ?? 0), 0) / hours.length;
+  const max = (k: NumKey) => Math.max(...hours.map((h) => h[k] ?? 0));
+  const avg = (k: NumKey) => hours.reduce((a, h) => a + (h[k] ?? 0), 0) / hours.length;
   const { act } = crit;
 
   const rainProb = max('pprob');

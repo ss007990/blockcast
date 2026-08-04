@@ -16,7 +16,10 @@ export interface ForecastState {
 
 let generation = 0; // drop out-of-date responses when the location changes mid-fetch
 
-const CACHE_KEY = 'blockcast.v2.forecastCache';
+// v3: adds hourly code/isDay/rh/dew + minutely nowcast, and stores timeIndex
+// as entries — a raw Map JSON-stringifies to {}, so v2 caches restored with a
+// broken (empty-object) timeIndex that crashed block scoring on the stale path.
+const CACHE_KEY = 'blockcast.v3.forecastCache';
 // Beyond this age the cached days no longer line up with "today" — worse than no data.
 const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
@@ -28,7 +31,8 @@ interface CachedForecast {
 
 function saveCache(entry: CachedForecast) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(entry));
+    const data = { ...entry.data, timeIndex: [...entry.data.timeIndex] };
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ ...entry, data }));
   } catch {
     // quota exceeded or private mode — the cache is best-effort
   }
@@ -39,6 +43,8 @@ function readCache(loc: Place): CachedForecast | null {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const entry = JSON.parse(raw) as CachedForecast;
+    const idx = entry.data.timeIndex as unknown;
+    entry.data.timeIndex = new Map(Array.isArray(idx) ? (idx as [string, number][]) : []);
     const samePlace =
       Math.abs(entry.dataFor.lat - loc.lat) < 0.01 && Math.abs(entry.dataFor.lon - loc.lon) < 0.01;
     if (!samePlace || Date.now() - entry.updatedAt > CACHE_MAX_AGE_MS) return null;

@@ -20,6 +20,18 @@ export interface OpenMeteoResponse {
     uv_index: (number | null)[];
     snowfall: (number | null)[];
     snow_depth: (number | null)[];
+    // optional: the worker's narrower query omits these
+    weather_code?: (number | null)[];
+    is_day?: (number | null)[];
+    relative_humidity_2m?: (number | null)[];
+    dew_point_2m?: (number | null)[];
+  };
+  /** 15-minute nowcast — only requested by the app, not the worker. */
+  minutely_15?: {
+    time: string[];
+    precipitation: (number | null)[];
+    rain: (number | null)[];
+    snowfall: (number | null)[];
   };
   daily: {
     time: string[];
@@ -91,6 +103,8 @@ export interface ForecastData {
   snowfall: number[];
   /** Number of past days included at the start of the range. */
   pastDays: number;
+  /** 15-minute nowcast for the next 24 h; null when not requested/available. */
+  minutely: { time: string[]; precip: number[]; rain: number[]; snow: number[] } | null;
   /** Non-null when the location has any ocean data; each flag says which
    * factor is actually available (tidal rivers can be tide-only). */
   marine: { swell: boolean; tide: boolean } | null;
@@ -113,6 +127,7 @@ export function reshapeForecast(
     const hour = +t.slice(11, 13);
     (days[day] ??= [])[hour] = {
       temp: H.apparent_temperature[i] ?? H.temperature_2m[i] ?? 0,
+      air: H.temperature_2m[i] ?? undefined,
       pprob: H.precipitation_probability[i] ?? 0,
       precip: H.precipitation[i] ?? 0,
       wind: H.wind_speed_10m[i] ?? 0,
@@ -120,10 +135,15 @@ export function reshapeForecast(
       cloud: H.cloud_cover[i] ?? 0,
       uv: H.uv_index[i] ?? 0,
       sdep: H.snow_depth[i] ?? 0,
+      code: H.weather_code?.[i] ?? undefined,
+      isDay: H.is_day ? (H.is_day[i] ?? 1) === 1 : undefined,
+      rh: H.relative_humidity_2m?.[i] ?? undefined,
+      dew: H.dew_point_2m?.[i] ?? undefined,
       swell: marine?.swell.get(t),
       tide: marine?.tide.get(t),
     };
   }
+  const m15 = j.minutely_15;
   return {
     days,
     daily: j.daily,
@@ -132,6 +152,14 @@ export function reshapeForecast(
     timeIndex,
     snowfall: H.snowfall.map((v) => v ?? 0),
     pastDays,
+    minutely: m15?.time?.length
+      ? {
+          time: m15.time,
+          precip: m15.precipitation.map((v) => v ?? 0),
+          rain: (m15.rain ?? []).map((v) => v ?? 0),
+          snow: (m15.snowfall ?? []).map((v) => v ?? 0),
+        }
+      : null,
     marine: marine ? { swell: marine.swell.size > 0, tide: marine.tide.size > 0 } : null,
   };
 }
@@ -188,6 +216,10 @@ export const isoDate = (dt: Date): string =>
   String(dt.getMonth() + 1).padStart(2, '0') +
   '-' +
   String(dt.getDate()).padStart(2, '0');
+
+/** WMO code → emoji, with night variants for clear/partly-clear skies. */
+export const wmoIconAt = (c: number, isDay = true): string =>
+  !isDay && c <= 1 ? '🌙' : !isDay && c === 2 ? '☁️' : wmoIcon(c);
 
 /** WMO weather code → emoji glyph. */
 export const wmoIcon = (c: number): string =>

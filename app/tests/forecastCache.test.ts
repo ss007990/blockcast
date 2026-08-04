@@ -9,10 +9,14 @@ import { fetchForecast } from '../src/services/openMeteo';
 
 vi.mock('../src/services/openMeteo', () => ({ fetchForecast: vi.fn() }));
 
-const CACHE_KEY = 'blockcast.v2.forecastCache';
+const CACHE_KEY = 'blockcast.v3.forecastCache';
 const QUEBEC = { name: 'Québec', lat: 46.8131, lon: -71.2075 };
 const HALIFAX = { name: 'Halifax', lat: 44.6488, lon: -63.5752 };
-const FAKE_DATA = { daily: { time: [] }, days: {} } as unknown as ForecastData;
+const FAKE_DATA = {
+  daily: { time: [] },
+  days: {},
+  timeIndex: new Map<string, number>(),
+} as unknown as ForecastData;
 
 const store = new Map<string, string>();
 
@@ -31,10 +35,15 @@ afterEach(() => {
   vi.mocked(fetchForecast).mockReset();
 });
 
+// mirror saveCache's wire format: timeIndex is stored as an entries array
 const seedCache = (dataFor: typeof QUEBEC, ageMs: number) =>
   store.set(
     CACHE_KEY,
-    JSON.stringify({ data: FAKE_DATA, dataFor, updatedAt: Date.now() - ageMs }),
+    JSON.stringify({
+      data: { ...FAKE_DATA, timeIndex: [] },
+      dataFor,
+      updatedAt: Date.now() - ageMs,
+    }),
   );
 
 describe('forecast cache fallback', () => {
