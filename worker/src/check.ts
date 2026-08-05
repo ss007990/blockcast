@@ -6,7 +6,15 @@ import { buildPushPayload } from '@block65/webcrypto-web-push';
 import { sendApns } from './apns';
 import { criteriaFrom, TOL_MULT, type CustomActivity } from '../../app/src/core/activities';
 import { planKey } from '../../app/src/core/alerts';
-import { getBlock, reshapeForecast, type ForecastData, type OpenMeteoResponse } from '../../app/src/core/forecast';
+import {
+  applyRainBlend,
+  getBlock,
+  RAIN_BLEND_MODELS,
+  reshapeForecast,
+  type ForecastData,
+  type OpenMeteoResponse,
+  type RainBlendResponse,
+} from '../../app/src/core/forecast';
 import type { Band } from '../../app/src/core/scoring';
 import type { Env, StoredSub, StoredSession } from './types';
 
@@ -60,9 +68,23 @@ async function fetchForecast(lat: number, lon: number): Promise<ForecastData> {
       'temperature_2m,apparent_temperature,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,cloud_cover,uv_index,snowfall,snow_depth',
     daily: 'weather_code,apparent_temperature_max,apparent_temperature_min,sunrise,sunset',
   }).toString();
-  const res = await fetch(u);
+  const b = new URL('https://api.open-meteo.com/v1/forecast');
+  b.search = new URLSearchParams({
+    latitude: String(lat),
+    longitude: String(lon),
+    timezone: 'auto',
+    forecast_days: '14',
+    past_days: '2',
+    hourly: 'precipitation_probability,precipitation',
+    models: RAIN_BLEND_MODELS,
+  }).toString();
+  // blend failures are non-fatal: scoring falls back to best_match alone
+  const [res, blendRes] = await Promise.all([fetch(u), fetch(b).catch(() => null)]);
   if (!res.ok) throw new Error(`open-meteo ${res.status}`);
-  return reshapeForecast((await res.json()) as OpenMeteoResponse, 2);
+  const j = (await res.json()) as OpenMeteoResponse;
+  const blend = blendRes?.ok ? ((await blendRes.json()) as RainBlendResponse) : null;
+  applyRainBlend(j, blend);
+  return reshapeForecast(j, 2);
 }
 
 const locKey = (lat: number, lon: number) => `${lat.toFixed(2)},${lon.toFixed(2)}`;

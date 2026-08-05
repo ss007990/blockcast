@@ -43,6 +43,52 @@ export interface OpenMeteoResponse {
   };
 }
 
+/** Extra models blended into the rain factors (worst case wins). ECMWF is the
+ * reference global model; GEM covers Canada with its high-res regional chain.
+ * best_match itself is already in the main request. */
+export const RAIN_BLEND_MODELS = 'ecmwf_ifs025,gem_seamless';
+
+/** Raw shape of the rain-only multi-model request: each variable comes back
+ * suffixed per model, e.g. precipitation_probability_ecmwf_ifs025. */
+export interface RainBlendResponse {
+  hourly: { time: string[] } & Record<string, (number | null)[] | string[]>;
+}
+
+/** Raise the main forecast's rain probability and amount to the worst case
+ * across the blend models, in place. A model past its horizon (or with no
+ * coverage) returns nulls and simply drops out, so days beyond ~10 days fall
+ * back to best_match alone. Timestamps are matched explicitly — a missing or
+ * misaligned blend leaves the main forecast untouched. */
+export function applyRainBlend(j: OpenMeteoResponse, blend: RainBlendResponse | null): void {
+  const bh = blend?.hourly;
+  if (!bh?.time?.length) return;
+  const byTime = new Map<string, number>();
+  for (let i = 0; i < bh.time.length; i++) {
+    const t = bh.time[i];
+    if (t) byTime.set(t, i);
+  }
+  const probCols: (number | null)[][] = [];
+  const sumCols: (number | null)[][] = [];
+  for (const k of Object.keys(bh)) {
+    if (k.startsWith('precipitation_probability_')) probCols.push(bh[k] as (number | null)[]);
+    else if (k.startsWith('precipitation_')) sumCols.push(bh[k] as (number | null)[]);
+  }
+  const H = j.hourly;
+  for (let i = 0; i < H.time.length; i++) {
+    const t = H.time[i];
+    const bi = t ? byTime.get(t) : undefined;
+    if (bi === undefined) continue;
+    for (const col of probCols) {
+      const v = col[bi];
+      if (v != null && v > (H.precipitation_probability[i] ?? -1)) H.precipitation_probability[i] = v;
+    }
+    for (const col of sumCols) {
+      const v = col[bi];
+      if (v != null && v > (H.precipitation[i] ?? -1)) H.precipitation[i] = v;
+    }
+  }
+}
+
 /** Raw shape of the Open-Meteo Marine API fields we request.
  * Inland the model has no data: every value comes back null — that absence
  * IS the "geographically relevant" test for showing swell/tide anywhere. */

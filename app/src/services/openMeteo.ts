@@ -1,8 +1,11 @@
 import {
+  applyRainBlend,
+  RAIN_BLEND_MODELS,
   reshapeForecast,
   type ForecastData,
   type MarineResponse,
   type OpenMeteoResponse,
+  type RainBlendResponse,
 } from '../core/forecast';
 
 const PAST_DAYS = 2; // needed to compute fresh snow over the last 48 h
@@ -29,6 +32,28 @@ async function fetchMarine(lat: number, lon: number): Promise<MarineResponse | n
   }
 }
 
+/** Rain from the extra blend models. Failure-tolerant: a null just means the
+ * forecast stays on best_match alone. */
+async function fetchRainBlend(lat: number, lon: number): Promise<RainBlendResponse | null> {
+  const u = new URL('https://api.open-meteo.com/v1/forecast');
+  u.search = new URLSearchParams({
+    latitude: String(lat),
+    longitude: String(lon),
+    timezone: 'auto',
+    forecast_days: '14',
+    past_days: String(PAST_DAYS),
+    hourly: 'precipitation_probability,precipitation',
+    models: RAIN_BLEND_MODELS,
+  }).toString();
+  try {
+    const res = await fetch(u);
+    if (!res.ok) return null;
+    return (await res.json()) as RainBlendResponse;
+  } catch {
+    return null;
+  }
+}
+
 // 14 days for the two-week planner; the marine fetch stays at 7 — the wave
 // model's horizon is ~8 days, so week 2 scores without swell/tide factors.
 export async function fetchForecast(lat: number, lon: number): Promise<ForecastData> {
@@ -46,8 +71,13 @@ export async function fetchForecast(lat: number, lon: number): Promise<ForecastD
     minutely_15: 'precipitation,rain,snowfall',
     forecast_minutely_15: '96',
   }).toString();
-  const [res, marine] = await Promise.all([fetch(u), fetchMarine(lat, lon)]);
+  const [res, marine, blend] = await Promise.all([
+    fetch(u),
+    fetchMarine(lat, lon),
+    fetchRainBlend(lat, lon),
+  ]);
   if (!res.ok) throw new Error(`Weather API error ${res.status}`);
   const j = (await res.json()) as OpenMeteoResponse;
+  applyRainBlend(j, blend);
   return reshapeForecast(j, PAST_DAYS, marine);
 }
