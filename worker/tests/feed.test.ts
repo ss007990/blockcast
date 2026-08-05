@@ -50,13 +50,13 @@ describe('feedToIcs', () => {
   it('serves a named calendar with the note in the description', () => {
     const ics = feedToIcs(parseFeedBody(body())!);
     expect(ics).toContain('X-WR-CALNAME:BlockCast');
-    expect(ics).toContain('SUMMARY:Tennis — BlockCast');
+    expect(ics).toContain('SUMMARY:Tennis · BlockCast');
     expect(ics).toContain('DTSTART:20260725T180000');
     expect(ics).toContain('DESCRIPTION:Playing with John from 6-8\\nPlanned with BlockCast');
   });
   it('localizes activity names for French feeds', () => {
     const ics = feedToIcs(parseFeedBody({ ...body(), lang: 'fr' })!);
-    expect(ics).toContain('SUMMARY:Tennis — BlockCast');
+    expect(ics).toContain('SUMMARY:Tennis · BlockCast');
   });
 
   it('emits UTC times when the payload carries a zone (18:00 EDT = 22:00Z)', () => {

@@ -60,13 +60,13 @@ describe('sessionToIcsEvent', () => {
 
   it('prepends the note to the description', () => {
     const e = sessionToIcsEvent({ ...session, note: 'Playing with John from 9-10' }, null, en, nameOf);
-    expect(e.summary).toBe('Tennis — BlockCast');
+    expect(e.summary).toBe('Tennis · BlockCast');
     expect(e.description.startsWith('Playing with John from 9-10\n')).toBe(true);
   });
 
   it('falls back to app branding without a note', () => {
     const e = sessionToIcsEvent(session, null, en, nameOf);
-    expect(e.summary).toBe('Tennis — BlockCast');
+    expect(e.summary).toBe('Tennis · BlockCast');
     expect(e.description).toBe('Planned with BlockCast');
   });
 });

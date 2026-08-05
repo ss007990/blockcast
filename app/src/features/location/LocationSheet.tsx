@@ -136,7 +136,7 @@ function LocationContent() {
         });
         const sat = L.tileLayer(
           'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-          { maxZoom: 17, attribution: '&copy; Esri — Maxar, Earthstar Geographics' },
+          { maxZoom: 17, attribution: '&copy; Esri, Maxar, Earthstar Geographics' },
         );
         sat.addTo(map);
         baseLayers.current = { sat, osm };

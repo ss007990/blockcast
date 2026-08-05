@@ -64,7 +64,7 @@ export function TilesGrid({ daySlices, nowH, now, sunrise, sunset, aqhi }: Props
           dew < 10 ? 0 : dew < 16 ? 1 : dew < 21 ? 2 : 3
         ];
   const humSub =
-    dew != null ? `${fill(t.home.dewPoint, { t: formatTemp(dew, units) })} — ${dewWord}` : '';
+    dew != null ? `${fill(t.home.dewPoint, { t: formatTemp(dew, units) })} · ${dewWord}` : '';
 
   // daylight left until sunset
   const sunsetDate = sunset ? new Date(sunset) : null;

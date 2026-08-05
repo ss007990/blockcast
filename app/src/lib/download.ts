@@ -12,14 +12,14 @@ export function sessionToIcsEvent(
   nameOf: (id: ActivityId) => string,
 ): IcsEvent {
   const forecast = b
-    ? `Forecast: risk ${b.score}/100 (${t.risk[b.band]}). Rain ${b.f.rainProb}%/${b.f.rainSum}mm, wind ${b.f.wind}km/h (gusts ${b.f.gust}), feels ${b.f.temp}C, UV ${b.f.uv}. — BlockCast`
+    ? `Forecast: risk ${b.score}/100 (${t.risk[b.band]}). Rain ${b.f.rainProb}%/${b.f.rainSum}mm, wind ${b.f.wind}km/h (gusts ${b.f.gust}), feels ${b.f.temp}C, UV ${b.f.uv} · BlockCast`
     : 'Planned with BlockCast';
   return {
     uid: `${p.id}-${p.day.replace(/-/g, '')}${String(p.h).padStart(2, '0')}@blockcast`,
     day: p.day,
     h: p.h,
     len: p.len,
-    summary: `${nameOf(p.activityId)} — BlockCast`,
+    summary: `${nameOf(p.activityId)} · BlockCast`,
     location: p.locName,
     description: p.note ? `${p.note}\n${forecast}` : forecast,
   };

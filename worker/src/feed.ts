@@ -131,7 +131,7 @@ export function feedToIcs(feed: StoredFeed): string {
       ...(toUtc
         ? { startUtc: toUtc(s.day, s.h), endUtc: toUtc(s.day, Math.min(s.h + s.len, 24)) }
         : {}),
-      summary: `${name} — BlockCast`,
+      summary: `${name} · BlockCast`,
       location: s.locName,
       description: s.note ? `${s.note}\nPlanned with BlockCast` : 'Planned with BlockCast',
     };

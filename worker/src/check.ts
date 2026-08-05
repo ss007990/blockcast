@@ -47,11 +47,11 @@ export function alertText(
   const word = BAND_WORD[lang][band];
   if (lang === 'fr')
     return {
-      title: `${name} — prévisions mises à jour`,
+      title: `${name} : prévisions mises à jour`,
       body: `${when} · maintenant ${word} (risque ${score}/100)`,
     };
   return {
-    title: `${name} — forecast changed`,
+    title: `${name}: forecast changed`,
     body: `${when} · now ${word} (risk ${score}/100)`,
   };
 }
