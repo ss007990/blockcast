@@ -1,6 +1,6 @@
-// The 24-hour rail under the sky hero: hour, condition icon, felt temp and
-// precipitation odds, with sunrise/sunset markers inline. Tapping an hour
-// opens the DetailSheet of the block that contains it.
+// The 24-hour rail under the sky hero: hour, condition icon, real temp with
+// the felt temp under it, and precipitation odds, with sunrise/sunset markers
+// inline. Tapping an hour opens the DetailSheet of the block that contains it.
 
 import { motion } from 'framer-motion';
 import { wmoIcon, wmoIconAt, type ForecastData } from '../../core/forecast';
@@ -28,6 +28,7 @@ type Cell =
       h: number;
       icon: string;
       temp: string;
+      feels: string;
       pprob: number;
       isNow: boolean;
     }
@@ -52,7 +53,8 @@ export function HourlyRail({ data, todayISO, nextISO, nowH, dayCode, onHour }: P
       day,
       h,
       icon: slice.code != null ? wmoIconAt(slice.code, slice.isDay ?? true) : wmoIcon(dayCode),
-      temp: formatTemp(slice.temp, units),
+      temp: formatTemp(slice.air ?? slice.temp, units),
+      feels: formatTemp(slice.temp, units),
       pprob: Math.round(slice.pprob),
       isNow: off === 0,
     });
@@ -104,13 +106,14 @@ export function HourlyRail({ data, todayISO, nextISO, nowH, dayCode, onHour }: P
               data-now={c.isNow || undefined}
               disabled={c.h < hFrom || c.h >= hTo}
               onClick={() => onHour(c.day, blockStart(c.h))}
-              aria-label={`${formatHour(c.h, clock)} · ${c.temp} · ${c.pprob}%`}
+              aria-label={`${formatHour(c.h, clock)} · ${c.temp} (${t.detail.felt} ${c.feels}) · ${c.pprob}%`}
             >
               <span className={s.railH}>{formatHour(c.h, clock)}</span>
               <span className={s.railIco} aria-hidden="true">
                 {c.icon}
               </span>
               <span className={s.railT}>{c.temp}</span>
+              <span className={s.railFeels}>{c.feels}</span>
               <span className={s.railP} data-wet={c.pprob >= 30 || undefined}>
                 {c.pprob}%
               </span>

@@ -1,4 +1,4 @@
-// The 7/14-day list: weekday, condition, felt min/max on a shared-scale range
+// The 7/14-day list: weekday, condition, real min/max on a shared-scale range
 // bar (with a "now" dot on today), and each day's best block score as a
 // risk chip. Tapping a row opens the day's best block in the DetailSheet.
 
@@ -18,7 +18,7 @@ interface Props {
   data: ForecastData;
   todayISO: string;
   nowH: number;
-  /** Current felt temp, for the "now" dot on today's bar. */
+  /** Current real temp, for the "now" dot on today's bar. */
   curTemp: number | null;
   onDay: (day: string, h: number) => void;
 }
@@ -52,8 +52,8 @@ export function DailyList({ data, todayISO, nowH, curTemp, onDay }: Props) {
     return {
       day,
       icon: wmoIcon(data.daily.weather_code[di] ?? 0),
-      lo: data.daily.apparent_temperature_min[di] ?? 0,
-      hi: data.daily.apparent_temperature_max[di] ?? 0,
+      lo: data.daily.temperature_2m_min?.[di] ?? data.daily.apparent_temperature_min[di] ?? 0,
+      hi: data.daily.temperature_2m_max?.[di] ?? data.daily.apparent_temperature_max[di] ?? 0,
       best,
     };
   });

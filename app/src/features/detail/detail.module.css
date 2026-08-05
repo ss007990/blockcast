@@ -118,6 +118,22 @@
   display: block;
 }
 
+.chartLegend {
+  display: flex;
+  gap: 14px;
+  justify-content: flex-end;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  margin: 1px 0 4px;
+}
+
+.chartLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .hgrid {
   display: grid;
   row-gap: 3px;

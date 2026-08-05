@@ -659,6 +659,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+.railFeels {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
 .railP {
   font-family: var(--font-mono);
   font-size: 10px;

@@ -38,6 +38,9 @@ export interface OpenMeteoResponse {
     weather_code: number[];
     apparent_temperature_max: number[];
     apparent_temperature_min: number[];
+    // real air temp for display; optional: the worker's narrower query omits them
+    temperature_2m_max?: number[];
+    temperature_2m_min?: number[];
     sunrise: string[];
     sunset: string[];
   };

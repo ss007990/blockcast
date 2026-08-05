@@ -1,6 +1,7 @@
-// The "Hour by hour" panel: one boxed module — a compact felt-temperature
-// curve with values written on the points, and a per-hour grid (rain, wind)
-// column-aligned with the curve. Numbers beat charts for 2–6 data points.
+// The "Hour by hour" panel: one boxed module — a compact temperature curve
+// (real temp labeled on the points, felt temp as a dashed companion line) and
+// a per-hour grid (rain, wind) column-aligned with the curve. Numbers beat
+// charts for 2–6 data points.
 
 import { motion } from 'framer-motion';
 import type { HourSlice } from '../../core/scoring';
@@ -29,19 +30,21 @@ interface ChartsProps {
 export function HourlyCharts({ hours, units, clock, t, sun }: ChartsProps) {
   if (hours.length < 2) return null;
   const n = hours.length;
-  const temps = hours.map((h) => h.slice.temp);
+  const temps = hours.map((h) => h.slice.air ?? h.slice.temp);
+  const felts = hours.map((h) => h.slice.temp);
   const probs = hours.map((h) => Math.round(h.slice.pprob));
   const winds = hours.map((h) => Math.round(h.slice.wind));
 
   // points sit at column centers so the grid below lines up with the curve
   const x = (i: number) => ((i + 0.5) * W) / n;
-  const lo = Math.min(...temps);
-  const hi = Math.max(...temps);
+  const lo = Math.min(...temps, ...felts);
+  const hi = Math.max(...temps, ...felts);
   const span = Math.max(3, hi - lo);
   const mid = (hi + lo) / 2;
   const y = (v: number) => H - BOT - ((v - (mid - span / 2)) / span) * (H - TOP - BOT);
 
   const line = temps.map((v, i) => `${i ? 'L' : 'M'}${x(i)},${y(v)}`).join(' ');
+  const feltLine = felts.map((v, i) => `${i ? 'L' : 'M'}${x(i)},${y(v)}`).join(' ');
   const area = `${line} L${x(n - 1)},${H} L${x(0)},${H} Z`;
   const deg = (c: number) => `${Math.round(units === 'imperial' ? cToF(c) : c)}°`;
 
@@ -61,6 +64,14 @@ export function HourlyCharts({ hours, units, clock, t, sun }: ChartsProps) {
 
       <svg className={s.chart} viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
         <path d={area} fill="var(--accent-soft)" />
+        <path
+          d={feltLine}
+          fill="none"
+          stroke="var(--ink-3)"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeDasharray="3 4"
+        />
         <motion.path
           d={line}
           fill="none"
@@ -88,6 +99,30 @@ export function HourlyCharts({ hours, units, clock, t, sun }: ChartsProps) {
           </g>
         ))}
       </svg>
+
+      <div className={s.chartLegend} aria-hidden="true">
+        <span>
+          <svg width="16" height="4" viewBox="0 0 16 4">
+            <line x1="1" y1="2" x2="15" y2="2" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" />
+          </svg>{' '}
+          {t.detail.air}
+        </span>
+        <span>
+          <svg width="16" height="4" viewBox="0 0 16 4">
+            <line
+              x1="1"
+              y1="2"
+              x2="15"
+              y2="2"
+              stroke="var(--ink-3)"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeDasharray="3 4"
+            />
+          </svg>{' '}
+          {t.detail.felt}
+        </span>
+      </div>
 
       <div className={s.hgrid} style={cols}>
         {hours.map(({ h }) => (

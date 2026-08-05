@@ -125,7 +125,7 @@ function HeatBoard() {
     <Card className={s.board}>
       <div className={s.boardHead}>
         <h2>
-          {nameOf(st.activity)} {t.board.weekGlance}
+          {st.actChosen ? `${nameOf(st.activity)} ${t.board.weekGlance}` : t.board.weekGlanceSolo}
         </h2>
         <button
           className={s.extendBtn}
@@ -173,8 +173,15 @@ function HeatBoard() {
               {fmtDayMonth(d, locale)}
               <br />
               <span className="tnum">
-                {formatTemp(data.daily.apparent_temperature_min[di] ?? 0, st.units)} /{' '}
-                {formatTemp(data.daily.apparent_temperature_max[di] ?? 0, st.units)}
+                {formatTemp(
+                  data.daily.temperature_2m_min?.[di] ?? data.daily.apparent_temperature_min[di] ?? 0,
+                  st.units,
+                )}{' '}
+                /{' '}
+                {formatTemp(
+                  data.daily.temperature_2m_max?.[di] ?? data.daily.apparent_temperature_max[di] ?? 0,
+                  st.units,
+                )}
               </span>
             </div>
           );

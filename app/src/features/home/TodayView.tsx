@@ -227,8 +227,14 @@ export function TodayView() {
           <span className={s.skyIcon}>{wmoIcon(code)}</span>
           <span className={s.skyHiLo}>
             {fill(t.home.hiLo, {
-              hi: formatTemp(data.daily.apparent_temperature_max[di] ?? 0, st.units),
-              lo: formatTemp(data.daily.apparent_temperature_min[di] ?? 0, st.units),
+              hi: formatTemp(
+                data.daily.temperature_2m_max?.[di] ?? data.daily.apparent_temperature_max[di] ?? 0,
+                st.units,
+              ),
+              lo: formatTemp(
+                data.daily.temperature_2m_min?.[di] ?? data.daily.apparent_temperature_min[di] ?? 0,
+                st.units,
+              ),
             })}
           </span>
         </div>
@@ -316,7 +322,7 @@ export function TodayView() {
 
       <h2 className={s.sectionTitle}>
         <span>{t.home.bestTitle}</span>
-        <span className={s.sectionFine}>{nameOf(st.activity)}</span>
+        <span className={s.sectionFine}>{st.actChosen ? nameOf(st.activity) : ''}</span>
         <span className={s.sectionTune}>
           <TuneToggle />
         </span>
@@ -362,7 +368,7 @@ export function TodayView() {
         data={data}
         todayISO={todayISO}
         nowH={nowH}
-        curTemp={cur?.temp ?? null}
+        curTemp={cur ? (cur.air ?? cur.temp) : null}
         onDay={openBlock}
       />
 

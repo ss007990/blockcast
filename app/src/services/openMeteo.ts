@@ -66,7 +66,8 @@ export async function fetchForecast(lat: number, lon: number): Promise<ForecastD
     past_days: String(PAST_DAYS),
     hourly:
       'temperature_2m,apparent_temperature,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,cloud_cover,uv_index,snowfall,snow_depth,weather_code,is_day,relative_humidity_2m,dew_point_2m',
-    daily: 'weather_code,apparent_temperature_max,apparent_temperature_min,sunrise,sunset',
+    daily:
+      'weather_code,apparent_temperature_max,apparent_temperature_min,temperature_2m_max,temperature_2m_min,sunrise,sunset',
     // 15-minute nowcast for the next 24 h (rain vs snow split for the Today card)
     minutely_15: 'precipitation,rain,snowfall',
     forecast_minutely_15: '96',
