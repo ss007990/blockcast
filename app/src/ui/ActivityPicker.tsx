@@ -18,6 +18,7 @@ export function ActivityPicker() {
   const locale = useLocale();
   const nameOf = useActivityName();
   const activity = useSettings((st) => st.activity);
+  const actChosen = useSettings((st) => st.actChosen);
   const setActivity = useSettings((st) => st.setActivity);
   const recents = useSettings((st) => st.recentActivities);
   const removeRecent = useSettings((st) => st.removeRecentActivity);
@@ -25,7 +26,8 @@ export function ActivityPicker() {
   const winter = useSeason();
   const setAddActOpen = useUi((u) => u.setAddActOpen);
 
-  const [open, setOpen] = useState(false);
+  // first launch: open the menu right away so choosing is the first gesture
+  const [open, setOpen] = useState(!actChosen);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   // close on outside click or Escape
@@ -69,15 +71,18 @@ export function ActivityPicker() {
       <div className={s.pickerWrap} ref={wrapRef}>
         <button
           className={s.pickerBtn}
+          data-cta={!actChosen || undefined}
           aria-haspopup="listbox"
           aria-expanded={open}
           aria-label={t.controls.activity}
           onClick={() => setOpen((v) => !v)}
         >
-          <span className={s.pickerIco} aria-hidden="true">
-            <ActivityIcon id={activity} />
-          </span>
-          {nameOf(activity)}
+          {actChosen && (
+            <span className={s.pickerIco} aria-hidden="true">
+              <ActivityIcon id={activity} />
+            </span>
+          )}
+          {actChosen ? nameOf(activity) : t.controls.chooseAct}
           <span className={s.pickerChevron} data-open={open || undefined} aria-hidden="true">
             ▾
           </span>
@@ -92,7 +97,7 @@ export function ActivityPicker() {
                 </div>
                 {[...g.inSeason, ...g.offSeason].map((id) => {
                   const off = !inSeason(id, winter, customs);
-                  const on = id === activity;
+                  const on = actChosen && id === activity;
                   return (
                     <button
                       key={id}
@@ -131,7 +136,8 @@ export function ActivityPicker() {
         )}
       </div>
 
-      {quick.length > 1 &&
+      {actChosen &&
+        quick.length > 1 &&
         quick.map((id) => {
           const on = id === activity;
           return (

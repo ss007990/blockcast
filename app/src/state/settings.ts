@@ -33,6 +33,9 @@ export type CritNumKey = 'tMin' | 'tMax' | 'windLo' | 'windHi' | 'swellLo' | 'sw
 
 export interface SettingsState {
   activity: ActivityId;
+  /** True once the user has explicitly picked an activity; until then the
+   * picker invites them to choose instead of presenting the tennis default. */
+  actChosen: boolean;
   /** Last activities used, most recent first (includes the current one). */
   recentActivities: ActivityId[];
   blockLen: BlockLen;
@@ -88,6 +91,7 @@ const v1 = importV1(localStorage);
 
 const defaults = {
   activity: v1.activity ?? ('tennis' as ActivityId),
+  actChosen: v1.activity != null,
   recentActivities: [v1.activity ?? ('tennis' as ActivityId)],
   blockLen: v1.blockLen ?? (4 as BlockLen),
   planDays: 7 as PlanDays,
@@ -114,6 +118,7 @@ export const useSettings = create<SettingsState>()(
       setActivity: (activity) =>
         set((s) => ({
           activity,
+          actChosen: true,
           recentActivities: [
             activity,
             ...s.recentActivities.filter((a) => a !== activity),
@@ -172,7 +177,17 @@ export const useSettings = create<SettingsState>()(
         ),
       setCalFeedToken: (calFeedToken) => set({ calFeedToken }),
     }),
-    { name: KEYS.settings, version: 2 },
+    {
+      name: KEYS.settings,
+      version: 3,
+      // v2 stores predate actChosen: anyone with a persisted store has been
+      // using the app, so treat their current activity as a deliberate choice
+      migrate: (persisted, version) => {
+        const s = persisted as Partial<SettingsState>;
+        if (version < 3) s.actChosen = true;
+        return s;
+      },
+    },
   ),
 );
 
