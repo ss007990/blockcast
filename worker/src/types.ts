@@ -72,4 +72,6 @@ export interface Env {
   APNS_TEAM_ID?: string;
   APNS_TOPIC?: string;
   APNS_ENV?: 'sandbox' | 'production';
+  /** Windy Webcams API key — nearby cams are off until set. */
+  WINDY_API_KEY?: string;
 }

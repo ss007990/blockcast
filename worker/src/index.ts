@@ -5,6 +5,7 @@ import { runChecks } from './check';
 import { feedKey, feedToIcs, isFeedToken, parseFeedBody } from './feed';
 import type { Env, StoredFeed } from './types';
 import { endpointKey, parseSubscribeBody, subKey } from './validate';
+import { handleWebcams } from './webcams';
 
 function corsHeaders(req: Request, env: Env): Record<string, string> {
   const origin = req.headers.get('Origin') ?? '';
@@ -76,6 +77,12 @@ export default {
       }
 
       return json(405, { error: 'method not allowed' }, cors);
+    }
+
+    // /api/webcams?lat=&lon= — nearest live webcams via the Windy proxy
+    if (url.pathname === '/api/webcams') {
+      if (req.method !== 'GET') return json(405, { error: 'method not allowed' }, cors);
+      return handleWebcams(url, env.WINDY_API_KEY, cors);
     }
 
     if (url.pathname !== '/api/subscribe') return json(404, { error: 'not found' }, cors);

@@ -16,6 +16,7 @@ export interface UiState {
   tuneOpen: boolean;
   addActOpen: boolean;
   radarOpen: boolean;
+  camsOpen: boolean;
 
   setTab: (t: Tab) => void;
   select: (b: SelectedBlock | null) => void;
@@ -25,6 +26,7 @@ export interface UiState {
   setTuneOpen: (v: boolean) => void;
   setAddActOpen: (v: boolean) => void;
   setRadarOpen: (v: boolean) => void;
+  setCamsOpen: (v: boolean) => void;
 }
 
 const TABS: Tab[] = ['today', 'week', 'planner', 'settings'];
@@ -43,6 +45,7 @@ export const useUi = create<UiState>()((set) => ({
   tuneOpen: false,
   addActOpen: false,
   radarOpen: false,
+  camsOpen: false,
 
   setTab: (tab) => {
     history.replaceState(null, '', `#${tab}`);
@@ -55,4 +58,5 @@ export const useUi = create<UiState>()((set) => ({
   setTuneOpen: (tuneOpen) => set({ tuneOpen }),
   setAddActOpen: (addActOpen) => set({ addActOpen }),
   setRadarOpen: (radarOpen) => set({ radarOpen }),
+  setCamsOpen: (camsOpen) => set({ camsOpen }),
 }));

@@ -12,6 +12,7 @@ BlockCast splits your day into blocks (2/3/4/6 h) and scores each block of the c
 - **Block detail** — factor breakdown plus hour-by-hour charts, sunrise/sunset
 - **Planner** — sessions re-checked on every fresh forecast, calendar export (.ics), in-app alerts when a planned session's risk band changes
 - **Push alerts** *(optional)* — a Cloudflare Worker re-checks subscribed sessions on a cron and sends Web Push notifications
+- **Nearby cams** *(optional)* — the closest [Windy](https://www.windy.com/webcams) webcams around the spot, pinned on a mini map: the ground truth the forecast can't give
 - **Per-activity tuning** — every factor weight and the comfort band are adjustable and persisted
 - **Global-ready** — English/Français, °C/°F, km/h/mph, 12/24-hour clock, light/dark/auto theme
 - **PWA** — installable, offline shell, no account, no tracking; settings and plans stay on the device
@@ -21,7 +22,7 @@ BlockCast splits your day into blocks (2/3/4/6 h) and scores each block of the c
 npm workspaces monorepo:
 
 - **`app/`** — the PWA. Vite + React + TypeScript (strict). `src/core` is pure, framework-free domain logic (scoring, suggestions, season, alerts, units, ics, geo) — the same modules run in the browser and in the worker. State in zustand stores with versioned localStorage persistence (v1 data is migrated automatically). Capacitor-ready for a future iOS build.
-- **`worker/`** — Cloudflare Worker: `POST/DELETE /api/subscribe` + a 3-hourly cron that re-scores subscribed sessions with the shared core and sends Web Push (VAPID) on band changes.
+- **`worker/`** — Cloudflare Worker: `POST/DELETE /api/subscribe` + a 3-hourly cron that re-scores subscribed sessions with the shared core and sends Web Push (VAPID) on band changes. Also `GET /api/webcams` — a cached proxy over the Windy Webcams API that keeps the key server-side.
 
 ## Development
 
@@ -42,6 +43,7 @@ npm run build      # app/dist
   2. `npx web-push generate-vapid-keys`, then `npx wrangler secret put VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY / VAPID_SUBJECT`
   3. `npm run deploy -w worker`
   4. Set `VITE_PUSH_API` and `VITE_VAPID_PUBLIC_KEY` for the app build (see `app/.env.example`)
+  5. *(nearby cams)* grab a free key at [api.windy.com/keys](https://api.windy.com/keys) (Webcams API), then `npx wrangler secret put WINDY_API_KEY` — until it is set the route answers 503 and the app hides the cams UI states gracefully
 
 ## Credits
 

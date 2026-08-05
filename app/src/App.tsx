@@ -10,6 +10,7 @@ import { DetailSheet } from './features/detail/DetailSheet';
 import { AddActivitySheet } from './ui/AddActivitySheet';
 import { TodayView } from './features/home/TodayView';
 import { LocationSheet } from './features/location/LocationSheet';
+import { CamsSheet } from './features/cams/CamsSheet';
 import { RadarSheet } from './features/radar/RadarSheet';
 import { PlannerView } from './features/planner/PlannerView';
 import { SettingsView } from './features/settings/SettingsView';
@@ -178,6 +179,7 @@ export function App() {
       <DetailSheet />
       <LocationSheet />
       <RadarSheet />
+      <CamsSheet />
       <AlertsSheet />
       <AddActivitySheet />
     </>

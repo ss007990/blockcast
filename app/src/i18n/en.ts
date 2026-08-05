@@ -48,6 +48,7 @@ export const en = {
     sunrise: 'Sunrise',
     sunset: 'Sunset',
     radar: 'Radar',
+    cams: 'Cams',
     feelsLike: 'Feels like {t}',
     // hero narrative: weather story + block verdict fused into one line
     storyDry: 'Dry all day.',
@@ -122,6 +123,16 @@ export const en = {
     hintWaves:
       'Swell height and direction for the hours ahead, the surfer’s and sailor’s view. Open water only.',
     hintObs: 'Observed radar: what actually fell over the last hours.',
+  },
+
+  cams: {
+    title: 'Nearby cams',
+    loading: 'Finding cams nearby…',
+    none: 'No webcams within 60 km of this spot.',
+    unavailable: 'Webcams are unavailable right now.',
+    live: 'LIVE',
+    viewOnWindy: 'View on Windy.com',
+    credit: 'Webcams by',
   },
 
   controls: {
@@ -322,7 +333,7 @@ export const en = {
     clock: 'Clock',
     about: 'About',
     aboutBody:
-      'BlockCast scores every block of your week for your sport: green means go. Live data from Open-Meteo; radar by Windy.com; maps by Leaflet & OpenStreetMap contributors. Settings and plans stay on your device.',
+      'BlockCast scores every block of your week for your sport: green means go. Live data from Open-Meteo; radar and webcams by Windy.com; maps by Leaflet & OpenStreetMap contributors. Settings and plans stay on your device.',
     version: 'Version',
     privacy: 'Privacy policy',
   },

@@ -17,6 +17,7 @@ import { formatDepth, formatHour, formatHourRange, formatTemp } from '../../core
 import { useActivityName, useLocale, useNowMs, useT } from '../../hooks';
 import { fill } from '../../i18n';
 import { fmtClock, fmtFull, fmtIsoTime } from '../../lib/format';
+import { webcamsAvailable } from '../../services/webcams';
 import { useExtras } from '../../state/extras';
 import { useForecast } from '../../state/forecast';
 import { critFor, useSettings } from '../../state/settings';
@@ -50,7 +51,7 @@ export function TodayView() {
   const st = useSettings();
   const { data, status, error } = useForecast();
   const { aqhi, alerts } = useExtras();
-  const { select, setLocOpen, setRadarOpen } = useUi();
+  const { select, setLocOpen, setRadarOpen, setCamsOpen } = useUi();
   const nowMs = useNowMs();
   const [alertOpen, setAlertOpen] = useState(false);
 
@@ -272,6 +273,11 @@ export function TodayView() {
               <button className={s.radarBtn} onClick={() => setRadarOpen(true)}>
                 📡 {t.home.radar}
               </button>
+              {webcamsAvailable() && (
+                <button className={s.radarBtn} onClick={() => setCamsOpen(true)}>
+                  🎥 {t.home.cams}
+                </button>
+              )}
             </span>
             <span>🌇 {fmtIsoTime(sunset, locale, st.clock)}</span>
           </div>

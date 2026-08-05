@@ -27,3 +27,5 @@ APNS_ENV = "production"
 #   APNS_PRIVATE_KEY   — contents of the AuthKey_<KEYID>.p8 from developer.apple.com
 #   APNS_KEY_ID        — the key's 10-char id
 #   APNS_TEAM_ID       — Apple Developer Team ID (membership page)
+#   WINDY_API_KEY      — free key from https://api.windy.com/keys (Webcams API);
+#                        nearby cams return 503 until it is set

@@ -50,6 +50,7 @@ export const fr: Dict = {
     sunrise: 'Lever',
     sunset: 'Coucher',
     radar: 'Radar',
+    cams: 'Caméras',
     feelsLike: 'Ressenti {t}',
     storyDry: 'Sec toute la journée.',
     storyStart: '{kind} vers {time}.',
@@ -123,6 +124,16 @@ export const fr: Dict = {
     hintWaves:
       'Hauteur et direction de la houle pour les prochaines heures, la vue du surfeur et du marin. Eaux libres seulement.',
     hintObs: 'Radar observé : ce qui est réellement tombé au cours des dernières heures.',
+  },
+
+  cams: {
+    title: 'Caméras à proximité',
+    loading: 'Recherche de caméras…',
+    none: 'Aucune webcam à moins de 60 km de cet endroit.',
+    unavailable: 'Les webcams sont indisponibles pour le moment.',
+    live: 'EN DIRECT',
+    viewOnWindy: 'Voir sur Windy.com',
+    credit: 'Webcams par',
   },
 
   controls: {
@@ -324,7 +335,7 @@ export const fr: Dict = {
     clock: 'Horloge',
     about: 'À propos',
     aboutBody:
-      'BlockCast note chaque bloc de votre semaine pour votre sport : vert = allez-y. Données en direct d’Open-Meteo; radar par Windy.com; cartes par Leaflet et les contributeurs OpenStreetMap. Réglages et séances restent sur votre appareil.',
+      'BlockCast note chaque bloc de votre semaine pour votre sport : vert = allez-y. Données en direct d’Open-Meteo; radar et webcams par Windy.com; cartes par Leaflet et les contributeurs OpenStreetMap. Réglages et séances restent sur votre appareil.',
     version: 'Version',
     privacy: 'Politique de confidentialité',
   },
