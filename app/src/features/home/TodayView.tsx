@@ -265,19 +265,22 @@ export function TodayView() {
           ))}
         </div>
 
+        <div className={s.skyActions}>
+          <button className={s.skyActionBtn} onClick={() => setRadarOpen(true)}>
+            📡 {t.home.radar}
+          </button>
+          {webcamsAvailable() && (
+            <button className={s.skyActionBtn} onClick={() => setCamsOpen(true)}>
+              🎥 {t.home.cams}
+            </button>
+          )}
+        </div>
+
         {sunrise && sunset && (
           <div className={s.skyFoot}>
             <span>🌅 {fmtIsoTime(sunrise, locale, st.clock)}</span>
             <span className={s.footNow}>
               {t.home.now} · {t.home.feels} {cur ? formatTemp(cur.temp, st.units) : '–'}
-              <button className={s.radarBtn} onClick={() => setRadarOpen(true)}>
-                📡 {t.home.radar}
-              </button>
-              {webcamsAvailable() && (
-                <button className={s.radarBtn} onClick={() => setCamsOpen(true)}>
-                  🎥 {t.home.cams}
-                </button>
-              )}
             </span>
             <span>🌇 {fmtIsoTime(sunset, locale, st.clock)}</span>
           </div>
