@@ -112,17 +112,23 @@ export const en = {
 
   radar: {
     title: 'Radar & next hours',
+    modeRadar: 'Radar',
     modeRain: 'Rain',
     modeWind: 'Wind',
     modeWaves: 'Waves',
-    modeObs: 'Radar',
+    hintRadar:
+      'Observed radar for the past hour, then HRDPS model rain (marked ≈) for the next 6 hours. Canada and border areas; use Rain elsewhere.',
     hintRain:
       'Model rain animation for the hours ahead. Press play or scrub the timeline at the bottom.',
     hintWind:
       'Wind speed and direction for the hours ahead. Same timeline, animated as flow.',
     hintWaves:
       'Swell height and direction for the hours ahead, the surfer’s and sailor’s view. Open water only.',
-    hintObs: 'Observed radar: what actually fell over the last hours.',
+    now: 'now',
+    play: 'Play',
+    pause: 'Pause',
+    hybridLoading: 'Loading radar…',
+    hybridErr: 'Radar is unavailable right now. Try the Rain view.',
   },
 
   cams: {

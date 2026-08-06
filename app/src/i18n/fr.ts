@@ -113,17 +113,23 @@ export const fr: Dict = {
 
   radar: {
     title: 'Radar et prochaines heures',
+    modeRadar: 'Radar',
     modeRain: 'Pluie',
     modeWind: 'Vent',
     modeWaves: 'Vagues',
-    modeObs: 'Radar',
+    hintRadar:
+      'Radar observé pour la dernière heure, puis pluie du modèle HRDPS (marquée ≈) pour les 6 prochaines heures. Canada et régions frontalières; utilisez Pluie ailleurs.',
     hintRain:
       'Animation de pluie prévue pour les prochaines heures. Lancez la lecture ou parcourez la ligne du temps en bas.',
     hintWind:
       'Vitesse et direction du vent pour les prochaines heures. Même ligne du temps, animée en flux.',
     hintWaves:
       'Hauteur et direction de la houle pour les prochaines heures, la vue du surfeur et du marin. Eaux libres seulement.',
-    hintObs: 'Radar observé : ce qui est réellement tombé au cours des dernières heures.',
+    now: 'maintenant',
+    play: 'Lecture',
+    pause: 'Pause',
+    hybridLoading: 'Chargement du radar…',
+    hybridErr: 'Le radar est indisponible pour le moment. Essayez la vue Pluie.',
   },
 
   cams: {

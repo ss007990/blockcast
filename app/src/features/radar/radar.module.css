@@ -28,6 +28,58 @@
   background: var(--surface-2);
 }
 
+.hybridMap {
+  height: 420px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  z-index: 0;
+}
+
+.hybridErr {
+  display: grid;
+  place-items: center;
+  height: 180px;
+  font-size: 13px;
+  color: var(--ink-3);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+}
+
+.timeline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.timeline input[type='range'] {
+  flex: 1;
+  accent-color: var(--accent);
+}
+
+.playBtn {
+  font-size: 15px;
+  line-height: 1;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
+/* model frames read as forecast, not observation */
+.frameLabel {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  min-width: 64px;
+  text-align: right;
+  color: var(--ink-2);
+}
+
+.frameLabel[data-future] {
+  color: var(--accent);
+}
+
 .credit {
   font-family: var(--font-mono);
   font-size: 10.5px;
