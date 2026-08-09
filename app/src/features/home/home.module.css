@@ -175,29 +175,35 @@
   }
 }
 
-.blockScore {
-  font-family: var(--font-mono);
-  font-size: 15px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
+/* the verdict word leads; the score rides along in the hours line */
+.blockWord {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-variation-settings: 'wdth' 86;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
-.block[data-band='g'] .blockScore {
+.block[data-band='g'] .blockWord {
   color: #a9ecb6;
 }
 
-.block[data-band='y'] .blockScore {
+.block[data-band='y'] .blockWord {
   color: #f8d78c;
 }
 
-.block[data-band='r'] .blockScore {
+.block[data-band='r'] .blockWord {
   color: #fbab9c;
 }
 
 .blockHours {
   font-family: var(--font-mono);
   font-size: 9.5px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.01em;
   opacity: 0.75;
   max-width: 100%;
   overflow: hidden;
@@ -434,11 +440,17 @@
   width: 46px;
   height: 46px;
   border-radius: var(--radius-s);
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 7px;
+  box-sizing: border-box;
   font-family: var(--font-mono);
   font-weight: 600;
   font-size: 16px;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
   border: 1px solid color-mix(in srgb, currentcolor 30%, transparent);

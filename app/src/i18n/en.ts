@@ -27,6 +27,10 @@ export const en = {
     gShort: 'Good to go',
     yShort: 'Some risk',
     rShort: 'High risk',
+    // one-word verdicts for the narrow block chips
+    gTiny: 'Go',
+    yTiny: 'Iffy',
+    rTiny: 'No-go',
   },
 
   home: {
@@ -241,6 +245,9 @@ export const en = {
     tempCurve: 'Feels like',
     rainCurve: 'Rain',
     windCurve: 'Wind',
+    mostly: 'mostly {factor}',
+    scoredFor: 'Scored for {activity} with your criteria',
+    adjust: 'Adjust',
   },
 
   planner: {

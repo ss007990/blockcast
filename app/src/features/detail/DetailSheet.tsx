@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { TOL_MULT } from '../../core/activities';
+import { FACTOR_KEYS, TOL_MULT, type FactorKey } from '../../core/activities';
 import { type PlannedSession } from '../../core/alerts';
 import { ActivityIcon } from '../../ui/ActivityIcon';
 import { AddToCalendar } from '../../ui/AddToCalendar';
@@ -7,6 +7,7 @@ import { getBlock } from '../../core/forecast';
 import type { HourSlice } from '../../core/scoring';
 import { formatHour } from '../../core/units';
 import { useActivityName, useLocale, useT } from '../../hooks';
+import { fill } from '../../i18n';
 import { sessionToIcsEvent } from '../../lib/download';
 import { fmtFull, fmtIsoTime } from '../../lib/format';
 import { useForecast } from '../../state/forecast';
@@ -14,6 +15,7 @@ import { usePlanner } from '../../state/planner';
 import { critFor, useSettings } from '../../state/settings';
 import { useUi } from '../../state/ui';
 import { Button, uiCss } from '../../ui/primitives';
+import { RiskScale } from '../../ui/RiskScale';
 import { Sheet } from '../../ui/Sheet';
 import { FactorChips } from './FactorChips';
 import { HourlyCharts } from './HourlyCharts';
@@ -30,7 +32,7 @@ export function DetailSheet() {
   const nameOf = useActivityName();
   const st = useSettings();
   const data = useForecast((f) => f.data);
-  const { selected, detailOpen, closeDetail } = useUi();
+  const { selected, detailOpen, closeDetail, tab, setTab, setTuneOpen } = useUi();
   const planner = usePlanner();
 
   const crit = useMemo(() => critFor(st, st.activity), [st]);
@@ -89,11 +91,31 @@ export function DetailSheet() {
 
   const addToPlanner = () => planner.add(session(Date.now()));
 
+  // which weighted factor drives the score — same maths as riskScore's "worst"
+  let domKey: FactorKey | null = null;
+  let domEff = 0;
+  for (const k of FACTOR_KEYS) {
+    const eff = Math.min(1, b.f.sev[k] * tolMult) * (crit.weights[k] / 10);
+    if (eff > domEff) {
+      domEff = eff;
+      domKey = k;
+    }
+  }
+  const dominant = domEff >= 0.2 ? domKey : null;
+
+  // the tune panel lives on the Today and Week views, under the same header
+  const openTune = () => {
+    closeDetail();
+    if (tab !== 'today' && tab !== 'week') setTab('week');
+    setTuneOpen(true);
+  };
+
   return (
     <Sheet open={detailOpen} onClose={closeDetail} ariaLabel={t.detail.title}>
       <div className={s.top}>
         <div className={s.gauge} style={{ background: bandBg(b.score), color: bandColor(b.score) }}>
           {b.score}
+          <RiskScale score={b.score} />
         </div>
         <div>
           <div className={s.when}>
@@ -101,11 +123,17 @@ export function DetailSheet() {
           </div>
           <div className={s.verdict}>
             {formatHour(h, st.clock)} – {formatHour(end, st.clock)} · {t.risk[b.band]}
+            {dominant ? ` · ${fill(t.detail.mostly, { factor: t.tune[dominant] })}` : ''}
           </div>
         </div>
       </div>
 
       <FactorChips b={b} crit={crit} tolMult={tolMult} units={st.units} t={t} />
+
+      <button className={s.whyTune} onClick={openTune}>
+        <span>⚙ {fill(t.detail.scoredFor, { activity: nameOf(st.activity) })}</span>
+        <b>{t.detail.adjust} →</b>
+      </button>
 
       <HourlyCharts
         hours={dayHours}

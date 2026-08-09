@@ -29,6 +29,10 @@ export const fr: Dict = {
     gShort: 'C’est bon',
     yShort: 'Un peu risqué',
     rShort: 'Risque élevé',
+    // one-word verdicts for the narrow block chips
+    gTiny: 'Allez-y',
+    yTiny: 'Risqué',
+    rTiny: 'Évitez',
   },
 
   home: {
@@ -242,6 +246,9 @@ export const fr: Dict = {
     tempCurve: 'Ressenti',
     rainCurve: 'Pluie',
     windCurve: 'Vent',
+    mostly: 'surtout {factor}',
+    scoredFor: 'Noté pour {activity} selon vos critères',
+    adjust: 'Ajuster',
   },
 
   planner: {

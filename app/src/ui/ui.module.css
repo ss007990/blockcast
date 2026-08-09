@@ -480,3 +480,30 @@
   padding: 18px 0;
   line-height: 1.5;
 }
+
+/* tiny 0–100 risk gradient; band stops match riskBand (25 / 55) */
+.riskScale {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--green-vivid) 0 25%,
+    var(--amber-vivid) 25% 55%,
+    var(--red-vivid) 55% 100%
+  );
+}
+
+.riskScale i {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  box-sizing: border-box;
+}

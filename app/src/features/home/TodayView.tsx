@@ -24,6 +24,7 @@ import { critFor, useSettings } from '../../state/settings';
 import { useUi } from '../../state/ui';
 import { ActivityPicker } from '../../ui/ActivityPicker';
 import { Icon } from '../../ui/Icon';
+import { RiskScale } from '../../ui/RiskScale';
 import { uiCss } from '../../ui/primitives';
 import { FactorChips } from '../detail/FactorChips';
 import { TunePanel, TuneToggle } from '../tune/TunePanel';
@@ -259,8 +260,10 @@ export function TodayView() {
               aria-label={`${formatHourRange(b.h, b.end, st.clock)} · ${t.common.risk} ${b.score} · ${t.risk[b.band]}`}
               onClick={() => openBlock(todayISO, b.h)}
             >
-              <b className={s.blockScore}>{b.score}</b>
-              <span className={s.blockHours}>{formatHour(b.h, st.clock)}</span>
+              <b className={s.blockWord}>{t.risk[`${b.band}Tiny`]}</b>
+              <span className={s.blockHours}>
+                {formatHour(b.h, st.clock)}·{b.score}
+              </span>
             </motion.button>
           ))}
         </div>
@@ -347,6 +350,7 @@ export function TodayView() {
           <button className={s.detailHead} onClick={() => openBlock(todayISO, best.h)}>
             <span className={s.detailGauge} data-band={best.band}>
               {best.score}
+              <RiskScale score={best.score} />
             </span>
             <span className={s.detailWhen}>
               <b>
