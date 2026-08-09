@@ -86,8 +86,13 @@ export async function handleRimg(
     return json(502, { error: 'xweather unreachable' }, cors);
   }
   if (!res.ok || !(res.headers.get('content-type') ?? '').startsWith('image/')) {
-    // surface the upstream reason (auth, plan, layer) — never the credentials
-    const detail = (await res.text().catch(() => '')).slice(0, 200);
+    // surface the upstream reason (auth, plan, layer). Upstream messages can
+    // echo the request URL, so scrub the credential segment before replying.
+    const detail = (await res.text().catch(() => ''))
+      .replaceAll(`${id}_${secret}`, '[credentials]')
+      .replaceAll(id, '[id]')
+      .replaceAll(secret, '[secret]')
+      .slice(0, 200);
     return json(502, { error: `xweather ${res.status}`, detail }, cors);
   }
 
