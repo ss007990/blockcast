@@ -58,7 +58,14 @@ export async function handleRimg(
   cors: Record<string, string>,
 ): Promise<Response> {
   if (url.pathname === '/api/rimg/status') {
-    return json(200, { enabled: !!(id && secret) }, cors);
+    // shape-only diagnostics: lengths and "URL-safe?" flags, never values
+    const shape = (v: string | undefined) =>
+      v == null ? null : { len: v.length, urlSafe: /^[A-Za-z0-9]+$/.test(v.trim()) };
+    return json(
+      200,
+      { enabled: !!(id && secret), id: shape(id), secret: shape(secret) },
+      cors,
+    );
   }
   const p = parseRimgPath(url.pathname);
   if (!p) return json(400, { error: 'bad rimg path' }, cors);
@@ -66,6 +73,11 @@ export async function handleRimg(
   // path turns into a 404 upstream
   id = id?.trim();
   secret = secret?.trim();
+  // the portal shows the pair as one "ID_SECRET" string and people paste it
+  // whole into a single slot — accept that in either one (a lone id/secret
+  // is plain alphanumeric, so the underscore is unambiguous)
+  const combined = [secret, id].find((v) => v && /^[A-Za-z0-9]+_[A-Za-z0-9]+$/.test(v));
+  if (combined) [id, secret] = combined.split('_') as [string, string];
   if (!id || !secret) return json(503, { error: 'xweather not configured' }, cors);
 
   const cache = caches.default;
