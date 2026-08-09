@@ -9,7 +9,7 @@
 // layer    radar | fradar   (observed / extrapolated future radar)
 // offset   current, -10min, +30min, …
 
-const XW_HOST = 'https://maps1.aerisapi.com';
+const XW_HOST = 'https://maps.api.xweather.com';
 
 const LAYERS = new Set(['radar', 'fradar']);
 const OFFSET_RE = /^(current|[+-]\d{1,3}min)$/;
@@ -62,6 +62,10 @@ export async function handleRimg(
   }
   const p = parseRimgPath(url.pathname);
   if (!p) return json(400, { error: 'bad rimg path' }, cors);
+  // pasted secrets sometimes carry stray whitespace; a newline in the URL
+  // path turns into a 404 upstream
+  id = id?.trim();
+  secret = secret?.trim();
   if (!id || !secret) return json(503, { error: 'xweather not configured' }, cors);
 
   const cache = caches.default;
@@ -81,8 +85,11 @@ export async function handleRimg(
   } catch {
     return json(502, { error: 'xweather unreachable' }, cors);
   }
-  if (!res.ok || !(res.headers.get('content-type') ?? '').startsWith('image/'))
-    return json(502, { error: `xweather ${res.status}` }, cors);
+  if (!res.ok || !(res.headers.get('content-type') ?? '').startsWith('image/')) {
+    // surface the upstream reason (auth, plan, layer) — never the credentials
+    const detail = (await res.text().catch(() => '')).slice(0, 200);
+    return json(502, { error: `xweather ${res.status}`, detail }, cors);
+  }
 
   const body = await res.arrayBuffer();
   const cached = new Response(body, {
