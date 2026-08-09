@@ -119,7 +119,10 @@ export function FutureRadar() {
   const overlaysRef = useRef<ImageOverlay[]>([]);
   const idxRef = useRef(0);
   const loadToken = useRef(0);
-  idxRef.current = idx;
+  // mirror idx for the async overlay builder; refs must not be written in render
+  useEffect(() => {
+    idxRef.current = idx;
+  }, [idx]);
 
   // pick the tier, then build the frame plan from what the servers offer
   useEffect(() => {
