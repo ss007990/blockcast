@@ -130,6 +130,7 @@ export const fr: Dict = {
     pause: 'Pause',
     hybridLoading: 'Chargement du radar…',
     hybridErr: 'Le radar est indisponible pour le moment. Essayez la vue Pluie.',
+    frames: 'Chargement des images… {done}/{total}',
   },
 
   cams: {

@@ -129,6 +129,7 @@ export const en = {
     pause: 'Pause',
     hybridLoading: 'Loading radar…',
     hybridErr: 'Radar is unavailable right now. Try the Rain view.',
+    frames: 'Loading frames… {done}/{total}',
   },
 
   cams: {
