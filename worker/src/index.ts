@@ -5,6 +5,7 @@ import { runChecks } from './check';
 import { feedKey, feedToIcs, isFeedToken, parseFeedBody } from './feed';
 import type { Env, StoredFeed } from './types';
 import { endpointKey, parseSubscribeBody, subKey } from './validate';
+import { handleRimg } from './rimg';
 import { handleWebcams } from './webcams';
 
 function corsHeaders(req: Request, env: Env): Record<string, string> {
@@ -77,6 +78,12 @@ export default {
       }
 
       return json(405, { error: 'method not allowed' }, cors);
+    }
+
+    // /api/rimg/... — Xweather radar/future-radar images, credentials server-side
+    if (url.pathname.startsWith('/api/rimg')) {
+      if (req.method !== 'GET') return json(405, { error: 'method not allowed' }, cors);
+      return handleRimg(url, env.XWEATHER_ID, env.XWEATHER_SECRET, cors);
     }
 
     // /api/webcams?lat=&lon= — nearest live webcams via the Windy proxy

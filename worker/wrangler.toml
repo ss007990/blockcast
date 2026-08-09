@@ -29,3 +29,6 @@ APNS_ENV = "production"
 #   APNS_TEAM_ID       — Apple Developer Team ID (membership page)
 #   WINDY_API_KEY      — free key from https://api.windy.com/keys (Webcams API);
 #                        nearby cams return 503 until it is set
+#   XWEATHER_ID        — Xweather (Vaisala) client id, from the account's Apps page
+#   XWEATHER_SECRET    — matching client secret; premium radar frames stay off
+#                        until both are set

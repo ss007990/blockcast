@@ -74,4 +74,7 @@ export interface Env {
   APNS_ENV?: 'sandbox' | 'production';
   /** Windy Webcams API key — nearby cams are off until set. */
   WINDY_API_KEY?: string;
+  /** Xweather client pair — premium radar frames are off until both set. */
+  XWEATHER_ID?: string;
+  XWEATHER_SECRET?: string;
 }

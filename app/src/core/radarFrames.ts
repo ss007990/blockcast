@@ -42,6 +42,39 @@ export interface RadarFrame {
   kind: 'radar' | 'model';
 }
 
+/** One frame of the premium (Xweather) timeline: observed radar and
+ * extrapolated future radar are offset-addressed, model frames absolute. */
+export interface HybridFrame {
+  kind: 'radar' | 'fradar' | 'model';
+  /** minutes relative to now — drives both the label and the request */
+  offMin: number;
+  /** ms epoch, only for model frames (WMS TIME) */
+  time?: number;
+}
+
+/**
+ * Xweather radar for the past hour and its extrapolation for the next one
+ * (10-minute steps), then HRDPS hourly steps out to `aheadH` hours. Model
+ * steps come from the layer's advertised time dimension so a frame is never
+ * requested that the server would answer with a blank.
+ */
+export function buildHybridFrames(
+  model: WmsTimeDim | null,
+  nowMs: number,
+  { pastMin = 60, aheadH = 6 }: { pastMin?: number; aheadH?: number } = {},
+): HybridFrame[] {
+  const frames: HybridFrame[] = [];
+  for (let m = -pastMin; m <= 0; m += 10) frames.push({ kind: 'radar', offMin: m });
+  for (let m = 10; m <= 60; m += 10) frames.push({ kind: 'fradar', offMin: m });
+  if (model) {
+    const first = model.start + Math.ceil((nowMs + 60 * 60_000 + 1 - model.start) / model.stepMs) * model.stepMs;
+    const to = Math.min(model.end, nowMs + aheadH * 3_600_000);
+    for (let t = first; t <= to; t += model.stepMs)
+      frames.push({ kind: 'model', offMin: Math.round((t - nowMs) / 60_000), time: t });
+  }
+  return frames;
+}
+
 /**
  * Observed frames for the trailing `pastMin` minutes, then model frames for
  * every model step after the radar's latest image, out to `aheadH` hours.

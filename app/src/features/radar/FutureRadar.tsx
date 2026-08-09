@@ -1,15 +1,17 @@
-// MétéoMédia-style future radar: ECCC's observed composite for the last
-// hour, then HRDPS instantaneous precipitation rate for the hours ahead.
-// Each frame is ONE WMS GetMap image for the visible bbox, preloaded before
-// playback starts, so the loop never animates over half-loaded tiles. On
-// pan/zoom the frame set is rebuilt and swapped in only once fully loaded.
+// MétéoMédia-style future radar with two data tiers. Premium (when the
+// worker holds Xweather credentials): observed radar for the past hour and
+// true radar extrapolation for the next one, 10-minute steps, then HRDPS
+// model rain hourly out to +6 h. Fallback (always available): ECCC observed
+// radar + HRDPS, all free. Each frame is ONE image for the visible bbox,
+// preloaded before playback starts, rebuilt on pan/zoom.
 
 import { useEffect, useRef, useState } from 'react';
 import type { CRS, ImageOverlay, LatLngBounds, Map as LeafletMap } from 'leaflet';
 import {
+  buildHybridFrames,
   buildRadarFrames,
   timeDimFromCapabilities,
-  type RadarFrame,
+  type HybridFrame,
 } from '../../core/radarFrames';
 import { useT } from '../../hooks';
 import { fill } from '../../i18n';
@@ -20,6 +22,7 @@ const GEOMET = 'https://geo.weather.gc.ca/geomet';
 const RADAR_LAYER = 'RADAR_1KM_RRAI';
 // instantaneous rate: the model analog of radar (PR/PC are accumulations)
 const MODEL_LAYER = 'HRDPS.CONTINENTAL_RT';
+const API = import.meta.env.VITE_PUSH_API as string | undefined;
 const FRAME_MS = 550;
 const END_HOLD_MS = 1600;
 const OPACITY = 0.75;
@@ -29,24 +32,67 @@ const capsUrl = (layer: string) =>
 
 const isoOf = (ms: number) => new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
 
-/** One GetMap image for the given bbox: the whole frame in a single request. */
-function frameUrl(f: RadarFrame, bounds: LatLngBounds, w: number, h: number, crs: CRS): string {
-  const sw = crs.project(bounds.getSouthWest());
-  const ne = crs.project(bounds.getNorthEast());
+type Mode = 'premium' | 'eccc';
+
+interface View {
+  bounds: LatLngBounds;
+  centerLat: number;
+  centerLon: number;
+  z: number;
+  w: number;
+  h: number;
+}
+
+/** GeoMet GetMap: the whole frame in a single request for the bbox. */
+function geometUrl(layer: string, timeMs: number, view: View, crs: CRS): string {
+  const sw = crs.project(view.bounds.getSouthWest());
+  const ne = crs.project(view.bounds.getNorthEast());
   const p = new URLSearchParams({
     service: 'WMS',
     version: '1.3.0',
     request: 'GetMap',
-    layers: f.kind === 'radar' ? RADAR_LAYER : MODEL_LAYER,
+    layers: layer,
     format: 'image/png',
     transparent: 'true',
     crs: 'EPSG:3857',
     bbox: `${sw.x},${sw.y},${ne.x},${ne.y}`,
-    width: String(w),
-    height: String(h),
-    time: isoOf(f.time),
+    width: String(view.w),
+    height: String(view.h),
+    time: isoOf(timeMs),
   });
   return `${GEOMET}?${p}`;
+}
+
+/** Worker-proxied Xweather flat map, centre/zoom addressed. */
+function rimgUrl(layer: 'radar' | 'fradar', offMin: number, view: View): string {
+  const off = offMin === 0 ? 'current' : `${offMin > 0 ? '+' : ''}${offMin}min`;
+  return (
+    `${API}/api/rimg/${layer}/${view.w}x${view.h}` +
+    `/${view.centerLat.toFixed(4)},${view.centerLon.toFixed(4)},${view.z}/${off}.png`
+  );
+}
+
+function frameUrl(f: HybridFrame, mode: Mode, view: View, crs: CRS): string {
+  if (mode === 'premium' && f.kind !== 'model') return rimgUrl(f.kind, f.offMin, view);
+  if (f.kind === 'model') return geometUrl(MODEL_LAYER, f.time!, view, crs);
+  return geometUrl(RADAR_LAYER, f.time!, view, crs);
+}
+
+/** The current viewport, sized so premium images come back retina-sharp:
+ * doubling the pixels means asking one zoom level deeper, same bbox. */
+function viewOf(map: LeafletMap): View {
+  const size = map.getSize();
+  const c = map.getCenter();
+  let scale = (window.devicePixelRatio || 1) >= 1.5 ? 2 : 1;
+  if (Math.max(size.x, size.y) * scale > 2048) scale = 1;
+  return {
+    bounds: map.getBounds(),
+    centerLat: c.lat,
+    centerLon: c.lng,
+    z: Math.round(map.getZoom()) + (scale === 2 ? 1 : 0),
+    w: Math.round(size.x * scale),
+    h: Math.round(size.y * scale),
+  };
 }
 
 const preload = (url: string) =>
@@ -61,7 +107,7 @@ export function FutureRadar() {
   const t = useT();
   const loc = useSettings((st) => st.loc);
 
-  const [frames, setFrames] = useState<RadarFrame[] | null>(null);
+  const [plan, setPlan] = useState<{ mode: Mode; frames: HybridFrame[] } | null>(null);
   const [err, setErr] = useState(false);
   const [idx, setIdx] = useState(0);
   const [playing, setPlaying] = useState(true);
@@ -75,23 +121,48 @@ export function FutureRadar() {
   const loadToken = useRef(0);
   idxRef.current = idx;
 
-  // frame plan from what GeoMet actually serves right now
+  // pick the tier, then build the frame plan from what the servers offer
   useEffect(() => {
     let disposed = false;
     void (async () => {
       try {
-        const [radarXml, modelXml] = await Promise.all([
-          fetch(capsUrl(RADAR_LAYER)).then((r) => r.text()),
-          fetch(capsUrl(MODEL_LAYER)).then((r) => r.text()),
-        ]);
-        const radar = timeDimFromCapabilities(radarXml);
+        let premium = false;
+        if (API) {
+          try {
+            const st = (await (await fetch(`${API}/api/rimg/status`)).json()) as {
+              enabled?: boolean;
+            };
+            premium = !!st.enabled;
+          } catch {
+            premium = false;
+          }
+        }
+        const modelXml = await fetch(capsUrl(MODEL_LAYER)).then((r) => r.text());
         const model = timeDimFromCapabilities(modelXml);
+
+        if (premium) {
+          const frames = buildHybridFrames(model, Date.now());
+          if (frames.length < 2) throw new Error('empty plan');
+          if (!disposed) {
+            setPlan({ mode: 'premium', frames });
+            setIdx(frames.filter((f) => f.kind === 'radar').length - 1);
+          }
+          return;
+        }
+
+        const radarXml = await fetch(capsUrl(RADAR_LAYER)).then((r) => r.text());
+        const radar = timeDimFromCapabilities(radarXml);
         if (!radar || !model) throw new Error('no time dimension');
-        const plan = buildRadarFrames(radar, model);
-        if (plan.length < 2) throw new Error('empty plan');
+        const eccc = buildRadarFrames(radar, model);
+        if (eccc.length < 2) throw new Error('empty plan');
+        const frames: HybridFrame[] = eccc.map((f) => ({
+          kind: f.kind,
+          offMin: Math.round((f.time - radar.end) / 60_000),
+          time: f.time,
+        }));
         if (!disposed) {
-          setFrames(plan);
-          setIdx(plan.filter((f) => f.kind === 'radar').length - 1);
+          setPlan({ mode: 'eccc', frames });
+          setIdx(frames.filter((f) => f.kind === 'radar').length - 1);
         }
       } catch {
         if (!disposed) setErr(true);
@@ -103,16 +174,12 @@ export function FutureRadar() {
   }, []);
 
   // build every frame image for the current view; swap in only when complete
-  const rebuildOverlays = async (map: LeafletMap, plan: RadarFrame[]) => {
+  const rebuildOverlays = async (map: LeafletMap, p: { mode: Mode; frames: HybridFrame[] }) => {
     const L = leafletRef.current;
     if (!L) return;
     const token = ++loadToken.current;
-    const bounds = map.getBounds();
-    const size = map.getSize();
-    const scale = Math.min(window.devicePixelRatio || 1, 2);
-    const w = Math.round(size.x * scale);
-    const h = Math.round(size.y * scale);
-    const urls = plan.map((f) => frameUrl(f, bounds, w, h, L.CRS.EPSG3857));
+    const view = viewOf(map);
+    const urls = p.frames.map((f) => frameUrl(f, p.mode, view, L.CRS.EPSG3857));
 
     let done = 0;
     setProgress({ done: 0, total: urls.length });
@@ -127,9 +194,9 @@ export function FutureRadar() {
 
     overlaysRef.current.forEach((o) => o.remove());
     overlaysRef.current = urls.map((u, i) =>
-      L.imageOverlay(u, bounds, {
+      L.imageOverlay(u, view.bounds, {
         opacity: i === idxRef.current ? OPACITY : 0,
-        className: plan[i]!.kind === 'model' ? 'bc-model-frame' : undefined,
+        className: p.frames[i]!.kind === 'model' ? 'bc-model-frame' : undefined,
       }).addTo(map),
     );
     setProgress(null);
@@ -137,7 +204,7 @@ export function FutureRadar() {
 
   // map init, then frames for the initial view
   useEffect(() => {
-    if (!frames) return;
+    if (!plan) return;
     let disposed = false;
     void (async () => {
       try {
@@ -153,6 +220,9 @@ export function FutureRadar() {
           maxZoom: 12,
           attribution:
             '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' +
+            (plan.mode === 'premium'
+              ? ' · <a href="https://www.xweather.com/">Xweather</a>'
+              : '') +
             ' · <a href="https://eccc-msc.github.io/open-data/">ECCC MSC</a>',
         }).addTo(map);
         L.marker([loc.lat, loc.lon], {
@@ -163,11 +233,11 @@ export function FutureRadar() {
         let debounce: ReturnType<typeof setTimeout>;
         map.on('moveend', () => {
           clearTimeout(debounce);
-          debounce = setTimeout(() => void rebuildOverlays(map, frames), 250);
+          debounce = setTimeout(() => void rebuildOverlays(map, plan), 250);
         });
         setTimeout(() => {
           map.invalidateSize();
-          void rebuildOverlays(map, frames);
+          void rebuildOverlays(map, plan);
         }, 60);
       } catch {
         if (!disposed) setErr(true);
@@ -182,7 +252,7 @@ export function FutureRadar() {
       overlaysRef.current = [];
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [frames]);
+  }, [plan]);
 
   // light up the active frame (all images are already decoded)
   useEffect(() => {
@@ -191,26 +261,24 @@ export function FutureRadar() {
 
   // the animation clock, holding a beat on the last frame
   useEffect(() => {
-    if (!playing || !frames || progress) return;
+    if (!playing || !plan || progress) return;
     const timer = setTimeout(
-      () => setIdx((i) => (i + 1) % frames.length),
-      idx === frames.length - 1 ? END_HOLD_MS : FRAME_MS,
+      () => setIdx((i) => (i + 1) % plan.frames.length),
+      idx === plan.frames.length - 1 ? END_HOLD_MS : FRAME_MS,
     );
     return () => clearTimeout(timer);
-  }, [playing, idx, frames, progress]);
+  }, [playing, idx, plan, progress]);
 
   if (err) return <div className={s.hybridErr}>{t.radar.hybridErr}</div>;
-  if (!frames) return <div className={s.hybridErr}>{t.radar.hybridLoading}</div>;
+  if (!plan) return <div className={s.hybridErr}>{t.radar.hybridLoading}</div>;
 
-  const nowTime = frames.reduce((n, f) => (f.kind === 'radar' ? f.time : n), frames[0]!.time);
-  const cur = frames[idx]!;
-  const offMin = Math.round((cur.time - nowTime) / 60_000);
+  const cur = plan.frames[idx]!;
   const label =
-    offMin === 0
+    cur.offMin === 0
       ? t.radar.now
-      : Math.abs(offMin) < 100
-        ? `${offMin > 0 ? '+' : ''}${offMin} min`
-        : `${offMin > 0 ? '+' : ''}${Math.round(offMin / 60)} h`;
+      : Math.abs(cur.offMin) < 100
+        ? `${cur.offMin > 0 ? '+' : ''}${cur.offMin} min`
+        : `${cur.offMin > 0 ? '+' : ''}${Math.round(cur.offMin / 60)} h`;
 
   return (
     <div>
@@ -233,7 +301,7 @@ export function FutureRadar() {
         <input
           type="range"
           min={0}
-          max={frames.length - 1}
+          max={plan.frames.length - 1}
           value={idx}
           aria-label={t.radar.title}
           onChange={(e) => {

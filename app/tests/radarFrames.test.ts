@@ -1,11 +1,43 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildHybridFrames,
   buildRadarFrames,
   parseWmsTimeDim,
   timeDimFromCapabilities,
 } from '../src/core/radarFrames';
 
 const T = (iso: string) => Date.parse(iso);
+
+describe('buildHybridFrames', () => {
+  const now = T('2026-08-09T15:07:00Z');
+  const model = {
+    start: T('2026-08-09T13:00:00Z'),
+    end: T('2026-08-11T12:00:00Z'),
+    stepMs: 3_600_000,
+  };
+
+  it('lays out radar past, fradar first hour, model beyond', () => {
+    const f = buildHybridFrames(model, now);
+    expect(f.filter((x) => x.kind === 'radar').map((x) => x.offMin)).toEqual([
+      -60, -50, -40, -30, -20, -10, 0,
+    ]);
+    expect(f.filter((x) => x.kind === 'fradar').map((x) => x.offMin)).toEqual([
+      10, 20, 30, 40, 50, 60,
+    ]);
+    const m = f.filter((x) => x.kind === 'model');
+    // first hourly step strictly after now+60min (16:07Z → 17:00Z)
+    expect(m[0]!.time).toBe(T('2026-08-09T17:00:00Z'));
+    // capped at now+6h (21:07Z → last step 21:00Z)
+    expect(m[m.length - 1]!.time).toBe(T('2026-08-09T21:00:00Z'));
+    expect(m.every((x) => x.offMin > 60)).toBe(true);
+  });
+
+  it('still yields the radar+fradar loop when the model is unavailable', () => {
+    const f = buildHybridFrames(null, now);
+    expect(f).toHaveLength(13);
+    expect(f.some((x) => x.kind === 'model')).toBe(false);
+  });
+});
 
 describe('parseWmsTimeDim', () => {
   it('parses a GeoMet minute-step dimension', () => {
