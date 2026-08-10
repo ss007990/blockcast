@@ -202,7 +202,7 @@ export function DailyList({ data, todayISO, nowH, curTemp, onDay }: Props) {
               className={s.dayRow}
               onClick={() => r.best && onDay(r.day, r.best.h)}
               disabled={!r.best}
-              aria-label={`${fmtWeekdayShort(r.day, locale)} · ${rangeText}${r.best ? ` · ${fill(t.home.dayBest, { score: String(r.best.score) })}` : ''}`}
+              aria-label={`${fmtWeekdayShort(r.day, locale)} · ${rangeText}`}
             >
               <span className={s.dayName}>
                 {isToday ? t.common.today : fmtWeekdayShort(r.day, locale)}
@@ -227,15 +227,6 @@ export function DailyList({ data, todayISO, nowH, curTemp, onDay }: Props) {
                 {dot != null && <span className={s.dayDot} style={{ left: `${dot}%` }} />}
               </span>
               <span className={s.dayHi}>{hiLabel}</span>
-              {r.best ? (
-                <span className={s.dayChip} data-band={r.best.band}>
-                  {r.best.score}
-                </span>
-              ) : (
-                <span className={s.dayChip} data-band="none">
-                  –
-                </span>
-              )}
             </button>
           );
         })}
