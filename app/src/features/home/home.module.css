@@ -379,7 +379,7 @@
   letter-spacing: normal;
 }
 
-/* metric flip for the daily list: 🌡 💨 🌧 ❄️, hugging the right edge */
+/* metric flip for the daily list: stroke icons, hugging the right edge */
 .metricBtns {
   order: 1;
   display: flex;

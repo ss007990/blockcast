@@ -1,10 +1,11 @@
 // The 24-hour rail under the sky hero: hour, condition icon, real temp with
-// the felt temp under it, and precipitation odds, with sunrise/sunset markers
-// inline. Tapping an hour opens the DetailSheet of the block that contains it.
+// the felt temp under it, and the hour's precipitation amount, with
+// sunrise/sunset markers inline. Tapping an hour opens the DetailSheet of
+// the block that contains it.
 
 import { motion } from 'framer-motion';
 import { wmoIcon, wmoIconAt, type ForecastData } from '../../core/forecast';
-import { formatHour, formatTemp } from '../../core/units';
+import { formatHour, formatPrecip, formatTemp } from '../../core/units';
 import { useLocale, useT } from '../../hooks';
 import { fmtIsoTime } from '../../lib/format';
 import { useSettings } from '../../state/settings';
@@ -29,7 +30,8 @@ type Cell =
       icon: string;
       temp: string;
       feels: string;
-      pprob: number;
+      /** Precipitation over the hour, mm. */
+      precip: number;
       isNow: boolean;
     }
   | { kind: 'sun'; key: string; icon: string; time: string };
@@ -55,7 +57,7 @@ export function HourlyRail({ data, todayISO, nextISO, nowH, dayCode, onHour }: P
       icon: slice.code != null ? wmoIconAt(slice.code, slice.isDay ?? true) : wmoIcon(dayCode),
       temp: formatTemp(slice.air ?? slice.temp, units),
       feels: formatTemp(slice.temp, units),
-      pprob: Math.round(slice.pprob),
+      precip: slice.precip,
       isNow: off === 0,
     });
   }
@@ -106,7 +108,7 @@ export function HourlyRail({ data, todayISO, nextISO, nowH, dayCode, onHour }: P
               data-now={c.isNow || undefined}
               disabled={c.h < hFrom || c.h >= hTo}
               onClick={() => onHour(c.day, blockStart(c.h))}
-              aria-label={`${formatHour(c.h, clock)} · ${c.temp} (${t.detail.felt} ${c.feels}) · ${c.pprob}%`}
+              aria-label={`${formatHour(c.h, clock)} · ${c.temp} (${t.detail.felt} ${c.feels}) · ${formatPrecip(c.precip, units)}`}
             >
               <span className={s.railH}>{formatHour(c.h, clock)}</span>
               <span className={s.railIco} aria-hidden="true">
@@ -114,8 +116,8 @@ export function HourlyRail({ data, todayISO, nextISO, nowH, dayCode, onHour }: P
               </span>
               <span className={s.railT}>{c.temp}</span>
               <span className={s.railFeels}>{c.feels}</span>
-              <span className={s.railP} data-wet={c.pprob >= 30 || undefined}>
-                {c.pprob}%
+              <span className={s.railP} data-wet={c.precip >= 0.2 || undefined}>
+                {c.precip >= 0.05 ? formatPrecip(c.precip, units) : ' '}
               </span>
             </button>
           ),

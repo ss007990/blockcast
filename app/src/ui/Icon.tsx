@@ -2,7 +2,18 @@
 
 import type { ReactElement, SVGProps } from 'react';
 
-export type IconName = 'today' | 'week' | 'planner' | 'settings' | 'bell' | 'pin' | 'search';
+export type IconName =
+  | 'today'
+  | 'week'
+  | 'planner'
+  | 'settings'
+  | 'bell'
+  | 'pin'
+  | 'search'
+  | 'thermo'
+  | 'wind'
+  | 'rain'
+  | 'snow';
 
 const PATHS: Record<IconName, ReactElement> = {
   today: (
@@ -49,6 +60,32 @@ const PATHS: Record<IconName, ReactElement> = {
     <>
       <circle cx="11" cy="11" r="6.5" />
       <path d="M16 16l4.5 4.5" />
+    </>
+  ),
+  thermo: (
+    <>
+      <path d="M10 13.8V5a2 2 0 0 1 4 0v8.8a4.6 4.6 0 1 1-4 0z" />
+      <path d="M12 9v7" />
+      <circle cx="12" cy="16.8" r="1.1" fill="currentColor" />
+    </>
+  ),
+  wind: (
+    <>
+      <path d="M3.5 8h9.6a2.6 2.6 0 1 0-2.6-2.6" />
+      <path d="M3.5 12.5h13.8a2.8 2.8 0 1 1-2.8 2.8" />
+      <path d="M3.5 17h6.4a2.1 2.1 0 1 1-2.1 2.1" />
+    </>
+  ),
+  rain: (
+    <>
+      <path d="M12 3.6s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z" />
+      <path d="M9.4 15.2a2.7 2.7 0 0 0 2 2.5" />
+    </>
+  ),
+  snow: (
+    <>
+      <path d="M12 3.5v17M4.6 7.75l14.8 8.5M19.4 7.75l-14.8 8.5" />
+      <path d="M9.7 4.6L12 6.9l2.3-2.3M9.7 19.4L12 17.1l2.3 2.3M3.9 11.3l3.1.8-.8 3.1M20.1 11.3l-3.1.8.8 3.1" />
     </>
   ),
 };

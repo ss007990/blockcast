@@ -12,6 +12,7 @@ import { cmToIn, formatTemp, kmhToMph, mmToIn } from '../../core/units';
 import { useLocale, useT } from '../../hooks';
 import { fill } from '../../i18n';
 import { fmtWeekdayShort } from '../../lib/format';
+import { Icon, type IconName } from '../../ui/Icon';
 import { critFor, useSettings } from '../../state/settings';
 import s from './home.module.css';
 
@@ -25,7 +26,12 @@ interface Props {
 }
 
 type Metric = 'temp' | 'wind' | 'rain' | 'snow';
-const METRIC_ICONS: Record<Metric, string> = { temp: '🌡', wind: '💨', rain: '🌧', snow: '❄️' };
+const METRIC_ICONS: Record<Metric, IconName> = {
+  temp: 'thermo',
+  wind: 'wind',
+  rain: 'rain',
+  snow: 'snow',
+};
 
 interface Row {
   day: string;
@@ -157,7 +163,7 @@ export function DailyList({ data, todayISO, nowH, curTemp, onDay }: Props) {
               title={metricLabel[m]}
               onClick={() => setPicked(m)}
             >
-              {METRIC_ICONS[m]}
+              <Icon name={METRIC_ICONS[m]} size={20} />
             </button>
           ))}
         </span>
