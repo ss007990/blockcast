@@ -42,13 +42,14 @@ export interface RadarFrame {
   kind: 'radar' | 'model';
 }
 
-/** One frame of the premium (Xweather) timeline: observed radar and
- * extrapolated future radar are offset-addressed, model frames absolute. */
+/** One frame of the hybrid timeline. Observed radar and Xweather's
+ * extrapolation are offset-addressed, model frames absolute, and 'nowcast'
+ * frames are synthesised client-side from observed motion. */
 export interface HybridFrame {
-  kind: 'radar' | 'fradar' | 'model';
+  kind: 'radar' | 'fradar' | 'nowcast' | 'model';
   /** minutes relative to now — drives both the label and the request */
   offMin: number;
-  /** ms epoch, only for model frames (WMS TIME) */
+  /** ms epoch, only for radar/model frames (WMS TIME) */
   time?: number;
 }
 
@@ -64,16 +65,17 @@ export function buildHybridFrames(
   {
     pastMin = 60,
     aheadH = 6,
-    // fradar is derived from the US radar network; outside its footprint
-    // (most of Canada) the extrapolated hour must be skipped
-    withFradar = true,
-  }: { pastMin?: number; aheadH?: number; withFradar?: boolean } = {},
+    // 'fradar' where the US radar network reaches, 'nowcast' (our own
+    // motion extrapolation) elsewhere, 'none' to jump straight to model
+    firstHour = 'none' as 'fradar' | 'nowcast' | 'none',
+  } = {},
 ): HybridFrame[] {
   const frames: HybridFrame[] = [];
   for (let m = -pastMin; m <= 0; m += 10) frames.push({ kind: 'radar', offMin: m });
-  if (withFradar) for (let m = 10; m <= 60; m += 10) frames.push({ kind: 'fradar', offMin: m });
+  if (firstHour !== 'none')
+    for (let m = 10; m <= 60; m += 10) frames.push({ kind: firstHour, offMin: m });
   if (model) {
-    const fromMs = nowMs + (withFradar ? 60 * 60_000 : 0);
+    const fromMs = nowMs + (firstHour !== 'none' ? 60 * 60_000 : 0);
     const first = model.start + Math.ceil((fromMs + 1 - model.start) / model.stepMs) * model.stepMs;
     const to = Math.min(model.end, nowMs + aheadH * 3_600_000);
     for (let t = first; t <= to; t += model.stepMs)

@@ -17,7 +17,7 @@ describe('buildHybridFrames', () => {
   };
 
   it('lays out radar past, fradar first hour, model beyond', () => {
-    const f = buildHybridFrames(model, now);
+    const f = buildHybridFrames(model, now, { firstHour: 'fradar' });
     expect(f.filter((x) => x.kind === 'radar').map((x) => x.offMin)).toEqual([
       -60, -50, -40, -30, -20, -10, 0,
     ]);
@@ -33,14 +33,24 @@ describe('buildHybridFrames', () => {
   });
 
   it('still yields the radar+fradar loop when the model is unavailable', () => {
-    const f = buildHybridFrames(null, now);
+    const f = buildHybridFrames(null, now, { firstHour: 'fradar' });
     expect(f).toHaveLength(13);
     expect(f.some((x) => x.kind === 'model')).toBe(false);
   });
 
-  it('replaces the fradar hour with model steps outside US radar coverage', () => {
-    const f = buildHybridFrames(model, now, { withFradar: false });
+  it('uses nowcast frames for the first hour outside US radar coverage', () => {
+    const f = buildHybridFrames(model, now, { firstHour: 'nowcast' });
+    expect(f.filter((x) => x.kind === 'nowcast').map((x) => x.offMin)).toEqual([
+      10, 20, 30, 40, 50, 60,
+    ]);
     expect(f.some((x) => x.kind === 'fradar')).toBe(false);
+    // model still starts after the projected hour
+    expect(f.filter((x) => x.kind === 'model')[0]!.time).toBe(T('2026-08-09T17:00:00Z'));
+  });
+
+  it('jumps straight to model steps when no first hour source exists', () => {
+    const f = buildHybridFrames(model, now, { firstHour: 'none' });
+    expect(f.some((x) => x.kind === 'fradar' || x.kind === 'nowcast')).toBe(false);
     const m = f.filter((x) => x.kind === 'model');
     // model picks up right after now (16:00Z), not after a skipped hour
     expect(m[0]!.time).toBe(T('2026-08-09T16:00:00Z'));

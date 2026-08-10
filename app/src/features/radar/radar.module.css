@@ -38,6 +38,12 @@
   filter: blur(2px);
 }
 
+/* projected frames keep the 1 km structure; a light soften hides the
+ * pixel grid without melting the cells */
+:global(.bc-nowcast-frame) {
+  filter: blur(1px);
+}
+
 .frameProgress {
   position: absolute;
   top: 10px;

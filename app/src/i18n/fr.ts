@@ -70,6 +70,11 @@ export const fr: Dict = {
     bestNone: 'Plus de bonne fenêtre aujourd’hui. La semaine ci-dessous en offre de meilleures.',
     next7: 'Prochains 7 jours',
     next7Fine: 'min → max, échelle commune · point = maintenant · pastille = risque du meilleur bloc',
+    // captions for the other daily metrics; {u} is the display unit
+    next7FineWind: 'soutenu → rafales, {u} · échelle commune · pastille = risque du meilleur bloc',
+    next7FineRain: 'probabilité de précipitations · total en {u} · pastille = risque du meilleur bloc',
+    next7FineSnow: 'neige totale, {u} · échelle commune · pastille = risque du meilleur bloc',
+    metricTemp: 'Température',
     show14: 'Voir 14 jours',
     show7: 'Voir 7 jours',
     dayBest: 'meilleur bloc risque {score}',
@@ -122,7 +127,7 @@ export const fr: Dict = {
     modeWind: 'Vent',
     modeWaves: 'Vagues',
     hintRadar:
-      'Radar observé pour la dernière heure, puis pluie du modèle HRDPS (marquée ≈) pour les 6 prochaines heures. Canada et régions frontalières; utilisez Pluie ailleurs.',
+      'Radar observé pour la dernière heure, son déplacement projeté pour la prochaine, puis pluie du modèle HRDPS (marquée ≈) jusqu’à 6 heures. Canada et régions frontalières; utilisez Pluie ailleurs.',
     hintRain:
       'Animation de pluie prévue pour les prochaines heures. Lancez la lecture ou parcourez la ligne du temps en bas.',
     hintWind:

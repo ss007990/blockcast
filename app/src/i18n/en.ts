@@ -69,6 +69,11 @@ export const en = {
     bestNone: 'No good window left today. The week below has better ones.',
     next7: 'Next 7 days',
     next7Fine: 'low → high, shared scale · dot = now · chip = best block risk',
+    // captions for the other daily metrics; {u} is the display unit
+    next7FineWind: 'sustained → gusts, {u} · shared scale · chip = best block risk',
+    next7FineRain: 'chance of precipitation · total in {u} · chip = best block risk',
+    next7FineSnow: 'snowfall total, {u} · shared scale · chip = best block risk',
+    metricTemp: 'Temperature',
     show14: 'Show 14 days',
     show7: 'Show 7 days',
     dayBest: 'best block risk {score}',
@@ -121,7 +126,7 @@ export const en = {
     modeWind: 'Wind',
     modeWaves: 'Waves',
     hintRadar:
-      'Observed radar for the past hour, then HRDPS model rain (marked ≈) for the next 6 hours. Canada and border areas; use Rain elsewhere.',
+      'Observed radar for the past hour, its projected motion for the next one, then HRDPS model rain (marked ≈) out to 6 hours. Canada and border areas; use Rain elsewhere.',
     hintRain:
       'Model rain animation for the hours ahead. Press play or scrub the timeline at the bottom.',
     hintWind:

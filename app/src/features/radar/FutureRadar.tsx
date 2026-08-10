@@ -12,10 +12,12 @@ import {
   buildRadarFrames,
   timeDimFromCapabilities,
   type HybridFrame,
+  type WmsTimeDim,
 } from '../../core/radarFrames';
 import { useT } from '../../hooks';
 import { fill } from '../../i18n';
 import { useSettings } from '../../state/settings';
+import { synthesizeNowcast } from './nowcastFrames';
 import s from './radar.module.css';
 
 const GEOMET = 'https://geo.weather.gc.ca/geomet';
@@ -73,9 +75,19 @@ function rimgUrl(layer: 'radar' | 'fradar', offMin: number, view: View): string 
 }
 
 function frameUrl(f: HybridFrame, mode: Mode, view: View, crs: CRS): string {
-  if (mode === 'premium' && f.kind !== 'model') return rimgUrl(f.kind, f.offMin, view);
+  if (mode === 'premium' && (f.kind === 'radar' || f.kind === 'fradar'))
+    return rimgUrl(f.kind, f.offMin, view);
   if (f.kind === 'model') return geometUrl(MODEL_LAYER, f.time!, view, crs);
   return geometUrl(RADAR_LAYER, f.time!, view, crs);
+}
+
+/** Web-Mercator bbox around a point, for probe requests made before the
+ * map (and Leaflet's CRS helpers) exist. */
+function probeBbox(lat: number, lon: number, halfM = 180000): string {
+  const R = 6378137;
+  const x = R * ((lon * Math.PI) / 180);
+  const y = R * Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
+  return `${x - halfM},${y - halfM},${x + halfM},${y + halfM}`;
 }
 
 /** The current viewport, sized so premium images come back retina-sharp:
@@ -107,7 +119,11 @@ export function FutureRadar() {
   const t = useT();
   const loc = useSettings((st) => st.loc);
 
-  const [plan, setPlan] = useState<{ mode: Mode; frames: HybridFrame[] } | null>(null);
+  const [plan, setPlan] = useState<{
+    mode: Mode;
+    frames: HybridFrame[];
+    radar: WmsTimeDim | null;
+  } | null>(null);
   const [err, setErr] = useState(false);
   const [idx, setIdx] = useState(0);
   const [playing, setPlaying] = useState(true);
@@ -140,49 +156,73 @@ export function FutureRadar() {
             premium = false;
           }
         }
-        const modelXml = await fetch(capsUrl(MODEL_LAYER)).then((r) => r.text());
+        const [modelXml, radarXml] = await Promise.all([
+          fetch(capsUrl(MODEL_LAYER)).then((r) => r.text()),
+          fetch(capsUrl(RADAR_LAYER)).then((r) => r.text()),
+        ]);
         const model = timeDimFromCapabilities(modelXml);
+        const radar = timeDimFromCapabilities(radarXml);
 
+        // First hour policy: our own motion nowcast keeps the crisp 1 km
+        // structure of the Canadian composite, so it wins wherever GeoMet
+        // sees the spot — and then the WHOLE loop renders from ECCC so the
+        // style never jumps mid-animation. Xweather takes over only where
+        // GeoMet has no coverage at all (US interior) and its fradar is
+        // real radar extrapolation rather than coarse model fill.
+        let useFradar = false;
         if (premium) {
-          // fradar only reaches as far as the US radar network. Probe the
-          // spot: if observed radar has echoes here but fradar's first frame
-          // has none, the extrapolated hour would be a lie — skip it.
-          let withFradar = true;
           try {
-            const probe = (path: string) =>
-              fetch(`${API}${path}`).then(async (r) => (r.ok ? (await r.blob()).size : 0));
-            const base = `/500x400/${loc.lat.toFixed(2)},${loc.lon.toFixed(2)},7`;
-            const [obs, ext] = await Promise.all([
-              probe(`/api/rimg/radar${base}/current.png`),
-              probe(`/api/rimg/fradar${base}/+10min.png`),
-            ]);
+            const size = (url: string) =>
+              fetch(url).then(async (r) => (r.ok ? (await r.blob()).size : 0));
             const EMPTY_PNG = 1500; // a fully transparent frame is ~0.9 kB
-            withFradar = ext > EMPTY_PNG || obs <= EMPTY_PNG;
+            const geometProbe = radar
+              ? `${GEOMET}?service=WMS&version=1.3.0&request=GetMap&layers=${RADAR_LAYER}` +
+                `&format=image/png&transparent=true&crs=EPSG:3857&bbox=${probeBbox(loc.lat, loc.lon)}` +
+                `&width=300&height=300&time=${isoOf(radar.end)}`
+              : null;
+            const gBytes = geometProbe ? await size(geometProbe) : 0;
+            if (gBytes <= EMPTY_PNG) {
+              const fBytes = await size(
+                `${API}/api/rimg/fradar/500x400/${loc.lat.toFixed(2)},${loc.lon.toFixed(2)},7/+10min.png`,
+              );
+              if (fBytes > EMPTY_PNG) useFradar = true;
+            }
           } catch {
-            withFradar = true;
+            useFradar = false;
           }
-          const frames = buildHybridFrames(model, Date.now(), { withFradar });
+        }
+
+        if (useFradar) {
+          const frames = buildHybridFrames(model, Date.now(), { firstHour: 'fradar' });
           if (frames.length < 2) throw new Error('empty plan');
           if (!disposed) {
-            setPlan({ mode: 'premium', frames });
+            setPlan({ mode: 'premium', frames, radar });
             setIdx(frames.filter((f) => f.kind === 'radar').length - 1);
           }
           return;
         }
 
-        const radarXml = await fetch(capsUrl(RADAR_LAYER)).then((r) => r.text());
-        const radar = timeDimFromCapabilities(radarXml);
         if (!radar || !model) throw new Error('no time dimension');
         const eccc = buildRadarFrames(radar, model);
         if (eccc.length < 2) throw new Error('empty plan');
-        const frames: HybridFrame[] = eccc.map((f) => ({
-          kind: f.kind,
-          offMin: Math.round((f.time - radar.end) / 60_000),
-          time: f.time,
+        // observed frames at native steps, our projected motion for the
+        // first hour, model only beyond it
+        const frames: HybridFrame[] = eccc
+          .map((f) => ({
+            kind: f.kind,
+            offMin: Math.round((f.time - radar.end) / 60_000),
+            time: f.time,
+          }))
+          .filter((f) => f.kind === 'radar' || f.offMin > 60);
+        const radarCount = frames.filter((f) => f.kind === 'radar').length;
+        const nowcast: HybridFrame[] = [10, 20, 30, 40, 50, 60].map((m) => ({
+          kind: 'nowcast',
+          offMin: m,
         }));
+        frames.splice(radarCount, 0, ...nowcast);
         if (!disposed) {
-          setPlan({ mode: 'eccc', frames });
-          setIdx(frames.filter((f) => f.kind === 'radar').length - 1);
+          setPlan({ mode: 'eccc', frames, radar });
+          setIdx(radarCount - 1);
         }
       } catch {
         if (!disposed) setErr(true);
@@ -194,29 +234,67 @@ export function FutureRadar() {
   }, []);
 
   // build every frame image for the current view; swap in only when complete
-  const rebuildOverlays = async (map: LeafletMap, p: { mode: Mode; frames: HybridFrame[] }) => {
+  const rebuildOverlays = async (
+    map: LeafletMap,
+    p: { mode: Mode; frames: HybridFrame[]; radar: WmsTimeDim | null },
+  ) => {
     const L = leafletRef.current;
     if (!L) return;
     const token = ++loadToken.current;
     const view = viewOf(map);
-    const urls = p.frames.map((f) => frameUrl(f, p.mode, view, L.CRS.EPSG3857));
+    const urls: (string | null)[] = p.frames.map((f) =>
+      f.kind === 'nowcast' ? null : frameUrl(f, p.mode, view, L.CRS.EPSG3857),
+    );
+
+    // the projected first hour: synthesised from the trailing observed frames
+    const ncIdx = p.frames.map((f, i) => (f.kind === 'nowcast' ? i : -1)).filter((i) => i >= 0);
+    if (ncIdx.length) {
+      const persist =
+        p.mode === 'premium'
+          ? rimgUrl('radar', 0, view)
+          : p.radar
+            ? geometUrl(RADAR_LAYER, p.radar.end, view, L.CRS.EPSG3857)
+            : null;
+      let synth: Awaited<ReturnType<typeof synthesizeNowcast>> = null;
+      if (p.radar) {
+        const s = p.radar.stepMs;
+        const sources = [p.radar.end - 2 * s, p.radar.end - s, p.radar.end].map((t) =>
+          geometUrl(RADAR_LAYER, t, view, L.CRS.EPSG3857),
+        );
+        const steps = ncIdx.map((i) => p.frames[i]!.offMin);
+        synth = await synthesizeNowcast(sources, steps, s / 60_000).catch(() => null);
+      }
+      if (token !== loadToken.current) return;
+      // motion when it can be trusted, persistence of the latest image if not
+      ncIdx.forEach((fi, j) => {
+        urls[fi] = synth?.urls[j] ?? persist;
+      });
+    }
+    const frameUrls = urls.filter((u): u is string => u != null);
+    if (frameUrls.length !== urls.length) return; // a source failed: keep the old set
 
     let done = 0;
-    setProgress({ done: 0, total: urls.length });
+    setProgress({ done: 0, total: frameUrls.length });
     await Promise.all(
-      urls.map((u) =>
+      frameUrls.map((u) =>
         preload(u).then(() => {
-          if (token === loadToken.current) setProgress({ done: ++done, total: urls.length });
+          if (token === loadToken.current)
+            setProgress({ done: ++done, total: frameUrls.length });
         }),
       ),
     );
     if (token !== loadToken.current || !mapRef.current) return;
 
     overlaysRef.current.forEach((o) => o.remove());
-    overlaysRef.current = urls.map((u, i) =>
+    overlaysRef.current = frameUrls.map((u, i) =>
       L.imageOverlay(u, view.bounds, {
         opacity: i === idxRef.current ? OPACITY : 0,
-        className: p.frames[i]!.kind === 'model' ? 'bc-model-frame' : undefined,
+        className:
+          p.frames[i]!.kind === 'model'
+            ? 'bc-model-frame'
+            : p.frames[i]!.kind === 'nowcast'
+              ? 'bc-nowcast-frame'
+              : undefined,
       }).addTo(map),
     );
     setProgress(null);
