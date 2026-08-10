@@ -144,7 +144,24 @@ export function FutureRadar() {
         const model = timeDimFromCapabilities(modelXml);
 
         if (premium) {
-          const frames = buildHybridFrames(model, Date.now());
+          // fradar only reaches as far as the US radar network. Probe the
+          // spot: if observed radar has echoes here but fradar's first frame
+          // has none, the extrapolated hour would be a lie — skip it.
+          let withFradar = true;
+          try {
+            const probe = (path: string) =>
+              fetch(`${API}${path}`).then(async (r) => (r.ok ? (await r.blob()).size : 0));
+            const base = `/500x400/${loc.lat.toFixed(2)},${loc.lon.toFixed(2)},7`;
+            const [obs, ext] = await Promise.all([
+              probe(`/api/rimg/radar${base}/current.png`),
+              probe(`/api/rimg/fradar${base}/+10min.png`),
+            ]);
+            const EMPTY_PNG = 1500; // a fully transparent frame is ~0.9 kB
+            withFradar = ext > EMPTY_PNG || obs <= EMPTY_PNG;
+          } catch {
+            withFradar = true;
+          }
+          const frames = buildHybridFrames(model, Date.now(), { withFradar });
           if (frames.length < 2) throw new Error('empty plan');
           if (!disposed) {
             setPlan({ mode: 'premium', frames });

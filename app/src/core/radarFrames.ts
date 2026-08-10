@@ -61,13 +61,20 @@ export interface HybridFrame {
 export function buildHybridFrames(
   model: WmsTimeDim | null,
   nowMs: number,
-  { pastMin = 60, aheadH = 6 }: { pastMin?: number; aheadH?: number } = {},
+  {
+    pastMin = 60,
+    aheadH = 6,
+    // fradar is derived from the US radar network; outside its footprint
+    // (most of Canada) the extrapolated hour must be skipped
+    withFradar = true,
+  }: { pastMin?: number; aheadH?: number; withFradar?: boolean } = {},
 ): HybridFrame[] {
   const frames: HybridFrame[] = [];
   for (let m = -pastMin; m <= 0; m += 10) frames.push({ kind: 'radar', offMin: m });
-  for (let m = 10; m <= 60; m += 10) frames.push({ kind: 'fradar', offMin: m });
+  if (withFradar) for (let m = 10; m <= 60; m += 10) frames.push({ kind: 'fradar', offMin: m });
   if (model) {
-    const first = model.start + Math.ceil((nowMs + 60 * 60_000 + 1 - model.start) / model.stepMs) * model.stepMs;
+    const fromMs = nowMs + (withFradar ? 60 * 60_000 : 0);
+    const first = model.start + Math.ceil((fromMs + 1 - model.start) / model.stepMs) * model.stepMs;
     const to = Math.min(model.end, nowMs + aheadH * 3_600_000);
     for (let t = first; t <= to; t += model.stepMs)
       frames.push({ kind: 'model', offMin: Math.round((t - nowMs) / 60_000), time: t });

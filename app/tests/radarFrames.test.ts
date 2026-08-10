@@ -37,6 +37,15 @@ describe('buildHybridFrames', () => {
     expect(f).toHaveLength(13);
     expect(f.some((x) => x.kind === 'model')).toBe(false);
   });
+
+  it('replaces the fradar hour with model steps outside US radar coverage', () => {
+    const f = buildHybridFrames(model, now, { withFradar: false });
+    expect(f.some((x) => x.kind === 'fradar')).toBe(false);
+    const m = f.filter((x) => x.kind === 'model');
+    // model picks up right after now (16:00Z), not after a skipped hour
+    expect(m[0]!.time).toBe(T('2026-08-09T16:00:00Z'));
+    expect(m[m.length - 1]!.time).toBe(T('2026-08-09T21:00:00Z'));
+  });
 });
 
 describe('parseWmsTimeDim', () => {
