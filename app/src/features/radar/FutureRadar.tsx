@@ -90,18 +90,22 @@ function probeBbox(lat: number, lon: number, halfM = 180000): string {
   return `${x - halfM},${y - halfM},${x + halfM},${y + halfM}`;
 }
 
-/** The current viewport, sized so premium images come back retina-sharp:
- * doubling the pixels means asking one zoom level deeper, same bbox. */
-function viewOf(map: LeafletMap): View {
+/** The current viewport, sized for the device's real pixel density. GeoMet
+ * takes bbox + arbitrary pixel size, so any scale works there; Xweather's
+ * centre/zoom addressing only supports doubling (one zoom level deeper for
+ * twice the pixels), hence the pow2 restriction in premium mode. */
+function viewOf(map: LeafletMap, pow2: boolean): View {
   const size = map.getSize();
   const c = map.getCenter();
-  let scale = (window.devicePixelRatio || 1) >= 1.5 ? 2 : 1;
-  if (Math.max(size.x, size.y) * scale > 2048) scale = 1;
+  const dpr = window.devicePixelRatio || 1;
+  let scale = pow2 ? (dpr >= 1.5 ? 2 : 1) : Math.min(3, Math.max(1, Math.round(dpr)));
+  while (scale > 1 && Math.max(size.x, size.y) * scale > 2048) scale -= 1;
+  if (pow2 && scale !== 2) scale = 1;
   return {
     bounds: map.getBounds(),
     centerLat: c.lat,
     centerLon: c.lng,
-    z: Math.round(map.getZoom()) + (scale === 2 ? 1 : 0),
+    z: Math.round(map.getZoom()) + (pow2 && scale === 2 ? 1 : 0),
     w: Math.round(size.x * scale),
     h: Math.round(size.y * scale),
   };
@@ -241,7 +245,7 @@ export function FutureRadar() {
     const L = leafletRef.current;
     if (!L) return;
     const token = ++loadToken.current;
-    const view = viewOf(map);
+    const view = viewOf(map, p.mode === 'premium');
     const urls: (string | null)[] = p.frames.map((f) =>
       f.kind === 'nowcast' ? null : frameUrl(f, p.mode, view, L.CRS.EPSG3857),
     );

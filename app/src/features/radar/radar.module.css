@@ -35,13 +35,13 @@
 /* HRDPS is a 2.5 km grid; a touch of blur melts the blocky cells into the
  * smooth look people know from broadcast future radar */
 :global(.bc-model-frame) {
-  filter: blur(2px);
+  filter: blur(1.25px);
 }
 
-/* projected frames keep the 1 km structure; a light soften hides the
- * pixel grid without melting the cells */
+/* projected frames carry their own subtle baked-in uncertainty blur;
+ * no extra CSS softening on top */
 :global(.bc-nowcast-frame) {
-  filter: blur(1px);
+  filter: none;
 }
 
 .frameProgress {

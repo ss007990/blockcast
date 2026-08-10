@@ -82,8 +82,9 @@ export async function synthesizeNowcast(
   const urls = stepsMin.map((min) => {
     const k = min / intervalMin;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // a touch of growing blur reads as growing uncertainty
-    ctx.filter = `blur(${((min / 60) * 1.5).toFixed(2)}px)`;
+    // the faintest touch of growing blur for uncertainty — cells must stay
+    // readable as cells all the way to +60
+    ctx.filter = `blur(${((min / 60) * 0.8).toFixed(2)}px)`;
     ctx.drawImage(newest, motion.dx * k * scale, motion.dy * k * scale);
     ctx.filter = 'none';
     return canvas.toDataURL('image/png');
