@@ -88,6 +88,33 @@
   accent-color: var(--accent);
 }
 
+.rangeWrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.rangeWrap input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+/* the observed/forecast boundary on the scrubber, MétéoMédia-style: a thumb
+ * left of the tick shows what happened, right of it what is expected */
+.nowTick {
+  position: absolute;
+  /* thumb travel is track width minus the ~16px thumb; offset accordingly */
+  left: calc(8px + (100% - 16px) * var(--now-frac, 0.5));
+  top: 50%;
+  width: 2px;
+  height: 15px;
+  transform: translate(-50%, -50%);
+  border-radius: 1px;
+  background: var(--ink-3);
+  pointer-events: none;
+}
+
 .playBtn {
   font-size: 15px;
   line-height: 1;

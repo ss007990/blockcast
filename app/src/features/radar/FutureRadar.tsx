@@ -30,6 +30,7 @@ const STYLE_LIGHT = 'https://tiles.openfreemap.org/styles/positron';
 const STYLE_DARK = 'https://tiles.openfreemap.org/styles/dark';
 const FRAME_MS = 550;
 const END_HOLD_MS = 1600;
+const CROSSFADE_MS = 300;
 const OPACITY = 0.75;
 // HRDPS is a 2.5 km grid; a touch of baked-in blur melts the blocky cells
 // into the smooth look people know from broadcast future radar
@@ -224,6 +225,9 @@ export function FutureRadar() {
           source: id,
           paint: {
             'raster-opacity': i === idxRef.current ? OPACITY : 0,
+            // the outgoing frame fades while the incoming one rises, so rain
+            // blends between steps instead of blinking (broadcast-radar feel)
+            'raster-opacity-transition': { duration: CROSSFADE_MS, delay: 0 },
             'raster-fade-duration': 0,
             'raster-resampling': 'linear',
           },
@@ -316,6 +320,9 @@ export function FutureRadar() {
 
   const cur = plan.frames[idx]!;
   const offMin = Math.round((cur.time - plan.radarEnd) / 60_000);
+  // where "now" sits on the scrubber: the last observed frame
+  const nowFrac =
+    plan.frames.findLastIndex((f) => f.kind === 'radar') / Math.max(1, plan.frames.length - 1);
   const label =
     offMin === 0
       ? t.radar.now
@@ -341,17 +348,20 @@ export function FutureRadar() {
         >
           {playing ? '⏸' : '▶'}
         </button>
-        <input
-          type="range"
-          min={0}
-          max={plan.frames.length - 1}
-          value={idx}
-          aria-label={t.radar.title}
-          onChange={(e) => {
-            setPlaying(false);
-            setIdx(Number(e.target.value));
-          }}
-        />
+        <div className={s.rangeWrap} style={{ ['--now-frac' as string]: nowFrac }}>
+          <input
+            type="range"
+            min={0}
+            max={plan.frames.length - 1}
+            value={idx}
+            aria-label={t.radar.title}
+            onChange={(e) => {
+              setPlaying(false);
+              setIdx(Number(e.target.value));
+            }}
+          />
+          <span className={s.nowTick} aria-hidden="true" />
+        </div>
         <span className={s.frameLabel} data-future={offMin > 0 || undefined}>
           {cur.kind === 'model' ? '≈ ' : ''}
           {label}
