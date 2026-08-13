@@ -1,62 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
-  buildHybridFrames,
   buildRadarFrames,
   parseWmsTimeDim,
   timeDimFromCapabilities,
 } from '../src/core/radarFrames';
+import { radarProvider } from '../src/core/radarCoverage';
 
 const T = (iso: string) => Date.parse(iso);
-
-describe('buildHybridFrames', () => {
-  const now = T('2026-08-09T15:07:00Z');
-  const model = {
-    start: T('2026-08-09T13:00:00Z'),
-    end: T('2026-08-11T12:00:00Z'),
-    stepMs: 3_600_000,
-  };
-
-  it('lays out radar past, fradar first hour, model beyond', () => {
-    const f = buildHybridFrames(model, now, { firstHour: 'fradar' });
-    expect(f.filter((x) => x.kind === 'radar').map((x) => x.offMin)).toEqual([
-      -60, -50, -40, -30, -20, -10, 0,
-    ]);
-    expect(f.filter((x) => x.kind === 'fradar').map((x) => x.offMin)).toEqual([
-      10, 20, 30, 40, 50, 60,
-    ]);
-    const m = f.filter((x) => x.kind === 'model');
-    // first hourly step strictly after now+60min (16:07Z → 17:00Z)
-    expect(m[0]!.time).toBe(T('2026-08-09T17:00:00Z'));
-    // capped at now+6h (21:07Z → last step 21:00Z)
-    expect(m[m.length - 1]!.time).toBe(T('2026-08-09T21:00:00Z'));
-    expect(m.every((x) => x.offMin > 60)).toBe(true);
-  });
-
-  it('still yields the radar+fradar loop when the model is unavailable', () => {
-    const f = buildHybridFrames(null, now, { firstHour: 'fradar' });
-    expect(f).toHaveLength(13);
-    expect(f.some((x) => x.kind === 'model')).toBe(false);
-  });
-
-  it('uses nowcast frames for the first hour outside US radar coverage', () => {
-    const f = buildHybridFrames(model, now, { firstHour: 'nowcast' });
-    expect(f.filter((x) => x.kind === 'nowcast').map((x) => x.offMin)).toEqual([
-      10, 20, 30, 40, 50, 60,
-    ]);
-    expect(f.some((x) => x.kind === 'fradar')).toBe(false);
-    // model still starts after the projected hour
-    expect(f.filter((x) => x.kind === 'model')[0]!.time).toBe(T('2026-08-09T17:00:00Z'));
-  });
-
-  it('jumps straight to model steps when no first hour source exists', () => {
-    const f = buildHybridFrames(model, now, { firstHour: 'none' });
-    expect(f.some((x) => x.kind === 'fradar' || x.kind === 'nowcast')).toBe(false);
-    const m = f.filter((x) => x.kind === 'model');
-    // model picks up right after now (16:00Z), not after a skipped hour
-    expect(m[0]!.time).toBe(T('2026-08-09T16:00:00Z'));
-    expect(m[m.length - 1]!.time).toBe(T('2026-08-09T21:00:00Z'));
-  });
-});
 
 describe('parseWmsTimeDim', () => {
   it('parses a GeoMet minute-step dimension', () => {
@@ -90,28 +40,76 @@ describe('timeDimFromCapabilities', () => {
 });
 
 describe('buildRadarFrames', () => {
-  const radar = parseWmsTimeDim('2026-08-06T10:54:00Z/2026-08-06T13:54:00Z/PT6M')!;
-  const model = parseWmsTimeDim('2026-08-06T07:00:00Z/2026-08-08T06:00:00Z/PT1H')!;
+  // shapes lifted from live GeoMet capabilities: the extrapolation window
+  // starts one step before the composite's latest frame and runs ~72 min past it
+  const radar = parseWmsTimeDim('2026-08-13T08:00:00Z/2026-08-13T11:00:00Z/PT6M')!;
+  const nowcast = parseWmsTimeDim('2026-08-13T10:54:00Z/2026-08-13T12:06:00Z/PT6M')!;
+  const model = parseWmsTimeDim('2026-08-13T07:00:00Z/2026-08-15T06:00:00Z/PT1H')!;
 
-  it('covers the past hour of radar then six model hours', () => {
-    const frames = buildRadarFrames(radar, model);
+  it('lays out observed past, extrapolation next, model beyond', () => {
+    const frames = buildRadarFrames(radar, nowcast, model);
     const obs = frames.filter((f) => f.kind === 'radar');
-    const fut = frames.filter((f) => f.kind === 'model');
+    const nc = frames.filter((f) => f.kind === 'nowcast');
+    const mod = frames.filter((f) => f.kind === 'model');
+
     expect(obs).toHaveLength(11); // 60 min at 6-min steps, inclusive
-    expect(obs[0]!.time).toBe(T('2026-08-06T12:54:00Z'));
-    expect(obs.at(-1)!.time).toBe(T('2026-08-06T13:54:00Z'));
-    expect(fut[0]!.time).toBe(T('2026-08-06T14:00:00Z')); // first hour after "now"
-    expect(fut.at(-1)!.time).toBe(T('2026-08-06T19:00:00Z')); // within +6 h
-    // strictly increasing, radar before model
+    expect(obs[0]!.time).toBe(T('2026-08-13T10:00:00Z'));
+    expect(obs.at(-1)!.time).toBe(T('2026-08-13T11:00:00Z'));
+
+    // every advertised step strictly after the latest observation
+    expect(nc[0]!.time).toBe(T('2026-08-13T11:06:00Z'));
+    expect(nc.at(-1)!.time).toBe(T('2026-08-13T12:06:00Z'));
+    expect(nc).toHaveLength(11);
+
+    // model picks up after the nowcast runs out, capped at +6 h
+    expect(mod[0]!.time).toBe(T('2026-08-13T13:00:00Z'));
+    expect(mod.at(-1)!.time).toBe(T('2026-08-13T17:00:00Z'));
+
+    // one strictly increasing timeline, no duplicates
     const times = frames.map((f) => f.time);
-    expect([...times].sort((a, b) => a - b)).toEqual(times);
+    expect([...new Set(times)].sort((a, b) => a - b)).toEqual(times);
+  });
+
+  it('falls back to observed then model when the nowcast layer is down', () => {
+    const frames = buildRadarFrames(radar, null, model);
+    expect(frames.some((f) => f.kind === 'nowcast')).toBe(false);
+    // model starts right after the radar's "now", not after a skipped hour
+    expect(frames.find((f) => f.kind === 'model')!.time).toBe(T('2026-08-13T12:00:00Z'));
+  });
+
+  it('ends at the nowcast when the model is down', () => {
+    const frames = buildRadarFrames(radar, nowcast, null);
+    expect(frames.some((f) => f.kind === 'model')).toBe(false);
+    expect(frames.at(-1)!.time).toBe(T('2026-08-13T12:06:00Z'));
+  });
+
+  it('ignores a stale nowcast that ends before the latest observation', () => {
+    const stale = parseWmsTimeDim('2026-08-13T09:00:00Z/2026-08-13T10:12:00Z/PT6M')!;
+    const frames = buildRadarFrames(radar, stale, model);
+    expect(frames.some((f) => f.kind === 'nowcast')).toBe(false);
+    expect(frames.find((f) => f.kind === 'model')!.time).toBe(T('2026-08-13T12:00:00Z'));
   });
 
   it('clamps to what the layers actually offer', () => {
-    const shortRadar = parseWmsTimeDim('2026-08-06T13:42:00Z/2026-08-06T13:54:00Z/PT6M')!;
-    const shortModel = parseWmsTimeDim('2026-08-06T07:00:00Z/2026-08-06T15:00:00Z/PT1H')!;
-    const frames = buildRadarFrames(shortRadar, shortModel);
+    const shortRadar = parseWmsTimeDim('2026-08-13T10:48:00Z/2026-08-13T11:00:00Z/PT6M')!;
+    const shortModel = parseWmsTimeDim('2026-08-13T07:00:00Z/2026-08-13T13:00:00Z/PT1H')!;
+    const frames = buildRadarFrames(shortRadar, nowcast, shortModel);
     expect(frames.filter((f) => f.kind === 'radar')).toHaveLength(3);
-    expect(frames.filter((f) => f.kind === 'model').at(-1)!.time).toBe(T('2026-08-06T15:00:00Z'));
+    expect(frames.filter((f) => f.kind === 'model').at(-1)!.time).toBe(T('2026-08-13T13:00:00Z'));
+  });
+});
+
+describe('radarProvider', () => {
+  it('serves ECCC across North American radar reach', () => {
+    expect(radarProvider(45.51, -73.57)).toBe('eccc'); // Montréal
+    expect(radarProvider(49.28, -123.12)).toBe('eccc'); // Vancouver
+    expect(radarProvider(25.76, -80.19)).toBe('eccc'); // Miami
+    expect(radarProvider(44.98, -93.27)).toBe('eccc'); // Minneapolis
+  });
+  it('reports no coverage elsewhere instead of a blank animation', () => {
+    expect(radarProvider(48.85, 2.35)).toBe('none'); // Paris
+    expect(radarProvider(35.68, 139.69)).toBe('none'); // Tokyo
+    expect(radarProvider(61.22, -149.9)).toBe('none'); // Anchorage (outside the 1 km composite)
+    expect(radarProvider(21.31, -157.86)).toBe('none'); // Honolulu
   });
 });

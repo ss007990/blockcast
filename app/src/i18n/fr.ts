@@ -127,7 +127,7 @@ export const fr: Dict = {
     modeWind: 'Vent',
     modeWaves: 'Vagues',
     hintRadar:
-      'Radar observé pour la dernière heure, son déplacement projeté pour la prochaine, puis pluie du modèle HRDPS (marquée ≈) jusqu’à 6 heures. Canada et régions frontalières; utilisez Pluie ailleurs.',
+      'Radar observé pour la dernière heure, la projection officielle d’ECCC pour la prochaine, puis pluie du modèle HRDPS (marquée ≈) jusqu’à 6 heures. Couvre le Canada et les États-Unis.',
     hintRain:
       'Animation de pluie prévue pour les prochaines heures. Lancez la lecture ou parcourez la ligne du temps en bas.',
     hintWind:
@@ -139,6 +139,7 @@ export const fr: Dict = {
     pause: 'Pause',
     hybridLoading: 'Chargement du radar…',
     hybridErr: 'Le radar est indisponible pour le moment. Essayez la vue Pluie.',
+    noCoverage: 'Le radar n’est pas encore offert pour cette région. Utilisez la vue Pluie.',
     frames: 'Chargement des images… {done}/{total}',
   },
 
@@ -354,7 +355,7 @@ export const fr: Dict = {
     clock: 'Horloge',
     about: 'À propos',
     aboutBody:
-      'BlockCast note chaque bloc de votre semaine pour votre sport : vert = allez-y. Données en direct d’Open-Meteo; radar et webcams par Windy.com; cartes par Leaflet et les contributeurs OpenStreetMap. Réglages et séances restent sur votre appareil.',
+      'BlockCast note chaque bloc de votre semaine pour votre sport : vert = allez-y. Données en direct d’Open-Meteo; radar par ECCC SMC; webcams par Windy.com; cartes par MapLibre, Leaflet, OpenFreeMap et les contributeurs OpenStreetMap. Réglages et séances restent sur votre appareil.',
     version: 'Version',
     privacy: 'Politique de confidentialité',
   },

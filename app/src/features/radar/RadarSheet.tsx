@@ -1,8 +1,9 @@
-// Radar & next-hours precipitation. The default tab is the hybrid future
-// radar (ECCC observed past hour + HRDPS model next 6 h, auto-playing,
-// MétéoMédia-style); the other tabs are Windy.com embeds with their own
-// timeline. Windy's embed cannot auto-play or blend radar with forecast,
-// which is why the default view is built in-app from GeoMet.
+// Radar & next-hours precipitation. The default tab is the future radar
+// (ECCC observed past hour + ECCC extrapolation nowcast + HRDPS model out
+// to 6 h, auto-playing, MétéoMédia-style); the other tabs are Windy.com
+// embeds with their own timeline. Windy's embed cannot auto-play or blend
+// radar with forecast, which is why the default view is built in-app from
+// GeoMet.
 
 import { useState } from 'react';
 import { useT } from '../../hooks';
@@ -78,7 +79,13 @@ function RadarContent() {
       )}
       <div className={s.credit}>
         {mode === 'radar' ? (
-          <a href="https://eccc-msc.github.io/open-data/">ECCC GeoMet</a>
+          <>
+            <a href="https://eccc-msc.github.io/open-data/">ECCC GeoMet</a>
+            {' · '}
+            <a href="https://openfreemap.org/">OpenFreeMap</a>
+            {' · © '}
+            <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>
+          </>
         ) : (
           <a href="https://www.windy.com/">Windy.com</a>
         )}

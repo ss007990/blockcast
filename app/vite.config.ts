@@ -48,5 +48,9 @@ export default defineConfig({
     }),
   ],
   server: { port: Number(process.env.PORT) || 5173 },
+  // maplibre-gl spawns its worker from a module the dep optimizer does not
+  // copy (maplibre-gl-worker.mjs), leaving the map without vector tiles in
+  // dev; excluding it makes dev serve the package as-is, like the build.
+  optimizeDeps: { exclude: ['maplibre-gl'] },
   build: { sourcemap: true },
 });

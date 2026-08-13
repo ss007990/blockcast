@@ -126,7 +126,7 @@ export const en = {
     modeWind: 'Wind',
     modeWaves: 'Waves',
     hintRadar:
-      'Observed radar for the past hour, its projected motion for the next one, then HRDPS model rain (marked ≈) out to 6 hours. Canada and border areas; use Rain elsewhere.',
+      'Observed radar for the past hour, the official ECCC projection for the next, then HRDPS model rain (marked ≈) out to 6 hours. Covers Canada and the United States.',
     hintRain:
       'Model rain animation for the hours ahead. Press play or scrub the timeline at the bottom.',
     hintWind:
@@ -138,6 +138,7 @@ export const en = {
     pause: 'Pause',
     hybridLoading: 'Loading radar…',
     hybridErr: 'Radar is unavailable right now. Try the Rain view.',
+    noCoverage: 'Radar is not available for this area yet. Use the Rain view instead.',
     frames: 'Loading frames… {done}/{total}',
   },
 
@@ -352,7 +353,7 @@ export const en = {
     clock: 'Clock',
     about: 'About',
     aboutBody:
-      'BlockCast scores every block of your week for your sport: green means go. Live data from Open-Meteo; radar and webcams by Windy.com; maps by Leaflet & OpenStreetMap contributors. Settings and plans stay on your device.',
+      'BlockCast scores every block of your week for your sport: green means go. Live data from Open-Meteo; radar by ECCC MSC; webcams by Windy.com; maps by MapLibre, Leaflet, OpenFreeMap & OpenStreetMap contributors. Settings and plans stay on your device.',
     version: 'Version',
     privacy: 'Privacy policy',
   },
