@@ -3,6 +3,7 @@
 // negligible — reshapeForecast must map those to marine: null / {tide}.
 
 import { describe, expect, it } from 'vitest';
+import { ACTIVITIES, isMarineActivity, newCustomActivity } from '../src/core/activities';
 import { reshapeForecast, type MarineResponse, type OpenMeteoResponse } from '../src/core/forecast';
 
 const T = ['2026-07-20T00:00', '2026-07-20T01:00', '2026-07-20T02:00'];
@@ -74,5 +75,20 @@ describe('reshapeForecast marine gate', () => {
     expect(day?.[0]?.swell).toBeUndefined();
     expect(day?.[0]?.tide).toBe(0);
     expect(day?.[2]?.tide).toBe(1);
+  });
+});
+
+describe('isMarineActivity', () => {
+  it('follows marine weights, not the display category — beach is leisure yet marine', () => {
+    expect(isMarineActivity(ACTIVITIES.beach)).toBe(true);
+    expect(isMarineActivity(ACTIVITIES.fishing)).toBe(true);
+    expect(isMarineActivity(ACTIVITIES.tennis)).toBe(false);
+    expect(isMarineActivity(ACTIVITIES.picnic)).toBe(false);
+  });
+  it('a custom activity filed under water qualifies even with zero weights', () => {
+    const surf = newCustomActivity({ name: 'Surf', emoji: '🏄', cat: 'water', season: 'warm' });
+    expect(isMarineActivity(surf)).toBe(true);
+    const bocce = newCustomActivity({ name: 'Bocce', emoji: '🎱', cat: 'leisure', season: 'warm' });
+    expect(isMarineActivity(bocce)).toBe(false);
   });
 });

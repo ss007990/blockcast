@@ -50,10 +50,12 @@ export function ActivityPicker() {
   // preset categories are localized; user-created ones display as typed
   const catLabel = (cat: string) => (t.cats as Record<string, string | undefined>)[cat] ?? cat;
 
-  // alphabetical by the label the user actually sees, so FR and EN each sort naturally
-  const groups = groupActivities(winter, customs)
-    .filter((g) => g.inSeason.length + g.offSeason.length > 0)
-    .sort((a, b) => catLabel(a.cat).localeCompare(catLabel(b.cat), locale));
+  // seasonal order straight from groupActivities: in-season categories first,
+  // ranked by relevance (snow leads in winter, trail in summer) — never
+  // alphabetized, so the menu reads the same way a sports watch ranks modes
+  const groups = groupActivities(winter, customs).filter(
+    (g) => g.inSeason.length + g.offSeason.length > 0,
+  );
 
   const pick = (id: string) => {
     setActivity(id);

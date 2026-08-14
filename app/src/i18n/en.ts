@@ -381,10 +381,10 @@ export const en = {
   },
 
   cats: {
-    powersports: 'Powersports',
-    trail: 'Trail',
-    water: 'Water',
-    court: 'Court',
+    powersports: 'Motorsports',
+    trail: 'Trail & Road',
+    water: 'On the Water',
+    court: 'Court & Course',
     snow: 'Snow',
     leisure: 'Leisure',
   },

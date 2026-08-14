@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   FACTOR_KEYS,
+  isMarineActivity,
   SWELL_HI_DEFAULT,
   WIND_HI_DEFAULT,
   type FactorKey,
@@ -121,9 +122,9 @@ export function TunePanel() {
   const marine = useForecast((f) => f.data?.marine ?? null);
   const crit = critFor(st, st.activity);
   const isWinterAct = crit.act.snowBase != null;
-  // swell/tide only make sense for water sports where that ocean data exists
+  // swell/tide only make sense for marine activities where that ocean data exists
   const showMarine = (k: FactorKey) =>
-    crit.act.cat === 'water' && (k === 'tide' ? !!marine?.tide : !!marine?.swell);
+    isMarineActivity(crit.act) && (k === 'tide' ? !!marine?.tide : !!marine?.swell);
   const isCustom = st.customActivities.some((c) => c.id === st.activity);
 
   return (

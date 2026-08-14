@@ -61,10 +61,13 @@ export const inSeason = (
   customs?: readonly CustomActivity[],
 ): boolean => actOf(id, customs)?.season !== (winter ? 'warm' : 'winter');
 
-// Category order per season: winter pulls snow up front, summer pushes it last.
+// Category order per season — a deliberate ranking, never alphabetized.
+// Winter leads with snow sports; summer leads with the everyday human-powered
+// stuff (trail, court) before boats, motors and lawn chairs. Snow sinks last
+// in summer the way ski modes sink to the bottom of a sports watch in July.
 const CAT_ORDER: Record<'winter' | 'summer', readonly CategoryId[]> = {
-  winter: ['powersports', 'snow', 'trail', 'water', 'court', 'leisure'],
-  summer: ['powersports', 'water', 'court', 'trail', 'leisure', 'snow'],
+  winter: ['snow', 'trail', 'powersports', 'court', 'water', 'leisure'],
+  summer: ['trail', 'court', 'water', 'powersports', 'leisure', 'snow'],
 };
 
 export interface ActivityGroup {

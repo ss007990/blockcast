@@ -1,7 +1,7 @@
 // Severity-tinted factor chips for one scored block — shared by the
 // detail sheet and the Today view's inline block cards.
 
-import type { Criteria, FactorKey } from '../../core/activities';
+import { isMarineActivity, type Criteria, type FactorKey } from '../../core/activities';
 import type { BlockResult } from '../../core/forecast';
 import {
   formatDepth,
@@ -58,11 +58,11 @@ export function FactorChips({ b, crit, tolMult, units, t }: Props) {
       val: units === 'imperial' ? formatSpeed(b.f.gust, units) : `${gustSpan} km/h`,
       eff: effOf('wind'),
     },
-    // marine chips: water activities only, and only where the ocean data exists
-    ...(crit.act.cat === 'water' && b.f.swell != null
+    // marine chips: marine activities only, and only where the ocean data exists
+    ...(isMarineActivity(crit.act) && b.f.swell != null
       ? [{ name: `🌊 ${t.detail.swell}`, val: formatHeight(b.f.swell, units), eff: effOf('swell') }]
       : []),
-    ...(crit.act.cat === 'water' && b.f.tideNorm != null
+    ...(isMarineActivity(crit.act) && b.f.tideNorm != null
       ? [
           {
             name: `🌗 ${t.detail.tide}`,

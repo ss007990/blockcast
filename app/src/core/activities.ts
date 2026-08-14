@@ -26,8 +26,9 @@ export type PresetActivityId = (typeof ACTIVITY_IDS)[number];
 /** Any activity id: a preset id or a user-created one ("c-…"). */
 export type ActivityId = string;
 
-// Categories group the rail; CATEGORY_IDS order is the base display order.
-export const CATEGORY_IDS = ['powersports', 'trail', 'water', 'court', 'snow', 'leisure'] as const;
+// Categories group the picker menu. Display order is seasonal — see
+// CAT_ORDER in season.ts; this list is just the canonical id set.
+export const CATEGORY_IDS = ['trail', 'court', 'water', 'snow', 'powersports', 'leisure'] as const;
 export type CategoryId = (typeof CATEGORY_IDS)[number];
 
 /** 'winter'/'warm' activities go off-season half the year; 'all' never do. */
@@ -95,7 +96,7 @@ export const ACTIVITIES: Record<PresetActivityId, ActivityPreset> = {
   },
   snowmob: {
     emoji: '🛷',
-    cat: 'powersports',
+    cat: 'snow',
     season: 'winter',
     w: w(6, 5, 5, 7, 3, 10, 2),
     tMin: -25,
@@ -137,7 +138,7 @@ export const ACTIVITIES: Record<PresetActivityId, ActivityPreset> = {
   },
   beach: {
     emoji: '🏖️',
-    cat: 'water',
+    cat: 'leisure',
     season: 'warm',
     w: w(8, 6, 7, 2, 7, 0, 0, 6, 5),
     tMin: 18,
@@ -196,6 +197,12 @@ export const actOf = (
 
 export const isWinterActivity = (id: ActivityId, customs?: readonly CustomActivity[]): boolean =>
   actOf(id, customs)?.snowBase != null;
+
+/** Swell/tide UI applies where the preset carries marine weights — plus any
+ * user-created activity filed under the water category, whose weights start
+ * at zero but can be tuned up. */
+export const isMarineActivity = (act: ActivityPreset): boolean =>
+  act.cat === 'water' || act.w.swell > 0 || act.w.tide > 0;
 
 /** Everything the scoring engine needs to judge one activity. */
 export interface Criteria {

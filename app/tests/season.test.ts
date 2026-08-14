@@ -42,22 +42,24 @@ describe('seasonSignals', () => {
 });
 
 describe('groupActivities', () => {
-  it('winter: powersports leads with the snowmobile in season, moto off-season', () => {
+  it('winter: snow leads with skiing and the snowmobile both in season', () => {
     const groups = groupActivities(true);
-    expect(groups[0]!.cat).toBe('powersports');
-    expect(groups[0]!.inSeason).toContain('snowmob');
-    expect(groups[0]!.inSeason).toContain('utv');
-    expect(groups[0]!.offSeason).toContain('motorcycle');
-    expect(groups[1]!.cat).toBe('snow');
+    expect(groups[0]!.cat).toBe('snow');
+    expect(groups[0]!.inSeason).toEqual(['skiing', 'snowmob']);
+    expect(groups[1]!.cat).toBe('trail');
+    const power = groups.find((g) => g.cat === 'powersports')!;
+    expect(power.inSeason).toContain('utv');
+    expect(power.offSeason).toContain('motorcycle');
   });
-  it('summer: snow and skiing are off-season, moto and UTV ride', () => {
+  it('summer: snow sports are off-season together, moto and UTV ride', () => {
     const groups = groupActivities(false);
+    expect(groups[0]!.cat).toBe('trail');
     const power = groups.find((g) => g.cat === 'powersports')!;
     expect(power.inSeason).toEqual(['motorcycle', 'utv']);
-    expect(power.offSeason).toEqual(['snowmob']);
+    expect(power.offSeason).toEqual([]);
     const snow = groups.find((g) => g.cat === 'snow')!;
     expect(snow.inSeason).toHaveLength(0);
-    expect(snow.offSeason).toEqual(['skiing']);
+    expect(snow.offSeason).toEqual(['skiing', 'snowmob']);
   });
   it('summer: groups with nothing in season sink to the end', () => {
     const groups = groupActivities(false);
