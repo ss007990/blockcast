@@ -128,6 +128,8 @@ export const fr: Dict = {
     modeWaves: 'Vagues',
     hintRadar:
       'Radar observé pour la dernière heure, la projection officielle d’ECCC pour la prochaine, puis pluie du modèle HRDPS (marquée ≈) jusqu’à 6 heures. Couvre le Canada et les États-Unis.',
+    hintRadarGlobal:
+      'Précipitations pour la dernière heure et les 4 prochaines, une prévision continue par Rainbow AI. Lancez la lecture ou parcourez la ligne du temps en bas.',
     hintRain:
       'Animation de pluie prévue pour les prochaines heures. Lancez la lecture ou parcourez la ligne du temps en bas.',
     hintWind:

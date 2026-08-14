@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildRadarFrames,
+  buildRainbowFrames,
   parseWmsTimeDim,
   timeDimFromCapabilities,
 } from '../src/core/radarFrames';
@@ -99,6 +100,30 @@ describe('buildRadarFrames', () => {
   });
 });
 
+describe('buildRainbowFrames', () => {
+  const snap = T('2026-08-14T16:40:00Z');
+
+  it('lays out 10-min analysis snapshots then the nowcast to +4 h', () => {
+    const frames = buildRainbowFrames(snap);
+    const obs = frames.filter((f) => f.kind === 'radar');
+    const fut = frames.filter((f) => f.kind === 'nowcast');
+    expect(obs).toHaveLength(7); // -60 … 0 inclusive
+    expect(obs[0]!.time).toBe(T('2026-08-14T15:40:00Z'));
+    expect(obs.at(-1)!.time).toBe(snap);
+    expect(fut).toHaveLength(24); // +10 … +240
+    expect(fut[0]!.time).toBe(T('2026-08-14T16:50:00Z'));
+    expect(fut.at(-1)!.time).toBe(T('2026-08-14T20:40:00Z'));
+    const times = frames.map((f) => f.time);
+    expect([...new Set(times)].sort((a, b) => a - b)).toEqual(times);
+  });
+
+  it('respects custom windows', () => {
+    const frames = buildRainbowFrames(snap, { pastMin: 30, aheadMin: 60 });
+    expect(frames.filter((f) => f.kind === 'radar')).toHaveLength(4);
+    expect(frames.filter((f) => f.kind === 'nowcast')).toHaveLength(6);
+  });
+});
+
 describe('radarProvider', () => {
   it('serves ECCC across North American radar reach', () => {
     expect(radarProvider(45.51, -73.57)).toBe('eccc'); // Montréal
@@ -106,10 +131,10 @@ describe('radarProvider', () => {
     expect(radarProvider(25.76, -80.19)).toBe('eccc'); // Miami
     expect(radarProvider(44.98, -93.27)).toBe('eccc'); // Minneapolis
   });
-  it('reports no coverage elsewhere instead of a blank animation', () => {
-    expect(radarProvider(48.85, 2.35)).toBe('none'); // Paris
-    expect(radarProvider(35.68, 139.69)).toBe('none'); // Tokyo
-    expect(radarProvider(61.22, -149.9)).toBe('none'); // Anchorage (outside the 1 km composite)
-    expect(radarProvider(21.31, -157.86)).toBe('none'); // Honolulu
+  it('routes the rest of the world to the Rainbow tier', () => {
+    expect(radarProvider(48.85, 2.35)).toBe('rainbow'); // Paris
+    expect(radarProvider(35.68, 139.69)).toBe('rainbow'); // Tokyo
+    expect(radarProvider(61.22, -149.9)).toBe('rainbow'); // Anchorage (outside the 1 km composite)
+    expect(radarProvider(21.31, -157.86)).toBe('rainbow'); // Honolulu
   });
 });

@@ -5,6 +5,7 @@ import { runChecks } from './check';
 import { feedKey, feedToIcs, isFeedToken, parseFeedBody } from './feed';
 import type { Env, StoredFeed } from './types';
 import { endpointKey, parseSubscribeBody, subKey } from './validate';
+import { handleRain } from './rain';
 import { handleRimg } from './rimg';
 import { handleWebcams } from './webcams';
 
@@ -84,6 +85,12 @@ export default {
     if (url.pathname.startsWith('/api/rimg')) {
       if (req.method !== 'GET') return json(405, { error: 'method not allowed' }, cors);
       return handleRimg(url, env.XWEATHER_ID, env.XWEATHER_SECRET, cors);
+    }
+
+    // /api/rain/... — Rainbow AI nowcast tiles, key held server-side
+    if (url.pathname.startsWith('/api/rain/')) {
+      if (req.method !== 'GET') return json(405, { error: 'method not allowed' }, cors);
+      return handleRain(url, env.RAINBOW_KEY, cors);
     }
 
     // /api/webcams?lat=&lon= — nearest live webcams via the Windy proxy

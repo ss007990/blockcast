@@ -77,4 +77,6 @@ export interface Env {
   /** Xweather client pair — premium radar frames are off until both set. */
   XWEATHER_ID?: string;
   XWEATHER_SECRET?: string;
+  /** Rainbow AI subscription key — international radar is off until set. */
+  RAINBOW_KEY?: string;
 }

@@ -6,6 +6,7 @@
 // GeoMet.
 
 import { useState } from 'react';
+import { radarProvider } from '../../core/radarCoverage';
 import { useT } from '../../hooks';
 import { useSettings } from '../../state/settings';
 import { useUi } from '../../state/ui';
@@ -38,6 +39,7 @@ function RadarContent() {
   const [mode, setMode] = useState<Mode>('radar');
   const { lat, lon } = st.loc;
   const metric = st.units !== 'imperial';
+  const provider = radarProvider(lat, lon);
 
   const src =
     mode === 'radar'
@@ -49,7 +51,7 @@ function RadarContent() {
         OVERLAY[mode];
 
   const hint = {
-    radar: t.radar.hintRadar,
+    radar: provider === 'rainbow' ? t.radar.hintRadarGlobal : t.radar.hintRadar,
     rain: t.radar.hintRain,
     wind: t.radar.hintWind,
     waves: t.radar.hintWaves,
@@ -80,7 +82,11 @@ function RadarContent() {
       <div className={s.credit}>
         {mode === 'radar' ? (
           <>
-            <a href="https://eccc-msc.github.io/open-data/">ECCC GeoMet</a>
+            {provider === 'rainbow' ? (
+              <a href="https://rainbow.ai/">Rainbow AI</a>
+            ) : (
+              <a href="https://eccc-msc.github.io/open-data/">ECCC GeoMet</a>
+            )}
             {' · '}
             <a href="https://openfreemap.org/">OpenFreeMap</a>
             {' · © '}

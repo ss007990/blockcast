@@ -127,6 +127,8 @@ export const en = {
     modeWaves: 'Waves',
     hintRadar:
       'Observed radar for the past hour, the official ECCC projection for the next, then HRDPS model rain (marked ≈) out to 6 hours. Covers Canada and the United States.',
+    hintRadarGlobal:
+      'Precipitation for the past hour and the next 4, one continuous nowcast by Rainbow AI. Press play or scrub the timeline at the bottom.',
     hintRain:
       'Model rain animation for the hours ahead. Press play or scrub the timeline at the bottom.',
     hintWind:

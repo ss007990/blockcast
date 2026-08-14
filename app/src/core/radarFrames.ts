@@ -60,6 +60,25 @@ const firstAfter = (dim: WmsTimeDim, afterMs: number): number =>
  * forecast source may be null (layer down or absent): the plan simply
  * continues with whatever remains.
  */
+/**
+ * Rainbow AI timeline: 10-minute analysis snapshots for the trailing
+ * `pastMin` minutes, then its ML nowcast every 10 minutes out to `aheadMin`.
+ * The snapshot itself is "now"; older snapshots serve the past, forecast
+ * offsets against the latest snapshot serve the future.
+ */
+export function buildRainbowFrames(
+  snapshotMs: number,
+  { pastMin = 60, aheadMin = 240 }: { pastMin?: number; aheadMin?: number } = {},
+): RadarFrame[] {
+  const step = 600_000;
+  const frames: RadarFrame[] = [];
+  const from = snapshotMs - Math.floor((pastMin * 60_000) / step) * step;
+  for (let t = from; t <= snapshotMs; t += step) frames.push({ time: t, kind: 'radar' });
+  const to = snapshotMs + Math.floor((aheadMin * 60_000) / step) * step;
+  for (let t = snapshotMs + step; t <= to; t += step) frames.push({ time: t, kind: 'nowcast' });
+  return frames;
+}
+
 export function buildRadarFrames(
   radar: WmsTimeDim,
   nowcast: WmsTimeDim | null,

@@ -10,13 +10,15 @@ import { useEffect, useRef, useState } from 'react';
 import type { Map as MlMap } from 'maplibre-gl';
 import {
   buildRadarFrames,
+  buildRainbowFrames,
   timeDimFromCapabilities,
   type RadarFrame,
 } from '../../core/radarFrames';
-import { radarProvider } from '../../core/radarCoverage';
+import { radarProvider, type RadarProvider } from '../../core/radarCoverage';
 import { useT } from '../../hooks';
 import { fill } from '../../i18n';
 import { useSettings } from '../../state/settings';
+import { stitchRainbowFrame } from './rainbowTiles';
 import s from './radar.module.css';
 
 const GEOMET = 'https://geo.weather.gc.ca/geomet';
@@ -28,6 +30,8 @@ const NOWCAST_LAYER = 'Radar_1km_RainPrecipRate-Extrapolation';
 const MODEL_LAYER = 'HRDPS.CONTINENTAL_RT';
 const STYLE_LIGHT = 'https://tiles.openfreemap.org/styles/positron';
 const STYLE_DARK = 'https://tiles.openfreemap.org/styles/dark';
+const API = import.meta.env.VITE_PUSH_API as string | undefined;
+const RAINBOW_LAYER = 'precip';
 const FRAME_MS = 550;
 const END_HOLD_MS = 1600;
 const CROSSFADE_MS = 300;
@@ -42,12 +46,16 @@ const capsUrl = (layer: string) =>
 const isoOf = (ms: number) => new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
 
 interface View {
-  /** WMS bbox in EPSG:3857 metres */
-  bbox: string;
+  /** EPSG:3857 bounds in metres */
+  xmin: number;
+  ymin: number;
+  xmax: number;
+  ymax: number;
   /** image corners for the map overlay, [w,n] [e,n] [e,s] [w,s] */
   coords: [[number, number], [number, number], [number, number], [number, number]];
   w: number;
   h: number;
+  zoom: number;
   /** CSS px → image px factor, for pixel-space effects like the model blur */
   scale: number;
 }
@@ -67,7 +75,7 @@ const geometUrl = (layer: string, timeMs: number, view: View): string =>
     format: 'image/png',
     transparent: 'true',
     crs: 'EPSG:3857',
-    bbox: view.bbox,
+    bbox: `${view.xmin},${view.ymin},${view.xmax},${view.ymax}`,
     width: String(view.w),
     height: String(view.h),
     time: isoOf(timeMs),
@@ -94,7 +102,10 @@ function viewOf(map: MlMap): View {
   const south = b.getSouth();
   const north = b.getNorth();
   return {
-    bbox: `${mercX(west)},${mercY(south)},${mercX(east)},${mercY(north)}`,
+    xmin: mercX(west),
+    ymin: mercY(south),
+    xmax: mercX(east),
+    ymax: mercY(north),
     coords: [
       [west, north],
       [east, north],
@@ -103,6 +114,7 @@ function viewOf(map: MlMap): View {
     ],
     w: Math.round(cssW * scale),
     h: Math.round(cssH * scale),
+    zoom: map.getZoom(),
     scale,
   };
 }
@@ -136,10 +148,16 @@ const loadFrame = (url: string, blurPx: number) =>
 export function FutureRadar() {
   const t = useT();
   const loc = useSettings((st) => st.loc);
-  const covered = radarProvider(loc.lat, loc.lon) === 'eccc';
+  const provider: RadarProvider = radarProvider(loc.lat, loc.lon);
 
-  const [plan, setPlan] = useState<{ frames: RadarFrame[]; radarEnd: number } | null>(null);
+  const [plan, setPlan] = useState<{
+    provider: RadarProvider;
+    frames: RadarFrame[];
+    radarEnd: number;
+  } | null>(null);
   const [err, setErr] = useState(false);
+  // the Rainbow tier needs the worker; without it there is nothing to show
+  const [unavailable, setUnavailable] = useState(false);
   const [idx, setIdx] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
@@ -154,12 +172,34 @@ export function FutureRadar() {
     idxRef.current = idx;
   }, [idx]);
 
-  // the frame plan comes from what the three layers advertise, never the clock
+  // the frame plan comes from what the source advertises, never the clock
   useEffect(() => {
-    if (!covered) return;
     let disposed = false;
     void (async () => {
       try {
+        if (provider === 'rainbow') {
+          if (!API) {
+            if (!disposed) setUnavailable(true);
+            return;
+          }
+          const st = (await (await fetch(`${API}/api/rain/status`)).json()) as {
+            enabled?: boolean;
+          };
+          if (!st.enabled) {
+            if (!disposed) setUnavailable(true);
+            return;
+          }
+          const snap = (await (
+            await fetch(`${API}/api/rain/snapshot/${RAINBOW_LAYER}`)
+          ).json()) as { snapshot?: number };
+          if (!snap.snapshot) throw new Error('no snapshot');
+          const frames = buildRainbowFrames(snap.snapshot * 1000);
+          if (!disposed) {
+            setPlan({ provider, frames, radarEnd: snap.snapshot * 1000 });
+            setIdx(frames.filter((f) => f.kind === 'radar').length - 1);
+          }
+          return;
+        }
         const dim = (layer: string) =>
           fetch(capsUrl(layer))
             .then((r) => r.text())
@@ -174,7 +214,7 @@ export function FutureRadar() {
         const frames = buildRadarFrames(radar, nowcast, model);
         if (frames.length < 2) throw new Error('empty plan');
         if (!disposed) {
-          setPlan({ frames, radarEnd: radar.end });
+          setPlan({ provider, frames, radarEnd: radar.end });
           setIdx(frames.filter((f) => f.kind === 'radar').length - 1);
         }
       } catch {
@@ -184,23 +224,34 @@ export function FutureRadar() {
     return () => {
       disposed = true;
     };
-  }, [covered]);
+  }, [provider]);
 
   // build every frame image for the current view; swap in only when complete
-  const rebuildOverlays = async (map: MlMap, frames: RadarFrame[]) => {
+  const rebuildOverlays = async (
+    map: MlMap,
+    p: { provider: RadarProvider; frames: RadarFrame[]; radarEnd: number },
+  ) => {
     const token = ++loadToken.current;
     const view = viewOf(map);
+    const frames = p.frames;
+    const buildOne = (f: RadarFrame): Promise<string | null> => {
+      if (p.provider === 'rainbow') {
+        // past = older snapshots at forecast 0; future = offsets on the latest
+        const future = f.time > p.radarEnd;
+        const snap = Math.round((future ? p.radarEnd : f.time) / 1000);
+        const fsec = future ? Math.round((f.time - p.radarEnd) / 1000) : 0;
+        return stitchRainbowFrame(API!, RAINBOW_LAYER, snap, fsec, view);
+      }
+      return loadFrame(frameUrl(f, view), f.kind === 'model' ? MODEL_BLUR_PX * view.scale : 0);
+    };
     let done = 0;
     setProgress({ done: 0, total: frames.length });
     const urls = await Promise.all(
       frames.map((f) =>
-        loadFrame(frameUrl(f, view), f.kind === 'model' ? MODEL_BLUR_PX * view.scale : 0).then(
-          (u) => {
-            if (token === loadToken.current)
-              setProgress({ done: ++done, total: frames.length });
-            return u;
-          },
-        ),
+        buildOne(f).then((u) => {
+          if (token === loadToken.current) setProgress({ done: ++done, total: frames.length });
+          return u;
+        }),
       ),
     );
     if (token !== loadToken.current || !mapRef.current) return;
@@ -241,7 +292,7 @@ export function FutureRadar() {
 
   // map init, then frames for the initial view
   useEffect(() => {
-    if (!plan || !covered) return;
+    if (!plan) return;
     let disposed = false;
     void (async () => {
       try {
@@ -272,7 +323,7 @@ export function FutureRadar() {
         let debounce: ReturnType<typeof setTimeout>;
         map.on('moveend', () => {
           clearTimeout(debounce);
-          debounce = setTimeout(() => void rebuildOverlays(map, plan.frames), 250);
+          debounce = setTimeout(() => void rebuildOverlays(map, plan), 250);
         });
         // 'load' and isStyleLoaded() both wait for painted tiles, which never
         // come in a hidden tab (no requestAnimationFrame there). 'style.load'
@@ -280,7 +331,7 @@ export function FutureRadar() {
         // needs, so frames start loading even when the sheet opens in the
         // background. Attached synchronously after the constructor: the style
         // fetch cannot have finished yet, so the event cannot be missed.
-        map.once('style.load', () => void rebuildOverlays(map, plan.frames));
+        map.once('style.load', () => void rebuildOverlays(map, plan));
       } catch {
         if (!disposed) setErr(true);
       }
@@ -293,7 +344,7 @@ export function FutureRadar() {
       frameIdsRef.current = [];
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plan, covered]);
+  }, [plan]);
 
   // light up the active frame (all images are already decoded)
   useEffect(() => {
@@ -314,7 +365,7 @@ export function FutureRadar() {
     return () => clearTimeout(timer);
   }, [playing, idx, plan, progress]);
 
-  if (!covered) return <div className={s.hybridErr}>{t.radar.noCoverage}</div>;
+  if (unavailable) return <div className={s.hybridErr}>{t.radar.noCoverage}</div>;
   if (err) return <div className={s.hybridErr}>{t.radar.hybridErr}</div>;
   if (!plan) return <div className={s.hybridErr}>{t.radar.hybridLoading}</div>;
 
