@@ -15,6 +15,12 @@ import {
   type RadarFrame,
 } from '../../core/radarFrames';
 import { radarProvider, type RadarProvider } from '../../core/radarCoverage';
+// MapLibre resolves its worker as a file next to its own module, which only
+// exists in node_modules: no bundler emits it, so production maps render
+// nothing (dev worked because the dep-optimizer exclusion serves the real
+// file). ?worker&url makes Vite bundle the worker self-contained and hand
+// back its emitted URL for setWorkerUrl below.
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { useT } from '../../hooks';
 import { fill } from '../../i18n';
 import { useSettings } from '../../state/settings';
@@ -298,6 +304,7 @@ export function FutureRadar() {
       try {
         await import('maplibre-gl/dist/maplibre-gl.css');
         const ml = await import('maplibre-gl');
+        ml.setWorkerUrl(maplibreWorkerUrl);
         if (disposed || !mapDiv.current || mapRef.current) return;
         const dark = document.documentElement.dataset.theme === 'dark';
         const map = new ml.Map({
