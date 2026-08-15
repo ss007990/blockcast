@@ -3,8 +3,10 @@ import type { Map as LeafletMap, Marker, TileLayer } from 'leaflet';
 import { distKm, parseLocQuery, rankLocResults, type GeoResult } from '../../core/geo';
 import { useIsMobile, useT } from '../../hooks';
 import { reverseGeocode, searchPlaces } from '../../services/geocoding';
+import { useGeo } from '../../state/geo';
 import { useSettings } from '../../state/settings';
 import { useUi } from '../../state/ui';
+import { Icon } from '../../ui/Icon';
 import { Button, uiCss } from '../../ui/primitives';
 import { Sheet } from '../../ui/Sheet';
 import s from './location.module.css';
@@ -22,6 +24,7 @@ export function LocationSheet() {
 function LocationContent() {
   const t = useT();
   const st = useSettings();
+  const geo = useGeo();
   const setLocOpen = useUi((u) => u.setLocOpen);
   // On phones, autofocusing the search field pops the keyboard the moment the
   // sheet opens — iOS then pans the sheet to keep the input above the keyboard,
@@ -156,32 +159,48 @@ function LocationContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const useMyLocation = () => {
-    navigator.geolocation?.getCurrentPosition(
-      (pos) => {
-        st.setLoc({
-          name: t.location.myLoc,
-          lat: +pos.coords.latitude.toFixed(4),
-          lon: +pos.coords.longitude.toFixed(4),
-          follow: true,
-        });
-        setLocOpen(false);
-      },
-      () => {},
-      { timeout: 6000 },
-    );
+  const goLive = async () => {
+    if (await geo.follow()) setLocOpen(false);
   };
 
-  const curSaved = st.savedPlaces.some((p) => p.lat === st.loc.lat && p.lon === st.loc.lon);
+  const following = st.loc.follow === true;
+  const curSaved =
+    !following && st.savedPlaces.some((p) => p.lat === st.loc.lat && p.lon === st.loc.lon);
 
   return (
     <div>
       <div className={s.title}>{t.location.set}</div>
 
+      {geo.supported && (
+        <div className={s.myLoc}>
+          <button
+            className={following ? `${s.myLocBtn} ${s.myLocOn}` : s.myLocBtn}
+            aria-pressed={following}
+            disabled={geo.status === 'locating'}
+            onClick={() => void goLive()}
+          >
+            <Icon name="locate" size={16} />
+            <span>
+              {t.location.useMyLoc}
+              {following && <small>{st.loc.name}</small>}
+            </span>
+          </button>
+          {geo.status !== 'idle' && (
+            <span className={s.myLocNote} role="status">
+              {geo.status === 'locating'
+                ? t.location.locating
+                : geo.status === 'denied'
+                  ? t.location.denied
+                  : t.location.unavailable}
+            </span>
+          )}
+        </div>
+      )}
+
       <div className={s.spots}>
         <span className={s.spotsLabel}>{t.location.mySpots}</span>
         {st.savedPlaces.map((p) => {
-          const cur = p.lat === st.loc.lat && p.lon === st.loc.lon;
+          const cur = !following && p.lat === st.loc.lat && p.lon === st.loc.lon;
           return (
             <span key={`${p.lat}-${p.lon}`} className={cur ? `${s.spot} ${s.spotOn}` : s.spot}>
               <button
@@ -244,14 +263,6 @@ function LocationContent() {
               );
             })
           )}
-        </div>
-      )}
-
-      {'geolocation' in navigator && (
-        <div className={s.myLoc}>
-          <Button variant="ghost" onClick={useMyLocation}>
-            📍 {t.location.useMyLoc}
-          </Button>
         </div>
       )}
 

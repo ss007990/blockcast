@@ -60,6 +60,17 @@
   color: var(--bg);
 }
 
+/* live: the chip is tracking the device, not holding a pinned spot */
+.locChipLive {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.locChipLive:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+
 .locChevron {
   font-size: 9px;
   opacity: 0.7;
@@ -77,6 +88,7 @@
   right: 0;
   z-index: 80;
   min-width: 190px;
+  max-width: min(272px, 78vw);
   background: var(--surface);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
@@ -110,6 +122,10 @@
   font-weight: 700;
 }
 
+.locItem:disabled {
+  opacity: 0.6;
+}
+
 .locItemName {
   flex: 1;
   min-width: 0;
@@ -118,9 +134,30 @@
   white-space: nowrap;
 }
 
+/* the resolved place name, or why locating failed — wraps, so a long
+   permission hint doesn't stretch the menu into the page */
+.locItemSub {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--ink-3);
+  white-space: normal;
+}
+
+.locItemOn .locItemSub {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.locSep {
+  height: 1px;
+  background: var(--line-strong);
+  margin: 5px 4px;
+  opacity: 0.5;
+}
+
 .locItemChange {
-  border-top: 1px dashed var(--line-strong);
-  margin-top: 4px;
   color: var(--accent);
   font-weight: 640;
 }
@@ -149,10 +186,17 @@
   color: var(--red);
 }
 
+/* the row is text, not icon + label, so it wants a word-space not the icon gap */
 .locItemSave {
+  gap: 5px;
   color: var(--accent);
   font-weight: 640;
   white-space: nowrap;
+}
+
+/* the name trails the label here rather than filling the row */
+.locItemSave .locItemName {
+  flex: 0 1 auto;
 }
 
 .bell {

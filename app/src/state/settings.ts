@@ -54,6 +54,9 @@ export interface SettingsState {
   loc: Place;
   /** True once geolocation/v1 import decided the starting location. */
   locChosen: boolean;
+  /** The last place pinned by hand. Offered in the switcher so device
+   * location and the spot you were looking at stay one tap apart. */
+  lastPinned: Place | null;
   /** Favourite places for one-tap switching (max 3). */
   savedPlaces: Place[];
   /** Capability token for the subscribable calendar feed; null = feed off. */
@@ -106,6 +109,7 @@ const defaults = {
   theme: 'system' as ThemeChoice,
   loc: v1.loc ?? { name: 'Québec', lat: 46.8131, lon: -71.2075 },
   locChosen: v1.loc != null,
+  lastPinned: null as Place | null,
   savedPlaces: [] as Place[],
   calFeedToken: null as string | null,
 };
@@ -168,12 +172,23 @@ export const useSettings = create<SettingsState>()(
       setUnits: (units) => set({ units }),
       setClock: (clock) => set({ clock }),
       setTheme: (theme) => set({ theme }),
-      setLoc: (loc, chosen = true) => set({ loc, locChosen: chosen }),
+      setLoc: (loc, chosen = true) =>
+        set((s) => ({
+          loc,
+          locChosen: chosen,
+          lastPinned: loc.follow ? s.lastPinned : loc,
+        })),
+      // saved spots are always pinned places: keeping `follow` would turn
+      // "the city I saved while travelling" back into device tracking
       toggleSavedPlace: (p) =>
         set((s) =>
           s.savedPlaces.some((x) => samePlace(x, p))
             ? { savedPlaces: s.savedPlaces.filter((x) => !samePlace(x, p)) }
-            : { savedPlaces: [...s.savedPlaces, p].slice(-MAX_SAVED_PLACES) },
+            : {
+                savedPlaces: [...s.savedPlaces, { name: p.name, lat: p.lat, lon: p.lon }].slice(
+                  -MAX_SAVED_PLACES,
+                ),
+              },
         ),
       setCalFeedToken: (calFeedToken) => set({ calFeedToken }),
     }),

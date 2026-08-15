@@ -9,6 +9,7 @@ export type IconName =
   | 'settings'
   | 'bell'
   | 'pin'
+  | 'locate'
   | 'search'
   | 'thermo'
   | 'wind'
@@ -54,6 +55,14 @@ const PATHS: Record<IconName, ReactElement> = {
     <>
       <path d="M12 21.5s-7.2-6.2-7.2-11.3a7.2 7.2 0 0 1 14.4 0c0 5.1-7.2 11.3-7.2 11.3z" />
       <circle cx="12" cy="10" r="2.6" />
+    </>
+  ),
+  // crosshair: device location, as distinct from a dropped pin
+  locate: (
+    <>
+      <circle cx="12" cy="12" r="6.4" />
+      <circle cx="12" cy="12" r="1.9" fill="currentColor" stroke="none" />
+      <path d="M12 2.2v3.1M12 18.7v3.1M2.2 12h3.1M18.7 12h3.1" />
     </>
   ),
   search: (

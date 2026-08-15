@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { TOL_MULT } from './core/activities';
 import { detectChanges, type PlannedSession } from './core/alerts';
 import { isoDate, locNow } from './core/forecast';
-import { distKm } from './core/geo';
 import { useLocale, useT, useThemeEffect } from './hooks';
 import { AlertsSheet } from './features/alerts/AlertsSheet';
 import { DetailSheet } from './features/detail/DetailSheet';
@@ -21,73 +20,53 @@ import { syncFeed } from './services/calendarFeed';
 import { useAlerts } from './state/alerts';
 import { useExtras } from './state/extras';
 import { useForecast } from './state/forecast';
+import { useGeo } from './state/geo';
 import { checkSession, usePlanner } from './state/planner';
 import { critFor, useSettings } from './state/settings';
 import { useUi } from './state/ui';
 
 export function App() {
   useThemeEffect();
-  const t = useT();
   const tab = useUi((u) => u.tab);
-  const { loc, locChosen, setLoc, lang, calFeedToken, customActivities } = useSettings();
+  const { loc, locChosen, lang, calFeedToken, customActivities } = useSettings();
   const { data, dataFor, load } = useForecast();
   const sessions = usePlanner((p) => p.sessions);
 
-  // fetch a fresh forecast (+ AQHI and ECCC alerts) whenever the location changes
+  // fetch a fresh forecast (+ AQHI and ECCC alerts) whenever the location
+  // changes. Keyed on the coordinates, not the object: a followed place gets
+  // renamed the moment the reverse geocoder answers, and that must not refetch.
+  const { lat, lon } = loc;
   useEffect(() => {
-    void load(loc);
-    void useExtras.getState().load(loc);
-  }, [load, loc]);
+    const place = useSettings.getState().loc;
+    void load(place);
+    void useExtras.getState().load(place);
+  }, [load, lat, lon]);
 
-  // first run without a saved location: try browser geolocation once
+  // first run without a saved location: ask the device where we are
   useEffect(() => {
-    if (locChosen || !navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) =>
-        setLoc({
-          name: t.location.myLoc,
-          lat: +pos.coords.latitude.toFixed(3),
-          lon: +pos.coords.longitude.toFixed(3),
-          follow: true,
-        }),
-      () => {},
-      { timeout: 4000 },
-    );
+    if (locChosen) return;
+    void useGeo.getState().follow();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // a followed location tracks the user: re-check coordinates on launch and
-  // whenever the app returns to the foreground. The pin only moves past 2 km
-  // so GPS jitter never triggers a refetch; picking a searched or saved spot
-  // clears `follow` and stops the tracking.
+  // every time the app comes back to the foreground. `focus` and `pageshow`
+  // ride along with `visibilitychange` because a WKWebView restored from the
+  // background doesn't reliably fire all three. The pin only moves past 2 km
+  // so GPS jitter never triggers a refetch; pinning a spot stops the tracking.
   useEffect(() => {
-    if (!navigator.geolocation) return;
-    let lastCheck = 0;
-    const recheck = () => {
-      if (!useSettings.getState().loc.follow) return;
-      const now = Date.now();
-      if (now - lastCheck < 5 * 60_000) return;
-      lastCheck = now;
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const cur = useSettings.getState().loc;
-          const next = {
-            lat: +pos.coords.latitude.toFixed(3),
-            lon: +pos.coords.longitude.toFixed(3),
-          };
-          if (!cur.follow || distKm(cur, next) < 2) return;
-          useSettings.getState().setLoc({ ...cur, ...next });
-        },
-        () => {},
-        { timeout: 8000, maximumAge: 60_000 },
-      );
+    const wake = () => {
+      if (document.visibilityState === 'visible') useGeo.getState().refresh();
     };
-    recheck();
-    const onVis = () => {
-      if (document.visibilityState === 'visible') recheck();
+    wake();
+    document.addEventListener('visibilitychange', wake);
+    window.addEventListener('focus', wake);
+    window.addEventListener('pageshow', wake);
+    return () => {
+      document.removeEventListener('visibilitychange', wake);
+      window.removeEventListener('focus', wake);
+      window.removeEventListener('pageshow', wake);
     };
-    document.addEventListener('visibilitychange', onVis);
-    return () => document.removeEventListener('visibilitychange', onVis);
   }, []);
 
   // every fresh forecast: prune past sessions, baseline new ones, detect changes
