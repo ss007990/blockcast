@@ -1,118 +1,191 @@
-/* Today — location + best-window lede, the painted-sky timeline with
-   today's blocks, and the numbered editorial suggestion index. */
+/* Today — the sky panel (this hour painted vertically, the day's hours as a
+   ribbon, today's blocks resting on that same axis), then the editorial cards
+   underneath. */
 
-.lede {
-  margin: 2px 0 14px;
-}
-
-.ledeSub {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-}
-
-.ledeLoc {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
-  font-weight: 650;
-  color: var(--ink-2);
-  padding: 4px 12px 4px 9px;
-  border-radius: 999px;
-  border: 1px solid var(--line-strong);
-  transition:
-    border-color 0.15s ease,
-    color 0.15s ease,
-    background 0.15s ease;
-}
-
-.ledeLoc:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-soft);
-}
-
-.ledeMeta {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--ink-2);
-  letter-spacing: 0.02em;
-}
-
-/* ---- the sky: today painted hour-by-hour, blocks resting on it ---- */
+/* ---- the sky panel ---- */
 
 .sky {
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-l);
-  padding: 18px 20px 14px;
-  color: #fdfcf8;
+  padding: 16px 18px 18px;
+  color: #f7f9fd;
   box-shadow: var(--shadow-2);
   isolation: isolate;
 }
 
-/* vertical light: brighter zenith above, ground shadow below */
-.sky::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 38%, rgba(5, 7, 14, 0.3));
-  pointer-events: none;
-}
-
+/* the panel gradient is already vertical, so the only overlay left is grain */
 .sky::after {
   content: '';
   position: absolute;
   inset: 0;
   background: var(--grain);
-  opacity: 0.13;
+  opacity: 0.1;
   mix-blend-mode: overlay;
   pointer-events: none;
 }
 
-.skyMeta {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
+.sky > * {
   position: relative;
   z-index: 1;
+}
+
+/* where and when, folded into the panel so nothing floats above it */
+.skyHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.skyLoc {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(247, 249, 253, 0.86);
+  padding: 3px 11px 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.skyLoc:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.skyDate {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(247, 249, 253, 0.68);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.skyMeta {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  margin-top: 14px;
+}
+
+.skyTempWrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .skyTemp {
   font-family: var(--font-display);
-  font-size: clamp(38px, 7vw, 50px);
+  font-size: clamp(42px, 8vw, 54px);
   font-weight: 830;
   font-variation-settings: 'wdth' 80;
-  font-style: italic;
-  letter-spacing: -0.01em;
-  line-height: 1;
+  letter-spacing: -0.02em;
+  line-height: 0.86;
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 2px 18px rgba(8, 12, 30, 0.35);
+}
+
+.skyFeels {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: rgba(247, 249, 253, 0.74);
+  margin-top: 7px;
 }
 
 .skyIcon {
-  font-size: 26px;
+  font-size: 27px;
   line-height: 1;
-  filter: drop-shadow(0 2px 8px rgba(8, 12, 30, 0.35));
+  margin-top: 1px;
+  filter: drop-shadow(0 2px 8px rgba(8, 12, 30, 0.4));
 }
 
 .skyHiLo {
   margin-left: auto;
+  text-align: right;
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0.92;
+  font-size: 12px;
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
+.skyHiLo i {
+  font-style: normal;
+  letter-spacing: 0.06em;
+  color: rgba(247, 249, 253, 0.64);
+}
+
+/* ---- the day: ribbon, axis and blocks all share one left-to-right scale ---- */
+
+.day {
+  margin-top: 20px;
+}
+
+/* the hour-by-hour painting, now labelled by the axis under it */
+.ribbon {
+  height: 6px;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
+.axis {
+  position: relative;
+  height: 13px;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  color: rgba(247, 249, 253, 0.74);
+}
+
+.axisLo {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.axisHi {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.axisNow {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.axisNow::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  margin-left: -3px;
+  border: 3px solid transparent;
+  border-bottom-color: currentcolor;
+}
+
+/* one bar divided into blocks, rather than four chips floating on the sky */
 .blocks {
   display: flex;
-  gap: 7px;
-  margin-top: 16px;
-  position: relative;
-  z-index: 1;
+  margin-top: 14px;
+  border-radius: 11px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
 }
 
 .block {
@@ -122,57 +195,47 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 11px 4px 9px;
-  border-radius: 11px;
-  background: rgba(9, 12, 22, 0.34);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    transform 0.15s ease;
+  gap: 4px;
+  padding: 11px 3px 10px;
+  background: rgba(8, 11, 20, 0.3);
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+  transition: background 0.15s ease;
+}
+
+.block:first-child {
+  border-left: none;
+}
+
+.block[data-band='g'] {
+  background: rgba(66, 170, 105, 0.3);
+}
+
+.block[data-band='y'] {
+  background: rgba(196, 152, 32, 0.3);
+}
+
+.block[data-band='r'] {
+  background: rgba(190, 64, 54, 0.32);
 }
 
 .block:hover:not(:disabled) {
-  background: rgba(9, 12, 22, 0.52);
-  border-color: rgba(255, 255, 255, 0.4);
-  transform: translateY(-2px);
+  background: rgba(8, 11, 20, 0.52);
 }
 
 .block[data-past] {
-  opacity: 0.35;
+  background: rgba(8, 11, 20, 0.42);
   cursor: default;
 }
 
-.block[data-now] {
-  border-color: rgba(255, 255, 255, 0.6);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
-}
-
-.block[data-now]::before {
+/* the ember accent marks the block you're in — and nothing else on the panel */
+.block[data-now]::after {
   content: '';
   position: absolute;
-  top: 7px;
-  right: 7px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #fff;
-  animation: nowPulse 2.2s ease-in-out infinite;
-}
-
-@keyframes nowPulse {
-  0%,
-  100% {
-    opacity: 1;
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.5);
-  }
-  50% {
-    opacity: 0.7;
-    box-shadow: 0 0 0 5px rgba(255, 255, 255, 0);
-  }
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: #ff6d3b;
 }
 
 /* the verdict word leads; the score rides along in the hours line */
@@ -181,7 +244,7 @@
   font-weight: 800;
   font-variation-settings: 'wdth' 86;
   font-size: 11px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   max-width: 100%;
   overflow: hidden;
@@ -189,158 +252,34 @@
 }
 
 .block[data-band='g'] .blockWord {
-  color: #a9ecb6;
+  color: #b6f0c1;
 }
 
 .block[data-band='y'] .blockWord {
-  color: #f8d78c;
+  color: #f9dc9a;
 }
 
 .block[data-band='r'] .blockWord {
-  color: #fbab9c;
+  color: #fcb6a8;
+}
+
+.block[data-past] .blockWord {
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .blockHours {
   font-family: var(--font-mono);
   font-size: 9.5px;
   letter-spacing: 0.01em;
-  opacity: 0.75;
+  opacity: 0.8;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.skyFoot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 14px;
-  padding-top: 11px;
-  border-top: 1px solid rgba(255, 255, 255, 0.24);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.03em;
-  opacity: 0.92;
-  position: relative;
-  z-index: 1;
-}
-
-.footNow {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 4px 8px;
-}
-
-/* radar & cams live here because this card is about right now: the model's
- * next hours and the ground truth of the nearest lenses */
-.skyActions {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 14px;
-  position: relative;
-  z-index: 1;
-}
-
-.skyActionBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-family: var(--font);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  padding: 8px 20px;
-  border-radius: 999px;
-  background: rgba(9, 12, 22, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.38);
-  color: inherit;
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.skyActionBtn:hover {
-  background: rgba(9, 12, 22, 0.55);
-  border-color: rgba(255, 255, 255, 0.55);
-}
-
-/* fine-print risk scale: 0–100 band bar so the numbers read as risk, not degrees */
-.scale {
-  margin-top: 12px;
-  position: relative;
-  z-index: 1;
-}
-
-.scaleBar {
-  display: flex;
-  height: 4px;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.scaleBar i[data-band='g'] {
-  width: 25%;
-  background: #a9ecb6;
-}
-
-.scaleBar i[data-band='y'] {
-  width: 30%;
-  background: #f8d78c;
-}
-
-.scaleBar i[data-band='r'] {
-  width: 45%;
-  background: #fbab9c;
-}
-
-.scaleLabels {
-  position: relative;
-  height: 13px;
-  margin-top: 5px;
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.03em;
-  opacity: 0.85;
-}
-
-.scaleLabels span {
-  position: absolute;
-  top: 0;
-  white-space: nowrap;
-}
-
-.scaleLabels span:nth-child(1) {
-  left: 0;
-}
-
-.scaleLabels span:nth-child(2) {
-  left: 25%;
-  transform: translateX(-50%);
-}
-
-.scaleLabels span:nth-child(3) {
-  left: 55%;
-  transform: translateX(-50%);
-}
-
-.scaleLabels span:nth-child(4) {
-  right: 0;
-}
-
-/* narrow screens: the 25/55 ticks crowd the endpoint labels — drop them */
-@media (max-width: 480px) {
-  .scaleLabels span:nth-child(2),
-  .scaleLabels span:nth-child(3) {
-    display: none;
-  }
+.block[data-past] .blockHours {
+  opacity: 0.5;
 }
 
 /* section title — uppercase with a starting-block accent bar */
@@ -357,10 +296,12 @@
   margin: 30px 0 14px;
 }
 
+/* sized to the cap height, not the line box, so it doesn't overhang the title */
 .sectionTitle::before {
   content: '';
+  flex: none;
   width: 5px;
-  height: 1.1em;
+  height: 0.76em;
   background: var(--accent);
   transform: skewX(-12deg);
 }
@@ -624,34 +565,13 @@
   border-radius: 0 0 var(--radius) var(--radius);
 }
 
-/* ── hero additions ─────────────────────────────────────────────────── */
-
-.skyTempWrap {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.skyFeels {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  opacity: 0.9;
-}
-
-/* the day's story in one line, frosted over the painted sky */
+/* the day's story in one line, set straight on the sky now that the panel is
+   dark enough to carry it without a scrim */
 .narrative {
-  position: relative;
-  z-index: 1;
-  margin: 14px 0 0;
-  padding: 8px 12px;
-  font-size: 13.5px;
+  margin: 18px 0 0;
+  font-size: 15px;
   line-height: 1.45;
-  border-radius: var(--radius-s);
-  background: rgba(9, 12, 22, 0.32);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  max-width: 34ch;
 }
 
 .narrative b {
@@ -934,31 +854,38 @@
 
 /* ── radar preview ──────────────────────────────────────────────────── */
 
-.radarCard {
+/* radar and the nearest lenses: the two ways to check the sky against the model.
+   Matched cards — same size, same anatomy, same tone, which comes from the same
+   sky sample as the hero panel so the three never drift apart. */
+.lookRow {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
+  gap: 10px;
   margin-top: 16px;
-  padding: 15px 18px;
-  border-radius: var(--radius);
-  color: #eef2f9;
-  background: linear-gradient(150deg, #20304a, #2c3f5e 62%, #1d2a40);
-  box-shadow: var(--shadow-2);
+}
+
+.lookCard {
   position: relative;
-  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 14px 15px 15px;
+  border-radius: var(--radius);
   text-align: left;
+  color: #eff3f9;
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+  isolation: isolate;
+  transition: filter 0.15s ease;
 }
 
-.radarCard[data-wet] {
-  background:
-    radial-gradient(140px 70px at 72% 30%, rgba(91, 155, 217, 0.5), transparent 70%),
-    radial-gradient(90px 55px at 85% 75%, rgba(110, 63, 180, 0.38), transparent 70%),
-    linear-gradient(150deg, #20304a, #2c3f5e 62%, #1d2a40);
+.lookCard:hover {
+  filter: brightness(1.14);
 }
 
-.radarCard::after {
+.lookCard::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -968,20 +895,52 @@
   pointer-events: none;
 }
 
-.radarCap {
+.lookCard > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* precip on the way: a soft cell drifts over the radar card, in the panel's
+   own blue rather than a colour from outside the palette */
+.lookCard[data-wet]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120px 62px at 74% 26%, rgba(126, 176, 226, 0.42), transparent 70%),
+    radial-gradient(80px 48px at 88% 78%, rgba(96, 132, 178, 0.34), transparent 70%);
+  pointer-events: none;
+}
+
+/* 📡 and 📹 both ship as light-grey hardware, so they carry on the dark card —
+   the darker camera glyphs (🎥, 📷) disappear into it */
+.lookIco {
+  font-size: 21px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 6px rgba(8, 12, 30, 0.4));
+}
+
+.lookGo {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 12px;
+  opacity: 0.55;
+}
+
+.lookTitle {
   font-family: var(--font-display);
   font-weight: 800;
   font-variation-settings: 'wdth' 86;
-  font-size: 14.5px;
+  font-size: 15px;
+  margin-top: 9px;
 }
 
-.radarOpen {
-  flex-shrink: 0;
-  font-size: 11.5px;
-  font-weight: 650;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 999px;
-  padding: 5px 12px;
+.lookSub {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: rgba(239, 243, 249, 0.82);
 }
 
 /* ── detail tiles ───────────────────────────────────────────────────── */

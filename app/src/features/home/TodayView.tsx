@@ -32,7 +32,7 @@ import { DailyList } from './DailyList';
 import { HourlyRail } from './HourlyRail';
 import { NowcastCard } from './NowcastCard';
 import { TilesGrid } from './TilesGrid';
-import { paintSky } from './sky';
+import { paintSky, skyCard, skyNow } from './sky';
 import s from './home.module.css';
 
 interface TodayBlock {
@@ -114,7 +114,23 @@ export function TodayView() {
   const code = data.daily.weather_code[di] ?? 0;
 
   const daySlices = data.days[todayISO] ?? [];
-  const sky = paintSky(daySlices, st.hFrom, st.hTo, sunrise, sunset);
+  const ribbon = paintSky(daySlices, st.hFrom, st.hTo, sunrise, sunset);
+
+  // the panel behind the type: this hour's sky, vertically, contrast-floored
+  const nowFrac = nowH + now.getMinutes() / 60;
+  const panel = skyNow(daySlices, nowFrac, sunrise, sunset);
+  const card = skyCard(daySlices, nowFrac, sunrise, sunset);
+
+  // where "now" falls on the ribbon's scale — the same scale the blocks use
+  const axisSpan = Math.max(1, st.hTo - st.hFrom);
+  const nowPct = ((nowFrac - st.hFrom) / axisSpan) * 100;
+  const nowOnAxis = nowPct >= 0 && nowPct <= 100;
+  // the caret is placed to the minute, so the label under it reads to the minute
+  const nowClock = fmtIsoTime(
+    `${todayISO}T${String(nowH).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+    locale,
+    st.clock,
+  );
 
   // the verdict: the best block still ahead of us
   const upcoming = blocks.filter((b) => !b.isPast);
@@ -148,40 +164,47 @@ export function TodayView() {
   const alert = [...alerts].sort((a, b) => alertRank(a.type) - alertRank(b.type))[0];
   const fr = st.lang === 'fr';
 
-  const radarCard = (
-    <motion.button
-      className={s.radarCard}
-      data-wet={nowcast != null || undefined}
-      onClick={() => setRadarOpen(true)}
+  // radar and the webcams: the two ways to check the model against the sky
+  const lookRow = (
+    <motion.div
+      className={s.lookRow}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.1 }}
     >
-      <span className={s.radarCap}>
-        📡 {nowcast ? t.home.radarWet : t.home.radarDry}
-      </span>
-      <span className={s.radarOpen}>{t.home.openRadar} ↗</span>
-    </motion.button>
+      <button
+        className={s.lookCard}
+        style={{ background: card }}
+        data-wet={nowcast != null || undefined}
+        onClick={() => setRadarOpen(true)}
+      >
+        <span className={s.lookIco} aria-hidden="true">
+          📡
+        </span>
+        <span className={s.lookGo} aria-hidden="true">
+          ↗
+        </span>
+        <b className={s.lookTitle}>{t.home.radar}</b>
+        <span className={s.lookSub}>{nowcast ? t.home.radarWet : t.home.radarDry}</span>
+      </button>
+      {webcamsAvailable() && (
+        <button className={s.lookCard} style={{ background: card }} onClick={() => setCamsOpen(true)}>
+          <span className={s.lookIco} aria-hidden="true">
+            📺
+          </span>
+          <span className={s.lookGo} aria-hidden="true">
+            ↗
+          </span>
+          <b className={s.lookTitle}>{t.home.cams}</b>
+          <span className={s.lookSub}>{t.home.camsSub}</span>
+        </button>
+      )}
+    </motion.div>
   );
 
   return (
     <div>
       <ActivityPicker />
-
-      <motion.header
-        key={st.activity}
-        className={s.lede}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
-      >
-        <div className={s.ledeSub}>
-          <button className={s.ledeLoc} onClick={() => setLocOpen(true)}>
-            <Icon name="pin" size={12} /> {st.loc.name}
-          </button>
-          <span className={s.ledeMeta}>{fmtFull(todayISO, locale)}</span>
-        </div>
-      </motion.header>
 
       {alert && (
         <motion.div
@@ -211,12 +234,19 @@ export function TodayView() {
 
       <motion.section
         className={s.sky}
-        style={{ backgroundImage: sky }}
+        style={{ background: panel }}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: 'easeOut', delay: 0.05 }}
         aria-label={t.home.todayBlocks}
       >
+        <div className={s.skyHead}>
+          <button className={s.skyLoc} onClick={() => setLocOpen(true)}>
+            <Icon name="pin" size={11} /> {st.loc.name}
+          </button>
+          <span className={s.skyDate}>{fmtFull(todayISO, locale)}</span>
+        </div>
+
         <div className={s.skyMeta}>
           <span className={s.skyTempWrap}>
             <span className={s.skyTemp}>
@@ -228,16 +258,17 @@ export function TodayView() {
           </span>
           <span className={s.skyIcon}>{wmoIcon(code)}</span>
           <span className={s.skyHiLo}>
-            {fill(t.home.hiLo, {
-              hi: formatTemp(
-                data.daily.temperature_2m_max?.[di] ?? data.daily.apparent_temperature_max[di] ?? 0,
-                st.units,
-              ),
-              lo: formatTemp(
-                data.daily.temperature_2m_min?.[di] ?? data.daily.apparent_temperature_min[di] ?? 0,
-                st.units,
-              ),
-            })}
+            <i>{t.home.hi}</i>{' '}
+            {formatTemp(
+              data.daily.temperature_2m_max?.[di] ?? data.daily.apparent_temperature_max[di] ?? 0,
+              st.units,
+            )}
+            <br />
+            <i>{t.home.lo}</i>{' '}
+            {formatTemp(
+              data.daily.temperature_2m_min?.[di] ?? data.daily.apparent_temperature_min[di] ?? 0,
+              st.units,
+            )}
           </span>
         </div>
 
@@ -245,71 +276,53 @@ export function TodayView() {
           {storyLine} <b>{bestLine}</b>
         </p>
 
-        <div className={s.blocks}>
-          {blocks.map((b, i) => (
-            <motion.button
-              key={`${st.activity}-${b.h}`}
-              className={s.block}
-              data-band={b.band}
-              data-past={b.isPast || undefined}
-              data-now={b.isNow || undefined}
-              disabled={b.isPast}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.28, delay: 0.04 * i }}
-              aria-label={`${formatHourRange(b.h, b.end, st.clock)} · ${t.common.risk} ${b.score} · ${t.risk[b.band]}`}
-              onClick={() => openBlock(todayISO, b.h)}
-            >
-              <b className={s.blockWord}>{t.risk[`${b.band}Tiny`]}</b>
-              <span className={s.blockHours}>
-                {formatHour(b.h, st.clock)}·{b.score}
+        {/* ribbon, axis and blocks all run hFrom → hTo, so the painted hours
+            line up with the block you'd tap */}
+        <motion.div
+          className={s.day}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.32, ease: 'easeOut', delay: 0.14 }}
+        >
+          <div className={s.ribbon} style={{ backgroundImage: ribbon }} aria-hidden="true" />
+
+          <div className={s.axis} aria-hidden="true">
+            {sunrise && (nowPct > 22 || !nowOnAxis) && (
+              <span className={s.axisLo}>🌅 {fmtIsoTime(sunrise, locale, st.clock)}</span>
+            )}
+            {nowOnAxis && (
+              <span className={s.axisNow} style={{ left: `${nowPct}%` }}>
+                {nowClock}
               </span>
-            </motion.button>
-          ))}
-        </div>
-
-        <div className={s.skyActions}>
-          <button className={s.skyActionBtn} onClick={() => setRadarOpen(true)}>
-            📡 {t.home.radar}
-          </button>
-          {webcamsAvailable() && (
-            <button className={s.skyActionBtn} onClick={() => setCamsOpen(true)}>
-              🎥 {t.home.cams}
-            </button>
-          )}
-        </div>
-
-        {sunrise && sunset && (
-          <div className={s.skyFoot}>
-            <span>🌅 {fmtIsoTime(sunrise, locale, st.clock)}</span>
-            <span className={s.footNow}>
-              {t.home.now} · {t.home.feels} {cur ? formatTemp(cur.temp, st.units) : '–'}
-            </span>
-            <span>🌇 {fmtIsoTime(sunset, locale, st.clock)}</span>
+            )}
+            {sunset && (nowPct < 78 || !nowOnAxis) && (
+              <span className={s.axisHi}>🌇 {fmtIsoTime(sunset, locale, st.clock)}</span>
+            )}
           </div>
-        )}
 
-        <div className={s.scale} aria-label={t.home.scaleFine}>
-          <div className={s.scaleBar} aria-hidden="true">
-            <i data-band="g" />
-            <i data-band="y" />
-            <i data-band="r" />
+          <div className={s.blocks}>
+            {blocks.map((b) => (
+              <button
+                key={`${st.activity}-${b.h}`}
+                className={s.block}
+                data-band={b.band}
+                data-past={b.isPast || undefined}
+                data-now={b.isNow || undefined}
+                disabled={b.isPast}
+                aria-label={`${formatHourRange(b.h, b.end, st.clock)} · ${t.common.risk} ${b.score} · ${t.risk[b.band]}`}
+                onClick={() => openBlock(todayISO, b.h)}
+              >
+                <b className={s.blockWord}>{t.risk[`${b.band}Tiny`]}</b>
+                <span className={s.blockHours}>
+                  {formatHour(b.h, st.clock)}·{b.score}
+                </span>
+              </button>
+            ))}
           </div>
-          <div className={s.scaleLabels} aria-hidden="true">
-            <span>{t.home.scaleGo}</span>
-            <span>25</span>
-            <span>55</span>
-            <span>{t.home.scaleStay}</span>
-          </div>
-        </div>
+        </motion.div>
       </motion.section>
 
-      {nowcast && (
-        <>
-          <NowcastCard nc={nowcast} />
-          {radarCard}
-        </>
-      )}
+      {nowcast && <NowcastCard nc={nowcast} />}
 
       {snow && (
         <motion.div
@@ -368,6 +381,8 @@ export function TodayView() {
         <div className={s.bestNone}>{t.home.bestNone}</div>
       )}
 
+      {lookRow}
+
       <HourlyRail
         data={data}
         todayISO={todayISO}
@@ -384,8 +399,6 @@ export function TodayView() {
         curTemp={cur ? (cur.air ?? cur.temp) : null}
         onDay={openBlock}
       />
-
-      {!nowcast && radarCard}
 
       <TilesGrid
         daySlices={daySlices}
