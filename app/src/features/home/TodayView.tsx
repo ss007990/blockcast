@@ -56,9 +56,14 @@ export function TodayView() {
   const nowMs = useNowMs();
   const [alertOpen, setAlertOpen] = useState(false);
 
+  // Everything is read off the Date here and nothing but primitives escapes:
+  // a mutable value living on into the render body defeats React Compiler,
+  // which then can't prove the memo deps below are stable.
   const now = locNow(data, nowMs);
   const todayISO = isoDate(now);
   const nowH = now.getHours();
+  const nowMin = now.getMinutes();
+  const nowTime = now.getTime();
 
   const crit = useMemo(() => critFor(st, st.activity), [st]);
   const tolMult = TOL_MULT[st.tolerance];
@@ -117,7 +122,7 @@ export function TodayView() {
   const ribbon = paintSky(daySlices, st.hFrom, st.hTo, sunrise, sunset);
 
   // the panel behind the type: this hour's sky, vertically, contrast-floored
-  const nowFrac = nowH + now.getMinutes() / 60;
+  const nowFrac = nowH + nowMin / 60;
   const panel = skyNow(daySlices, nowFrac, sunrise, sunset);
   const card = skyCard(daySlices, nowFrac, sunrise, sunset);
 
@@ -127,7 +132,7 @@ export function TodayView() {
   const nowOnAxis = nowPct >= 0 && nowPct <= 100;
   // the caret is placed to the minute, so the label under it reads to the minute
   const nowClock = fmtIsoTime(
-    `${todayISO}T${String(nowH).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+    `${todayISO}T${String(nowH).padStart(2, '0')}:${String(nowMin).padStart(2, '0')}`,
     locale,
     st.clock,
   );
@@ -403,7 +408,7 @@ export function TodayView() {
       <TilesGrid
         daySlices={daySlices}
         nowH={nowH}
-        now={now}
+        nowTime={nowTime}
         sunrise={sunrise}
         sunset={sunset}
         aqhi={aqhi}

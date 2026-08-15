@@ -14,13 +14,14 @@ import s from './home.module.css';
 interface Props {
   daySlices: (HourSlice | undefined)[];
   nowH: number;
-  now: Date;
+  /** Local "now" as epoch ms — a primitive, so the caller's Date stays put. */
+  nowTime: number;
   sunrise: string | undefined;
   sunset: string | undefined;
   aqhi: AirQuality | null;
 }
 
-export function TilesGrid({ daySlices, nowH, now, sunrise, sunset, aqhi }: Props) {
+export function TilesGrid({ daySlices, nowH, nowTime, sunrise, sunset, aqhi }: Props) {
   const t = useT();
   const locale = useLocale();
   const { units, clock } = useSettings();
@@ -69,8 +70,8 @@ export function TilesGrid({ daySlices, nowH, now, sunrise, sunset, aqhi }: Props
   // daylight left until sunset
   const sunsetDate = sunset ? new Date(sunset) : null;
   const daylightH =
-    sunsetDate && sunsetDate.getTime() > now.getTime()
-      ? Math.round(((sunsetDate.getTime() - now.getTime()) / 36e5) * 10) / 10
+    sunsetDate && sunsetDate.getTime() > nowTime
+      ? Math.round(((sunsetDate.getTime() - nowTime) / 36e5) * 10) / 10
       : 0;
   const sunTimes =
     sunrise && sunset
