@@ -5,6 +5,7 @@ import { runChecks } from './check';
 import { feedKey, feedToIcs, isFeedToken, parseFeedBody } from './feed';
 import type { Env, StoredFeed } from './types';
 import { endpointKey, parseSubscribeBody, subKey } from './validate';
+import { handleGeomet } from './geomet';
 import { handleRain } from './rain';
 import { handleRimg } from './rimg';
 import { handleWebcams } from './webcams';
@@ -18,6 +19,9 @@ function corsHeaders(req: Request, env: Env): Record<string, string> {
     'Access-Control-Allow-Origin': ok ? origin : allowed[0] ?? '',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'content-type',
+    // custom response headers are invisible to fetch() unless exposed, and
+    // x-bc-cache is how you tell an edge hit from an upstream fetch
+    'Access-Control-Expose-Headers': 'x-bc-cache',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
   };
@@ -85,6 +89,13 @@ export default {
     if (url.pathname.startsWith('/api/rimg')) {
       if (req.method !== 'GET') return json(405, { error: 'method not allowed' }, cors);
       return handleRimg(url, env.XWEATHER_ID, env.XWEATHER_SECRET, cors);
+    }
+
+    // /api/geomet/... — ECCC radar frames and capabilities, cached at the
+    // edge per cell rectangle so many viewers of one city cost one fetch
+    if (url.pathname.startsWith('/api/geomet/')) {
+      if (req.method !== 'GET') return json(405, { error: 'method not allowed' }, cors);
+      return handleGeomet(url, cors);
     }
 
     // /api/rain/... — Rainbow AI nowcast tiles, key held server-side

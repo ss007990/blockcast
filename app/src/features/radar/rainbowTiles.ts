@@ -1,30 +1,16 @@
-// Stitch Rainbow AI XYZ tiles (via the worker proxy) into one image for the
-// visible bbox, drop-in compatible with the single-image-per-frame pipeline
-// the radar player uses for GeoMet. Stitching client-side keeps the
-// preload-then-play behaviour; per-frame lazy tile sources would blank the
-// first playback pass.
+// Stitch Rainbow AI XYZ tiles (via the worker proxy) into one image, drop-in
+// compatible with the single-image-per-frame pipeline the radar player uses
+// for GeoMet. Stitching client-side keeps the preload-then-play behaviour;
+// per-frame lazy tile sources would blank the first playback pass.
+//
+// Rainbow serves 256 px tiles on the standard web-mercator grid, which is the
+// same grid core/radarView.ts snaps to, so a frame is exactly the rectangle's
+// cells drawn at their own offsets: no projection or resampling arithmetic
+// here, and no chance of the stitched image drifting from where the map places
+// it. Requesting one zoom level coarser is the caller's business (it passes a
+// lower density), because every tile is a billed call.
 
-const WORLD = 2 * Math.PI * 6378137;
-const MAX_Z = 12; // Rainbow's precip tiles stop at zoom 12
-// Request one zoom level below the display resolution: 4x fewer tiles per
-// frame, and every tile is a billed call. Rainbow's field is heavily smoothed
-// to begin with, so the extra level was buying blur at full price.
-const ZOOM_BIAS = -1;
-
-export interface StitchView {
-  /** EPSG:3857 metres */
-  xmin: number;
-  ymin: number;
-  xmax: number;
-  ymax: number;
-  /** output image size in px */
-  w: number;
-  h: number;
-  /** map zoom (512px-tile convention, as MapLibre reports it) */
-  zoom: number;
-  /** CSS px → image px factor */
-  scale: number;
-}
+import { CELL_PX, type SnappedView } from '../../core/radarView';
 
 const loadTile = (url: string) =>
   new Promise<HTMLImageElement | null>((resolve) => {
@@ -37,46 +23,35 @@ const loadTile = (url: string) =>
 
 /**
  * One stitched frame. Null when any tile fails: the caller keeps the old
- * frame set rather than animating holes.
+ * frame set rather than animating holes. A 429 from the worker's daily tile
+ * budget arrives here as a failed image, which is the intended outcome — the
+ * player holds what it has instead of showing gaps.
  */
 export async function stitchRainbowFrame(
   api: string,
   layer: string,
   snapshotSec: number,
   fsec: number,
-  v: StitchView,
+  v: SnappedView,
 ): Promise<string | null> {
-  // +1 converts MapLibre's 512px-tile zoom to the 256px XYZ convention;
-  // log2(scale) keeps tile resolution in step with the device pixel ratio
-  const z = Math.max(0, Math.min(MAX_Z, Math.round(v.zoom + Math.log2(v.scale)) + 1 + ZOOM_BIAS));
-  const n = 2 ** z;
-  const span = WORLD / n;
-  const tx0 = Math.max(0, Math.floor((v.xmin + WORLD / 2) / span));
-  const tx1 = Math.min(n - 1, Math.floor((v.xmax + WORLD / 2) / span));
-  const ty0 = Math.max(0, Math.floor((WORLD / 2 - v.ymax) / span));
-  const ty1 = Math.min(n - 1, Math.floor((WORLD / 2 - v.ymin) / span));
+  const jobs: { x: number; y: number; col: number; row: number }[] = [];
+  for (let col = 0; col < v.nx; col += 1)
+    for (let row = 0; row < v.ny; row += 1) jobs.push({ x: v.x0 + col, y: v.y0 + row, col, row });
 
-  const jobs: { x: number; y: number }[] = [];
-  for (let x = tx0; x <= tx1; x += 1)
-    for (let y = ty0; y <= ty1; y += 1) jobs.push({ x, y });
   const imgs = await Promise.all(
     jobs.map((j) =>
-      loadTile(`${api}/api/rain/tile/${layer}/${snapshotSec}/${fsec}/${z}/${j.x}/${j.y}.png`),
+      loadTile(`${api}/api/rain/tile/${layer}/${snapshotSec}/${fsec}/${v.z}/${j.x}/${j.y}.png`),
     ),
   );
   if (imgs.some((i) => i == null)) return null;
 
   const canvas = document.createElement('canvas');
-  canvas.width = v.w;
-  canvas.height = v.h;
+  canvas.width = v.width;
+  canvas.height = v.height;
   const ctx = canvas.getContext('2d');
   if (!ctx) return null;
-  const sx = v.w / (v.xmax - v.xmin);
-  const sy = v.h / (v.ymax - v.ymin);
   jobs.forEach((j, i) => {
-    const mx0 = j.x * span - WORLD / 2;
-    const my0 = WORLD / 2 - j.y * span; // tile top edge
-    ctx.drawImage(imgs[i]!, (mx0 - v.xmin) * sx, (v.ymax - my0) * sy, span * sx, span * sy);
+    ctx.drawImage(imgs[i]!, j.col * CELL_PX, j.row * CELL_PX, CELL_PX, CELL_PX);
   });
   try {
     return canvas.toDataURL('image/png');

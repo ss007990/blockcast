@@ -15,6 +15,7 @@ import {
   type RadarFrame,
 } from '../../core/radarFrames';
 import { radarProvider, type RadarProvider } from '../../core/radarCoverage';
+import { mercX, mercY, snapView, type SnappedView } from '../../core/radarView';
 // MapLibre resolves its worker as a file next to its own module, which only
 // exists in node_modules: no bundler emits it, so production maps render
 // nothing (dev worked because the dep-optimizer exclusion serves the real
@@ -38,6 +39,9 @@ const STYLE_LIGHT = 'https://tiles.openfreemap.org/styles/positron';
 const STYLE_DARK = 'https://tiles.openfreemap.org/styles/dark';
 const API = import.meta.env.VITE_PUSH_API as string | undefined;
 const RAINBOW_LAYER = 'precip';
+// Rainbow bills per tile, so its frames are built one grid level coarser than
+// the display: a quarter of the tiles, on an already smooth field.
+const RAINBOW_DENSITY = 0.5;
 const FRAME_MS = 550;
 const END_HOLD_MS = 1600;
 const CROSSFADE_MS = 300;
@@ -46,83 +50,76 @@ const OPACITY = 0.75;
 // into the smooth look people know from broadcast future radar
 const MODEL_BLUR_PX = 1.25;
 
-const capsUrl = (layer: string) =>
-  `${GEOMET}?service=WMS&version=1.3.0&request=GetCapabilities&layers=${layer}`;
+// Frames and capabilities go through the worker when it is configured: it
+// caches per cell rectangle at the edge, so every extra viewer of a city is
+// free and MSC sees one request instead of one per device.
+//
+// 'direct' is the fallback, and it is load-bearing rather than decorative. A
+// local build has no VITE_PUSH_API; more importantly the app and the worker
+// deploy separately, so between shipping the app and deploying the worker the
+// proxy route simply does not exist. Radar is the feature people open first,
+// and it should degrade to slightly-more-upstream-traffic, never to an error
+// screen. So the capabilities step decides the route and the frames follow it.
+type Route = 'worker' | 'direct';
 
 const isoOf = (ms: number) => new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
 
-interface View {
-  /** EPSG:3857 bounds in metres */
-  xmin: number;
-  ymin: number;
-  xmax: number;
-  ymax: number;
-  /** image corners for the map overlay, [w,n] [e,n] [e,s] [w,s] */
-  coords: [[number, number], [number, number], [number, number], [number, number]];
-  w: number;
-  h: number;
-  zoom: number;
-  /** CSS px → image px factor, for pixel-space effects like the model blur */
-  scale: number;
+const capsUrl = (route: Route, layer: string) =>
+  route === 'worker'
+    ? `${API}/api/geomet/caps/${layer}`
+    : `${GEOMET}?service=WMS&version=1.3.0&request=GetCapabilities&layers=${layer}`;
+
+/** One frame image. Both routes describe the same rectangle of grid cells;
+ * only who resolves it differs. */
+function geometUrl(route: Route, layer: string, timeMs: number, v: SnappedView): string {
+  const time = isoOf(timeMs);
+  if (route === 'worker') {
+    return `${API}/api/geomet/map/${layer}/${time}/${v.z}/${v.x0}/${v.y0}/${v.nx}/${v.ny}.png`;
+  }
+  return (
+    `${GEOMET}?` +
+    new URLSearchParams({
+      service: 'WMS',
+      version: '1.3.0',
+      request: 'GetMap',
+      layers: layer,
+      format: 'image/png',
+      transparent: 'true',
+      crs: 'EPSG:3857',
+      bbox: v.bbox.join(','),
+      width: String(v.width),
+      height: String(v.height),
+      time,
+    })
+  );
 }
 
-const R = 6378137;
-const mercX = (lon: number) => R * ((lon * Math.PI) / 180);
-const mercY = (lat: number) => R * Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
-
-/** GeoMet GetMap: the whole frame in a single request for the bbox. */
-const geometUrl = (layer: string, timeMs: number, view: View): string =>
-  `${GEOMET}?` +
-  new URLSearchParams({
-    service: 'WMS',
-    version: '1.3.0',
-    request: 'GetMap',
-    layers: layer,
-    format: 'image/png',
-    transparent: 'true',
-    crs: 'EPSG:3857',
-    bbox: `${view.xmin},${view.ymin},${view.xmax},${view.ymax}`,
-    width: String(view.w),
-    height: String(view.h),
-    time: isoOf(timeMs),
-  });
-
-const frameUrl = (f: RadarFrame, view: View): string =>
+const frameUrl = (route: Route, f: RadarFrame, view: SnappedView): string =>
   geometUrl(
+    route,
     f.kind === 'model' ? MODEL_LAYER : f.kind === 'nowcast' ? NOWCAST_LAYER : RADAR_LAYER,
     f.time,
     view,
   );
 
-/** The current viewport, sized for the device's real pixel density. */
-function viewOf(map: MlMap): View {
-  const el = map.getContainer();
-  const cssW = el.clientWidth;
-  const cssH = el.clientHeight;
+/** The current viewport as a cell rectangle, at the device's pixel density.
+ * `densityFactor` below 1 asks for a coarser grid: the Rainbow tier pays per
+ * tile, and half the density is a quarter of the tiles on a field that is
+ * heavily smoothed to begin with. */
+function viewOf(map: MlMap, densityFactor = 1): SnappedView {
   const dpr = window.devicePixelRatio || 1;
-  let scale = Math.min(3, Math.max(1, Math.round(dpr)));
-  while (scale > 1 && Math.max(cssW, cssH) * scale > 2048) scale -= 1;
+  const density = Math.min(3, Math.max(1, Math.round(dpr))) * densityFactor;
   const b = map.getBounds();
-  const west = b.getWest();
-  const east = b.getEast();
-  const south = b.getSouth();
-  const north = b.getNorth();
-  return {
-    xmin: mercX(west),
-    ymin: mercY(south),
-    xmax: mercX(east),
-    ymax: mercY(north),
-    coords: [
-      [west, north],
-      [east, north],
-      [east, south],
-      [west, south],
-    ],
-    w: Math.round(cssW * scale),
-    h: Math.round(cssH * scale),
-    zoom: map.getZoom(),
-    scale,
-  };
+  return snapView(
+    {
+      xmin: mercX(b.getWest()),
+      ymin: mercY(b.getSouth()),
+      xmax: mercX(b.getEast()),
+      ymax: mercY(b.getNorth()),
+    },
+    map.getZoom(),
+    density,
+  );
 }
 
 /** Preload a frame; model frames get their blur baked in (raster layers
@@ -158,6 +155,8 @@ export function FutureRadar() {
 
   const [plan, setPlan] = useState<{
     provider: RadarProvider;
+    /** which side resolves GeoMet frames; irrelevant to the Rainbow tier */
+    route: Route;
     frames: RadarFrame[];
     radarEnd: number;
   } | null>(null);
@@ -201,26 +200,36 @@ export function FutureRadar() {
           if (!snap.snapshot) throw new Error('no snapshot');
           const frames = buildRainbowFrames(snap.snapshot * 1000);
           if (!disposed) {
-            setPlan({ provider, frames, radarEnd: snap.snapshot * 1000 });
+            setPlan({ provider, route: 'direct', frames, radarEnd: snap.snapshot * 1000 });
             setIdx(frames.filter((f) => f.kind === 'radar').length - 1);
           }
           return;
         }
-        const dim = (layer: string) =>
-          fetch(capsUrl(layer))
-            .then((r) => r.text())
-            .then(timeDimFromCapabilities)
+        const dim = (route: Route, layer: string) =>
+          fetch(capsUrl(route, layer))
+            .then((r) => (r.ok ? r.text() : null))
+            .then((x) => (x == null ? null : timeDimFromCapabilities(x)))
             .catch(() => null);
-        const [radar, nowcast, model] = await Promise.all([
-          dim(RADAR_LAYER),
-          dim(NOWCAST_LAYER),
-          dim(MODEL_LAYER),
-        ]);
+        const dims = (route: Route) =>
+          Promise.all([
+            dim(route, RADAR_LAYER),
+            dim(route, NOWCAST_LAYER),
+            dim(route, MODEL_LAYER),
+          ]);
+
+        let route: Route = API ? 'worker' : 'direct';
+        let [radar, nowcast, model] = await dims(route);
+        // no radar window through the proxy means the route is missing or
+        // down, not that ECCC has stopped publishing: fall back to upstream
+        if (!radar && route === 'worker') {
+          route = 'direct';
+          [radar, nowcast, model] = await dims(route);
+        }
         if (!radar) throw new Error('no radar time dimension');
         const frames = buildRadarFrames(radar, nowcast, model);
         if (frames.length < 2) throw new Error('empty plan');
         if (!disposed) {
-          setPlan({ provider, frames, radarEnd: radar.end });
+          setPlan({ provider, route, frames, radarEnd: radar.end });
           setIdx(frames.filter((f) => f.kind === 'radar').length - 1);
         }
       } catch {
@@ -235,10 +244,10 @@ export function FutureRadar() {
   // build every frame image for the current view; swap in only when complete
   const rebuildOverlays = async (
     map: MlMap,
-    p: { provider: RadarProvider; frames: RadarFrame[]; radarEnd: number },
+    p: { provider: RadarProvider; route: Route; frames: RadarFrame[]; radarEnd: number },
   ) => {
     const token = ++loadToken.current;
-    const view = viewOf(map);
+    const view = viewOf(map, p.provider === 'rainbow' ? RAINBOW_DENSITY : 1);
     const frames = p.frames;
     const buildOne = (f: RadarFrame): Promise<string | null> => {
       if (p.provider === 'rainbow') {
@@ -248,7 +257,7 @@ export function FutureRadar() {
         const fsec = future ? Math.round((f.time - p.radarEnd) / 1000) : 0;
         return stitchRainbowFrame(API!, RAINBOW_LAYER, snap, fsec, view);
       }
-      return loadFrame(frameUrl(f, view), f.kind === 'model' ? MODEL_BLUR_PX * view.scale : 0);
+      return loadFrame(frameUrl(p.route, f, view), f.kind === 'model' ? MODEL_BLUR_PX * view.scale : 0);
     };
     let done = 0;
     setProgress({ done: 0, total: frames.length });
