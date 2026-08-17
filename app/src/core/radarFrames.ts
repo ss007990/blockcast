@@ -61,21 +61,32 @@ const firstAfter = (dim: WmsTimeDim, afterMs: number): number =>
  * continues with whatever remains.
  */
 /**
- * Rainbow AI timeline: 10-minute analysis snapshots for the trailing
- * `pastMin` minutes, then its ML nowcast every 10 minutes out to `aheadMin`.
- * The snapshot itself is "now"; older snapshots serve the past, forecast
- * offsets against the latest snapshot serve the future.
+ * Rainbow AI timeline: analysis snapshots every `pastStepMin` for the
+ * trailing `pastMin` minutes, then its ML nowcast every `futureStepMin` out
+ * to `aheadMin`. The snapshot itself is "now"; older snapshots serve the
+ * past, forecast offsets against the latest snapshot serve the future.
+ *
+ * The past keeps the native 10-minute cadence, because that loop is what
+ * shows motion. The future is coarser on purpose: every frame is a full set
+ * of billed tiles, and an ML nowcast changes little in ten minutes. Both
+ * steps must stay multiples of 10 min, which is Rainbow's grid.
  */
 export function buildRainbowFrames(
   snapshotMs: number,
-  { pastMin = 60, aheadMin = 240 }: { pastMin?: number; aheadMin?: number } = {},
+  {
+    pastMin = 60,
+    aheadMin = 240,
+    pastStepMin = 10,
+    futureStepMin = 20,
+  }: { pastMin?: number; aheadMin?: number; pastStepMin?: number; futureStepMin?: number } = {},
 ): RadarFrame[] {
-  const step = 600_000;
+  const past = pastStepMin * 60_000;
+  const ahead = futureStepMin * 60_000;
   const frames: RadarFrame[] = [];
-  const from = snapshotMs - Math.floor((pastMin * 60_000) / step) * step;
-  for (let t = from; t <= snapshotMs; t += step) frames.push({ time: t, kind: 'radar' });
-  const to = snapshotMs + Math.floor((aheadMin * 60_000) / step) * step;
-  for (let t = snapshotMs + step; t <= to; t += step) frames.push({ time: t, kind: 'nowcast' });
+  const from = snapshotMs - Math.floor((pastMin * 60_000) / past) * past;
+  for (let t = from; t <= snapshotMs; t += past) frames.push({ time: t, kind: 'radar' });
+  const to = snapshotMs + Math.floor((aheadMin * 60_000) / ahead) * ahead;
+  for (let t = snapshotMs + ahead; t <= to; t += ahead) frames.push({ time: t, kind: 'nowcast' });
   return frames;
 }
 

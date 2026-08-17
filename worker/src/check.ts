@@ -87,7 +87,14 @@ async function fetchForecast(lat: number, lon: number): Promise<ForecastData> {
   return reshapeForecast(j, 2);
 }
 
-const locKey = (lat: number, lon: number) => `${lat.toFixed(2)},${lon.toFixed(2)}`;
+// Forecasts are memoised per grid cell for the length of one cron pass. Two
+// decimals is ~1.1 km, so every subscriber used to get a private fetch; a
+// 0.05° cell (~5.5 km) lets a neighbourhood share one, which is most of the
+// cron's Open-Meteo cost in any city. Deliberately not 0.1° (~11 km): that
+// starts to blur real coast and mountain differences.
+const GRID_DEG = 0.05;
+const snap = (v: number) => (Math.round(v / GRID_DEG) * GRID_DEG).toFixed(2);
+export const locKey = (lat: number, lon: number) => `${snap(lat)},${snap(lon)}`;
 
 export async function runChecks(env: Env): Promise<void> {
   const vapid = {

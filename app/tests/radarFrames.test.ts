@@ -103,24 +103,32 @@ describe('buildRadarFrames', () => {
 describe('buildRainbowFrames', () => {
   const snap = T('2026-08-14T16:40:00Z');
 
-  it('lays out 10-min analysis snapshots then the nowcast to +4 h', () => {
+  it('keeps 10-min analysis snapshots and steps the nowcast every 20 min to +4 h', () => {
     const frames = buildRainbowFrames(snap);
     const obs = frames.filter((f) => f.kind === 'radar');
     const fut = frames.filter((f) => f.kind === 'nowcast');
-    expect(obs).toHaveLength(7); // -60 … 0 inclusive
+    expect(obs).toHaveLength(7); // -60 … 0 inclusive, native cadence
     expect(obs[0]!.time).toBe(T('2026-08-14T15:40:00Z'));
     expect(obs.at(-1)!.time).toBe(snap);
-    expect(fut).toHaveLength(24); // +10 … +240
-    expect(fut[0]!.time).toBe(T('2026-08-14T16:50:00Z'));
+    expect(fut).toHaveLength(12); // +20 … +240, half the billed tiles
+    expect(fut[0]!.time).toBe(T('2026-08-14T17:00:00Z'));
     expect(fut.at(-1)!.time).toBe(T('2026-08-14T20:40:00Z'));
     const times = frames.map((f) => f.time);
     expect([...new Set(times)].sort((a, b) => a - b)).toEqual(times);
   });
 
-  it('respects custom windows', () => {
+  it('every offset lands on Rainbow’s 10-minute grid', () => {
+    for (const f of buildRainbowFrames(snap)) {
+      expect(Math.abs((f.time - snap) % 600_000)).toBe(0); // abs: past offsets are negative
+    }
+  });
+
+  it('respects custom windows and steps', () => {
     const frames = buildRainbowFrames(snap, { pastMin: 30, aheadMin: 60 });
     expect(frames.filter((f) => f.kind === 'radar')).toHaveLength(4);
-    expect(frames.filter((f) => f.kind === 'nowcast')).toHaveLength(6);
+    expect(frames.filter((f) => f.kind === 'nowcast')).toHaveLength(3);
+    const tenMin = buildRainbowFrames(snap, { aheadMin: 60, futureStepMin: 10 });
+    expect(tenMin.filter((f) => f.kind === 'nowcast')).toHaveLength(6);
   });
 });
 

@@ -79,4 +79,7 @@ export interface Env {
   XWEATHER_SECRET?: string;
   /** Rainbow AI subscription key — international radar is off until set. */
   RAINBOW_KEY?: string;
+  /** Billed Rainbow tiles allowed per day before /api/rain/tile returns 429.
+   * Numeric string (wrangler vars are strings); defaults to 5000. */
+  RAIN_TILE_BUDGET?: string;
 }

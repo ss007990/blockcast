@@ -22,6 +22,10 @@ let generation = 0; // drop out-of-date responses when the location changes mid-
 const CACHE_KEY = 'blockcast.v3.forecastCache';
 // Beyond this age the cached days no longer line up with "today" — worse than no data.
 const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+// Under this age the cache is served instead of refetching. The forecast
+// itself only updates hourly upstream, so a relaunch a few minutes later was
+// spending four billable requests to redraw the same numbers.
+const CACHE_FRESH_MS = 20 * 60 * 1000;
 
 interface CachedForecast {
   data: ForecastData;
@@ -63,6 +67,19 @@ export const useForecast = create<ForecastState>()((set) => ({
 
   load: async (loc) => {
     const gen = ++generation;
+    // still-fresh cache: serve it and make no requests at all. `dataFor` is
+    // the place that was asked for, not the cached one — they agree to 0.01°.
+    const fresh = readCache(loc);
+    if (fresh && Date.now() - fresh.updatedAt < CACHE_FRESH_MS) {
+      set({
+        data: fresh.data,
+        dataFor: loc,
+        updatedAt: fresh.updatedAt,
+        status: 'ready',
+        error: null,
+      });
+      return;
+    }
     set({ status: 'loading', error: null });
     try {
       const data = await fetchForecast(loc.lat, loc.lon);

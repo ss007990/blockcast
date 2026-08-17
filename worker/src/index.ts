@@ -90,7 +90,7 @@ export default {
     // /api/rain/... — Rainbow AI nowcast tiles, key held server-side
     if (url.pathname.startsWith('/api/rain/')) {
       if (req.method !== 'GET') return json(405, { error: 'method not allowed' }, cors);
-      return handleRain(url, env.RAINBOW_KEY, cors);
+      return handleRain(url, env, cors);
     }
 
     // /api/webcams?lat=&lon= — nearest live webcams via the Windy proxy

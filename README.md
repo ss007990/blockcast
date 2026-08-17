@@ -44,6 +44,7 @@ npm run build      # app/dist
   3. `npm run deploy -w worker`
   4. Set `VITE_PUSH_API` and `VITE_VAPID_PUBLIC_KEY` for the app build (see `app/.env.example`)
   5. *(nearby cams)* grab a free key at [api.windy.com/keys](https://api.windy.com/keys) (Webcams API), then `npx wrangler secret put WINDY_API_KEY` — until it is set the route answers 503 and the app hides the cams UI states gracefully
+  6. *(radar outside North America)* `npx wrangler secret put RAINBOW_KEY` for a [rainbow.ai](https://rainbow.ai) key — without it `/api/rain/status` reports `enabled: false` and the app shows a no-coverage message instead of animating blank frames. Every cache miss is a billed tile, so `RAIN_TILE_BUDGET` in `wrangler.toml` (default 5000/day) caps the spend and the route answers 429 past it; `/api/rain/status` reports the day's count
 
 ## Credits
 

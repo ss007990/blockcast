@@ -15,6 +15,11 @@ crons = ["0 */3 * * *"]
 
 [vars]
 ALLOWED_ORIGINS = "https://blockcast.ca,http://localhost:5173,capacitor://localhost"
+# Billed Rainbow tiles per day before /api/rain/tile starts answering 429.
+# Cache hits are free and never counted. At ~418 tiles per radar view that is
+# roughly a dozen uncached views a day; Rainbow bills $0.20/1000 beyond a
+# 30,000/month free allowance, so this caps the worst month near $24.
+RAIN_TILE_BUDGET = "5000"
 APNS_TOPIC = "ca.blockcast.app"
 # "production" for TestFlight/App Store builds (their device tokens are
 # production-environment). Flip back to "sandbox" only for local Xcode dev pushes.

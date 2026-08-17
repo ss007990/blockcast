@@ -6,6 +6,10 @@
 
 const WORLD = 2 * Math.PI * 6378137;
 const MAX_Z = 12; // Rainbow's precip tiles stop at zoom 12
+// Request one zoom level below the display resolution: 4x fewer tiles per
+// frame, and every tile is a billed call. Rainbow's field is heavily smoothed
+// to begin with, so the extra level was buying blur at full price.
+const ZOOM_BIAS = -1;
 
 export interface StitchView {
   /** EPSG:3857 metres */
@@ -44,7 +48,7 @@ export async function stitchRainbowFrame(
 ): Promise<string | null> {
   // +1 converts MapLibre's 512px-tile zoom to the 256px XYZ convention;
   // log2(scale) keeps tile resolution in step with the device pixel ratio
-  const z = Math.max(0, Math.min(MAX_Z, Math.round(v.zoom + Math.log2(v.scale)) + 1));
+  const z = Math.max(0, Math.min(MAX_Z, Math.round(v.zoom + Math.log2(v.scale)) + 1 + ZOOM_BIAS));
   const n = 2 ** z;
   const span = WORLD / n;
   const tx0 = Math.max(0, Math.floor((v.xmin + WORLD / 2) / span));

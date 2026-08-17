@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { parseRainTilePath } from '../src/rain';
+import { parseRainTilePath, tileBudget } from '../src/rain';
+
+describe('tileBudget', () => {
+  it('reads the configured daily budget', () => {
+    expect(tileBudget({ RAIN_TILE_BUDGET: '1200' })).toBe(1200);
+  });
+
+  it('falls back to the default rather than uncapping', () => {
+    expect(tileBudget({})).toBe(5000);
+    expect(tileBudget({ RAIN_TILE_BUDGET: '' })).toBe(5000);
+    expect(tileBudget({ RAIN_TILE_BUDGET: 'lots' })).toBe(5000);
+    expect(tileBudget({ RAIN_TILE_BUDGET: '0' })).toBe(5000);
+    expect(tileBudget({ RAIN_TILE_BUDGET: '-1' })).toBe(5000);
+  });
+});
 
 describe('parseRainTilePath', () => {
   const ok = (p: string) => parseRainTilePath(p);

@@ -4,7 +4,7 @@
 // Tiles are immutable per (snapshot, forecast) pair, so the edge cache
 // makes cost scale with viewed areas, not users.
 //
-//   GET /api/rain/status                                     → { enabled }
+//   GET /api/rain/status                                     → { enabled, spent, budget }
 //   GET /api/rain/snapshot/{layer}                           → { snapshot }
 //   GET /api/rain/tile/{layer}/{snapshot}/{fsec}/{z}/{x}/{y}.png
 //
@@ -12,6 +12,13 @@
 // snapshot  epoch seconds, 10-minute aligned (from /snapshot; older
 //           snapshots reach 2 h back with fsec 0)
 // fsec      forecast offset in seconds, 0..14400 in steps of 600
+//
+// Every cache miss is a billed Rainbow call, and this endpoint is public:
+// the iOS app only reaches it outside North America, but blockcast.ca is
+// worldwide, so a daily budget caps the damage a single enthusiastic visitor
+// (or a scraper) can do. See `chargeTile` for what the counter is and is not.
+
+import type { Env } from './types';
 
 const RB_HOST = 'https://api.rainbow.ai';
 const UA = 'BlockCast-worker/1.0';
@@ -19,6 +26,65 @@ const UA = 'BlockCast-worker/1.0';
 const LAYERS = new Set(['precip', 'precip-global']);
 const TILE_CACHE_SECONDS = 6 * 3600; // a (snapshot, fsec) tile never changes
 const SNAPSHOT_CACHE_SECONDS = 60;
+
+const DEFAULT_DAILY_BUDGET = 5000; // ~12 full radar views/day at 418 tiles each
+const FLUSH_EVERY = 25; // billed tiles per KV write — keeps writes off the free-tier ceiling
+const COUNTER_FRESH_MS = 60_000;
+const COUNTER_TTL_SECONDS = 3 * 24 * 3600;
+
+interface Tally {
+  key: string;
+  /** last value read back from KV */
+  stored: number;
+  /** billed in this isolate since the last flush */
+  pending: number;
+  readAt: number;
+}
+
+// Per-isolate, deliberately. Cloudflare runs many isolates and KV is
+// eventually consistent, so this undercounts across the fleet and can
+// overshoot the budget by roughly (isolates x FLUSH_EVERY). It is a spend
+// guard, not an accountant: the point is that a runaway costs dollars
+// instead of hundreds.
+let tally: Tally | null = null;
+
+/** Billed tiles allowed per day. Anything missing, unparseable or <= 0 falls
+ * back to the default rather than uncapping the endpoint. */
+export const tileBudget = (env: Pick<Env, 'RAIN_TILE_BUDGET'>): number => {
+  const n = Number(env.RAIN_TILE_BUDGET);
+  return Number.isFinite(n) && n > 0 ? n : DEFAULT_DAILY_BUDGET;
+};
+
+const dayKey = (now: number): string => `rbq:${new Date(now).toISOString().slice(0, 10)}`;
+
+/** Today's billed-tile count, re-read from KV at most once a minute. */
+async function spentToday(env: Env, now: number): Promise<Tally> {
+  const key = dayKey(now);
+  if (!tally || tally.key !== key) tally = { key, stored: 0, pending: 0, readAt: 0 };
+  if (now - tally.readAt > COUNTER_FRESH_MS) {
+    const raw = await env.SUBS.get(key);
+    tally.stored = Number(raw) || 0;
+    tally.readAt = now;
+  }
+  return tally;
+}
+
+/** Count one billed tile, flushing to KV every FLUSH_EVERY. */
+async function chargeTile(env: Env, t: Tally): Promise<void> {
+  t.pending += 1;
+  if (t.pending < FLUSH_EVERY) return;
+  const flushed = t.pending;
+  t.pending = 0;
+  try {
+    const raw = await env.SUBS.get(t.key);
+    const total = (Number(raw) || 0) + flushed;
+    await env.SUBS.put(t.key, String(total), { expirationTtl: COUNTER_TTL_SECONDS });
+    t.stored = total;
+    t.readAt = Date.now();
+  } catch {
+    t.pending += flushed; // KV hiccup: try again on the next tile
+  }
+}
 
 export interface RainTileParams {
   layer: string;
@@ -61,6 +127,8 @@ async function cachedUpstream(
   contentType: string,
   cacheSeconds: number,
   cors: Record<string, string>,
+  /** called once the upstream call has actually happened, i.e. been billed */
+  onBilled?: () => Promise<void>,
 ): Promise<Response> {
   const cache = caches.default;
   const cacheKey = new Request(`https://rain-cache.blockcast.internal${cachePath}`);
@@ -85,6 +153,7 @@ async function cachedUpstream(
   }
 
   const body = await res.arrayBuffer();
+  await onBilled?.();
   const headers = {
     'content-type': contentType,
     'cache-control': `public, max-age=${cacheSeconds}`,
@@ -95,10 +164,18 @@ async function cachedUpstream(
 
 export async function handleRain(
   url: URL,
-  key: string | undefined,
+  env: Env,
   cors: Record<string, string>,
 ): Promise<Response> {
-  if (url.pathname === '/api/rain/status') return json(200, { enabled: !!key }, cors);
+  let key = env.RAINBOW_KEY;
+  const budget = tileBudget(env);
+
+  if (url.pathname === '/api/rain/status') {
+    if (!key) return json(200, { enabled: false }, cors);
+    const t = await spentToday(env, Date.now());
+    const spent = t.stored + t.pending;
+    return json(200, { enabled: spent < budget, spent, budget }, cors);
+  }
   if (!key) return json(503, { error: 'rainbow not configured' }, cors);
   key = key.trim();
 
@@ -119,6 +196,14 @@ export async function handleRain(
 
   const p = parseRainTilePath(url.pathname);
   if (!p) return json(400, { error: 'bad rain path' }, cors);
+
+  // Cached tiles are free, so the budget is only consulted for the ones that
+  // would reach Rainbow. A 429 lets the client keep whatever it already has.
+  const t = await spentToday(env, Date.now());
+  if (t.stored + t.pending >= budget) {
+    return json(429, { error: 'daily tile budget reached', budget }, cors);
+  }
+
   return cachedUpstream(
     url.pathname,
     `${RB_HOST}/tiles/v1/${p.layer}/${p.snapshot}/${p.fsec}/${p.z}/${p.x}/${p.y}`,
@@ -126,5 +211,6 @@ export async function handleRain(
     'image/png',
     TILE_CACHE_SECONDS,
     cors,
+    () => chargeTile(env, t),
   );
 }
