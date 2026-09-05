@@ -17,6 +17,7 @@ import { WeekView } from './features/week/WeekView';
 import { Masthead, TabBar } from './shell/Header';
 import s from './shell/shell.module.css';
 import { syncFeed } from './services/calendarFeed';
+import { resyncPush } from './services/push';
 import { useAlerts } from './state/alerts';
 import { useExtras } from './state/extras';
 import { useForecast } from './state/forecast';
@@ -28,7 +29,8 @@ import { useUi } from './state/ui';
 export function App() {
   useThemeEffect();
   const tab = useUi((u) => u.tab);
-  const { loc, locChosen, lang, calFeedToken, customActivities } = useSettings();
+  const { loc, locChosen, lang, calFeedToken, customActivities, pushOn, tune, tolerance, units } =
+    useSettings();
   const { data, dataFor, load } = useForecast();
   const sessions = usePlanner((p) => p.sessions);
 
@@ -131,6 +133,42 @@ export function App() {
       window.removeEventListener('pagehide', flush);
     };
   }, [calFeedToken, sessions, customActivities, lang]);
+
+  // push alerts on: the worker only watches what it was last told, so every
+  // planner or criteria change is mirrored on the transport registered at
+  // opt-in (same debounce and background flush as the feed). A reinstall
+  // loses that transport; the switch then turns itself off so the planner
+  // offers the opt-in button again instead of claiming alerts are on.
+  useEffect(() => {
+    if (!pushOn) return;
+    let synced = false;
+    const flush = () => {
+      if (synced) return;
+      synced = true;
+      const st = useSettings.getState();
+      void resyncPush({
+        sessions,
+        critFor: (id) => critFor(st, id),
+        customs: st.customActivities,
+        tolMult: TOL_MULT[st.tolerance],
+        lang: st.lang,
+        units: st.units,
+      }).then((r) => {
+        if (r === 'no-transport') useSettings.getState().setPushOn(false);
+      });
+    };
+    const timer = setTimeout(flush, 1200);
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', flush);
+    };
+  }, [pushOn, sessions, tune, tolerance, customActivities, lang, units]);
 
   return (
     <>

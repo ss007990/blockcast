@@ -8,7 +8,7 @@ import type { ActivityId, Criteria, CustomActivity } from '../core/activities';
 import type { PlannedSession } from '../core/alerts';
 import type { Lang } from '../i18n';
 import type { UnitSystem } from '../core/units';
-import { subscribeNativePush, unsubscribeNativePush } from './nativePush';
+import { resyncNativePush, subscribeNativePush, unsubscribeNativePush } from './nativePush';
 
 const API = import.meta.env.VITE_PUSH_API as string | undefined;
 const VAPID_PUBLIC = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
@@ -89,6 +89,40 @@ export async function subscribePush(ctx: PushContext): Promise<boolean> {
     body: JSON.stringify({ subscription: sub.toJSON(), ...buildSubscribeBody(ctx) }),
   });
   return res.ok;
+}
+
+export type ResyncResult = 'ok' | 'no-transport' | 'failed';
+
+/** Mirror the planner to the worker after the user has opted in: same body
+ * as subscribing, on the transport already registered, no prompt. With no
+ * sessions left the subscription is deleted so nothing stale gets watched;
+ * the next planned session re-creates it. */
+export async function resyncPush(ctx: PushContext): Promise<ResyncResult> {
+  const body = buildSubscribeBody(ctx);
+  const hasSessions = ctx.sessions.length > 0;
+  if (Capacitor.isNativePlatform()) return resyncNativePush(body, hasSessions);
+  if (!API || !('serviceWorker' in navigator)) return 'no-transport';
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) return 'no-transport';
+    const res = hasSessions
+      ? await fetch(`${API}/api/subscribe`, {
+          method: 'POST',
+          keepalive: true,
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ subscription: sub.toJSON(), ...body }),
+        })
+      : await fetch(`${API}/api/subscribe`, {
+          method: 'DELETE',
+          keepalive: true,
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        });
+    return res.ok ? 'ok' : 'failed';
+  } catch {
+    return 'failed';
+  }
 }
 
 export async function unsubscribePush(): Promise<void> {

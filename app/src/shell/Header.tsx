@@ -173,7 +173,7 @@ function LocSwitch() {
               className={`${s.locItem} ${s.locItemSave}`}
               onClick={() => toggleSavedPlace(loc)}
             >
-              ☆ {t.location.saveSpot} — <span className={s.locItemName}>{loc.name}</span>
+              ☆ {t.location.saveSpot} · <span className={s.locItemName}>{loc.name}</span>
             </button>
           )}
           <button

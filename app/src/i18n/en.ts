@@ -296,6 +296,7 @@ export const en = {
     markRead: 'Mark all read',
     enablePush: 'Enable push alerts',
     pushOn: 'Push alerts on',
+    pushOff: 'Turn off',
   },
 
   location: {

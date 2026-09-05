@@ -61,6 +61,9 @@ export interface SettingsState {
   savedPlaces: Place[];
   /** Capability token for the subscribable calendar feed; null = feed off. */
   calFeedToken: string | null;
+  /** Push alerts enabled: the planner is mirrored to the worker on every
+   * change, on the transport registered when the user opted in. */
+  pushOn: boolean;
 
   setActivity: (a: ActivityId) => void;
   /** Dismiss an activity from the quick-access chips. */
@@ -83,6 +86,7 @@ export interface SettingsState {
   /** Save a place as a favourite, or un-save it if already saved. */
   toggleSavedPlace: (p: Place) => void;
   setCalFeedToken: (t: string | null) => void;
+  setPushOn: (on: boolean) => void;
 }
 
 const samePlace = (a: Place, b: Place) => a.lat === b.lat && a.lon === b.lon;
@@ -112,6 +116,7 @@ const defaults = {
   lastPinned: null as Place | null,
   savedPlaces: [] as Place[],
   calFeedToken: null as string | null,
+  pushOn: false,
 };
 
 export const useSettings = create<SettingsState>()(
@@ -191,6 +196,7 @@ export const useSettings = create<SettingsState>()(
               },
         ),
       setCalFeedToken: (calFeedToken) => set({ calFeedToken }),
+      setPushOn: (pushOn) => set({ pushOn }),
     }),
     {
       name: KEYS.settings,

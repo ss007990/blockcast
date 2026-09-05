@@ -115,7 +115,8 @@ export async function reverseGeocode(lat: number, lon: number, lang: Lang): Prom
       `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${lang}`,
     );
     const j = (await r.json()) as { locality?: string; city?: string; principalSubdivision?: string };
-    return j.locality || j.city || j.principalSubdivision || '';
+    // city first: locality is often a neighbourhood ("Vieux-Québec–Cap-Blanc–colline Parlementaire")
+    return j.city || j.locality || j.principalSubdivision || '';
   } catch {
     return ''; // offline reverse geocode is optional
   }

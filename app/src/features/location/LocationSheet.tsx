@@ -225,7 +225,7 @@ function LocationContent() {
         })}
         {!curSaved && (
           <button className={s.spotSave} onClick={() => st.toggleSavedPlace(st.loc)}>
-            ☆ {t.location.saveSpot} — {st.loc.name}
+            ☆ {t.location.saveSpot} · {st.loc.name}
           </button>
         )}
       </div>

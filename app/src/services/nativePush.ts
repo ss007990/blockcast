@@ -45,6 +45,35 @@ export async function subscribeNativePush(body: object): Promise<boolean> {
   return res.ok;
 }
 
+/** Re-send the planner on the token registered at opt-in, without touching
+ * the permission prompt. 'no-transport' means the app was reinstalled or the
+ * token was never stored, and the user has to opt in again. */
+export async function resyncNativePush(
+  body: object,
+  hasSessions: boolean,
+): Promise<'ok' | 'no-transport' | 'failed'> {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!API || !token) return 'no-transport';
+  try {
+    const res = hasSessions
+      ? await fetch(`${API}/api/subscribe`, {
+          method: 'POST',
+          keepalive: true,
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ ...body, apns: { token } }),
+        })
+      : await fetch(`${API}/api/subscribe`, {
+          method: 'DELETE',
+          keepalive: true,
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ apnsToken: token }),
+        });
+    return res.ok ? 'ok' : 'failed';
+  } catch {
+    return 'failed';
+  }
+}
+
 export async function unsubscribeNativePush(): Promise<void> {
   const token = localStorage.getItem(TOKEN_KEY);
   if (!token) return;

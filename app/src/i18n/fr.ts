@@ -298,6 +298,7 @@ export const fr: Dict = {
     markRead: 'Tout marquer comme lu',
     enablePush: 'Activer les alertes push',
     pushOn: 'Alertes push actives',
+    pushOff: 'Désactiver',
   },
 
   location: {

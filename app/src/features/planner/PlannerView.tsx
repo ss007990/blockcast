@@ -6,7 +6,7 @@ import { formatHour } from '../../core/units';
 import { useActivityName, useLocale, useT } from '../../hooks';
 import { sessionToIcsEvent } from '../../lib/download';
 import { fmtWeekdayShort } from '../../lib/format';
-import { pushAvailability, subscribePush } from '../../services/push';
+import { pushAvailability, subscribePush, unsubscribePush } from '../../services/push';
 import { CalendarFeed } from './CalendarFeed';
 import { useForecast } from '../../state/forecast';
 import { checkSession, usePlanner } from '../../state/planner';
@@ -22,14 +22,16 @@ export function PlannerView() {
   const st = useSettings();
   const { data, dataFor } = useForecast();
   const { sessions, remove, update } = usePlanner();
-  const [pushState, setPushState] = useState<'idle' | 'busy' | 'on'>('idle');
+  const [pushBusy, setPushBusy] = useState(false);
 
   const checkOf = (p: (typeof sessions)[number]) =>
     checkSession(p, data, dataFor, critFor(st, p.activityId), TOL_MULT[st.tolerance]);
 
   const availability = pushAvailability();
+  // opting in registers the transport and sends the current planner; from
+  // then on App mirrors every change while `pushOn` stays set
   const enablePush = async () => {
-    setPushState('busy');
+    setPushBusy(true);
     const ok = await subscribePush({
       sessions,
       critFor: (id) => critFor(st, id),
@@ -38,7 +40,14 @@ export function PlannerView() {
       lang: st.lang,
       units: st.units,
     });
-    setPushState(ok ? 'on' : 'idle');
+    if (ok) st.setPushOn(true);
+    setPushBusy(false);
+  };
+  const disablePush = async () => {
+    setPushBusy(true);
+    await unsubscribePush();
+    st.setPushOn(false);
+    setPushBusy(false);
   };
 
   return (
@@ -111,14 +120,19 @@ export function PlannerView() {
       {sessions.length > 0 && (
         <div className={s.pushRow}>
           {availability === 'ok' || availability === 'unconfigured' ? (
-            pushState === 'on' ? (
-              <span>🔔 {t.alerts.pushOn}</span>
+            st.pushOn ? (
+              <>
+                <span>🔔 {t.alerts.pushOn}</span>
+                <Button variant="ghost" onClick={disablePush} disabled={pushBusy}>
+                  {t.alerts.pushOff}
+                </Button>
+              </>
             ) : (
               <>
                 <Button
                   variant="ghost"
                   onClick={enablePush}
-                  disabled={pushState === 'busy' || availability === 'unconfigured'}
+                  disabled={pushBusy || availability === 'unconfigured'}
                 >
                   🔔 {t.planner.notifyMe}
                 </Button>

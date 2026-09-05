@@ -104,6 +104,9 @@ export async function runChecks(env: Env): Promise<void> {
   };
   const todayKey = new Date().toISOString().slice(0, 10) + 'T00';
   const forecasts = new Map<string, ForecastData>();
+  let subs = 0;
+  let sent = 0;
+  let dropped = 0;
 
   let cursor: string | undefined;
   do {
@@ -114,11 +117,13 @@ export async function runChecks(env: Env): Promise<void> {
       if (entry.name.startsWith('cal:')) continue; // calendar feeds, not push subs
       const sub = await env.SUBS.get<StoredSub>(entry.name, 'json');
       if (!sub) continue;
+      subs++;
 
       // drop sessions already in the past; drop the whole sub when empty
       sub.sessions = sub.sessions.filter((s) => planKey(s) >= todayKey);
       if (!sub.sessions.length) {
         await env.SUBS.delete(entry.name);
+        dropped++;
         continue;
       }
 
@@ -166,9 +171,11 @@ export async function runChecks(env: Env): Promise<void> {
             const result = await sendApns(env, sub.apns.token, { title, body }, `bc-${s.id}`);
             if (result === 'gone') {
               await env.SUBS.delete(entry.name); // device token is dead
+              dropped++;
               dirty = false;
               break;
             }
+            if (result === 'sent') sent++;
           } else if (sub.subscription) {
             const payload = await buildPushPayload(
               { data: JSON.stringify({ title, body, url: 'https://blockcast.ca/#planner', tag: `bc-${s.id}` }) },
@@ -178,9 +185,11 @@ export async function runChecks(env: Env): Promise<void> {
             const res = await fetch(sub.subscription.endpoint, payload);
             if (res.status === 404 || res.status === 410) {
               await env.SUBS.delete(entry.name); // subscription expired
+              dropped++;
               dirty = false;
               break;
             }
+            if (res.ok) sent++;
           } else {
             continue; // no transport — nothing to notify
           }
@@ -191,7 +200,12 @@ export async function runChecks(env: Env): Promise<void> {
           // one bad session/fetch must not sink the whole run
         }
       }
-      if (dirty) await env.SUBS.put(entry.name, JSON.stringify(sub));
+      // same 30 d clock as /api/subscribe, so a re-based sub still expires
+      // once the app stops mirroring instead of lingering forever
+      if (dirty)
+        await env.SUBS.put(entry.name, JSON.stringify(sub), { expirationTtl: 30 * 24 * 3600 });
     }
   } while (cursor);
+  // the only trace a cron tick leaves; read it with `wrangler tail`
+  console.log(`checks: ${subs} subs, ${forecasts.size} forecasts, ${sent} sent, ${dropped} dropped`);
 }
