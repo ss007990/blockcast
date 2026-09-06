@@ -195,4 +195,24 @@ describe('runChecks', () => {
     // main + blend request, once, for two subscribers ~0 km apart
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
   });
+
+  it('uses the free host without a key and the keyed customer host with one', async () => {
+    scriptOpenMeteo(false);
+    await runChecks(env(fakeKv({ a: apnsSub() }).kv));
+    for (const [input] of vi.mocked(fetch).mock.calls) {
+      const u = new URL(String(input));
+      expect(u.host).toBe('api.open-meteo.com');
+      expect(u.searchParams.has('apikey')).toBe(false);
+    }
+
+    vi.mocked(fetch).mockClear();
+    await runChecks({ ...env(fakeKv({ a: apnsSub() }).kv), OPEN_METEO_KEY: 'k123' });
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
+    for (const [input] of vi.mocked(fetch).mock.calls) {
+      const u = new URL(String(input));
+      expect(u.host).toBe('customer-api.open-meteo.com');
+      expect(u.searchParams.get('apikey')).toBe('k123');
+      expect(u.searchParams.get('latitude')).toBeTruthy();
+    }
+  });
 });

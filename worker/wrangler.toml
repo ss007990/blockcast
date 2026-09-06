@@ -32,6 +32,9 @@ APNS_ENV = "production"
 #   APNS_PRIVATE_KEY   — contents of the AuthKey_<KEYID>.p8 from developer.apple.com
 #   APNS_KEY_ID        — the key's 10-char id
 #   APNS_TEAM_ID       — Apple Developer Team ID (membership page)
+#   OPEN_METEO_KEY     — Open-Meteo API key (Standard plan, open-meteo.com/en/pricing);
+#                        while unset the cron uses the free per-IP tier, which
+#                        it shares with every other Cloudflare Worker
 #   WINDY_API_KEY      — free key from https://api.windy.com/keys (Webcams API);
 #                        nearby cams return 503 until it is set
 #   XWEATHER_ID        — Xweather (Vaisala) client id, from the account's Apps page

@@ -56,9 +56,18 @@ export function alertText(
   };
 }
 
-async function fetchForecast(lat: number, lon: number): Promise<ForecastData> {
-  const u = new URL('https://api.open-meteo.com/v1/forecast');
-  u.search = new URLSearchParams({
+// With OPEN_METEO_KEY set the cron talks to the paid customer endpoint, which
+// has its own quota keyed to us instead of the free tier's per-IP limit that
+// every Cloudflare tenant shares. Without it, the free host as before.
+function forecastUrl(env: Env, params: Record<string, string>): URL {
+  const key = env.OPEN_METEO_KEY?.trim();
+  const u = new URL(key ? 'https://customer-api.open-meteo.com/v1/forecast' : 'https://api.open-meteo.com/v1/forecast');
+  u.search = new URLSearchParams(key ? { ...params, apikey: key } : params).toString();
+  return u;
+}
+
+async function fetchForecast(env: Env, lat: number, lon: number): Promise<ForecastData> {
+  const u = forecastUrl(env, {
     latitude: String(lat),
     longitude: String(lon),
     timezone: 'auto',
@@ -67,9 +76,8 @@ async function fetchForecast(lat: number, lon: number): Promise<ForecastData> {
     hourly:
       'temperature_2m,apparent_temperature,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,cloud_cover,uv_index,snowfall,snow_depth',
     daily: 'weather_code,apparent_temperature_max,apparent_temperature_min,sunrise,sunset',
-  }).toString();
-  const b = new URL('https://api.open-meteo.com/v1/forecast');
-  b.search = new URLSearchParams({
+  });
+  const b = forecastUrl(env, {
     latitude: String(lat),
     longitude: String(lon),
     timezone: 'auto',
@@ -77,7 +85,7 @@ async function fetchForecast(lat: number, lon: number): Promise<ForecastData> {
     past_days: '2',
     hourly: 'precipitation_probability,precipitation',
     models: RAIN_BLEND_MODELS,
-  }).toString();
+  });
   // blend failures are non-fatal: scoring falls back to best_match alone
   const [res, blendRes] = await Promise.all([fetch(u), fetch(b).catch(() => null)]);
   if (!res.ok) throw new Error(`open-meteo ${res.status}`);
@@ -133,7 +141,7 @@ export async function runChecks(env: Env): Promise<void> {
           const key = locKey(s.lat, s.lon);
           let data = forecasts.get(key);
           if (!data) {
-            data = await fetchForecast(s.lat, s.lon);
+            data = await fetchForecast(env, s.lat, s.lon);
             forecasts.set(key, data);
           }
           // custom activities aren't in ACTIVITIES — rebuild one from the

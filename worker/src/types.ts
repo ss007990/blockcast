@@ -77,6 +77,9 @@ export interface Env {
   /** Xweather client pair — premium radar frames are off until both set. */
   XWEATHER_ID?: string;
   XWEATHER_SECRET?: string;
+  /** Open-Meteo API key (Standard plan or above). When set the cron uses the
+   * customer endpoint and its own quota; unset means the free tier. */
+  OPEN_METEO_KEY?: string;
   /** Rainbow AI subscription key — international radar is off until set. */
   RAINBOW_KEY?: string;
   /** Billed Rainbow tiles allowed per day before /api/rain/tile returns 429.
