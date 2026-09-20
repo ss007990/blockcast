@@ -9,6 +9,7 @@ import { formatHour } from '../../core/units';
 import { useActivityName, useLocale, useT } from '../../hooks';
 import { fill } from '../../i18n';
 import { sessionToIcsEvent } from '../../lib/download';
+import { maybeAskForReview } from '../../services/review';
 import { fmtFull, fmtIsoTime } from '../../lib/format';
 import { useForecast } from '../../state/forecast';
 import { usePlanner } from '../../state/planner';
@@ -89,7 +90,10 @@ export function DetailSheet() {
     ...(note.trim() ? { note: note.trim() } : {}),
   });
 
-  const addToPlanner = () => planner.add(session(Date.now()));
+  const addToPlanner = () => {
+    planner.add(session(Date.now()));
+    void maybeAskForReview(usePlanner.getState().sessions.length);
+  };
 
   // which weighted factor drives the score — same maths as riskScore's "worst"
   let domKey: FactorKey | null = null;

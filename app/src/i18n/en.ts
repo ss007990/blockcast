@@ -112,6 +112,16 @@ export const en = {
     aqhiSub1: 'AQHI: sensitive groups, take it easier',
     aqhiSub2: 'AQHI: reduce strenuous outdoor activity',
     aqhiSub3: 'AQHI: avoid strenuous outdoor activity',
+    aqi0: 'Good',
+    aqi1: 'Moderate',
+    aqi2: 'Unhealthy for sensitive groups',
+    aqi3: 'Unhealthy',
+    aqi4: 'Very unhealthy',
+    aqi5: 'Hazardous',
+    aqiSub0: 'AQI: ideal air for being outdoors',
+    aqiSub1: 'AQI: sensitive groups, take it easier',
+    aqiSub2: 'AQI: reduce strenuous outdoor activity',
+    aqiSub3: 'AQI: avoid strenuous outdoor activity',
     alertUntil: 'until {time}',
   },
 
@@ -361,6 +371,7 @@ export const en = {
       'BlockCast scores every block of your week for your sport: green means go. Live data from Open-Meteo; radar by ECCC MSC; webcams by Windy.com; maps by MapLibre, Leaflet, OpenFreeMap & OpenStreetMap contributors. Settings and plans stay on your device.',
     version: 'Version',
     privacy: 'Privacy policy',
+    getApp: 'Get the iPhone app',
   },
 
   intro:

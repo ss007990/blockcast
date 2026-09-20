@@ -1,7 +1,8 @@
 // Active ECCC weather alerts for a point, from the GeoMet OGC API
-// (api.weather.gc.ca — CORS-open, bilingual fields built in).
+// (api.weather.gc.ca — CORS-open, bilingual fields built in). The shape is
+// shared with the US feed in nws.ts, so the banner is country-agnostic.
 
-export interface EcccAlert {
+export interface WeatherAlert {
   nameEn: string;
   nameFr: string;
   textEn: string;
@@ -31,7 +32,9 @@ interface AlertFeature {
 
 const BOX = 0.15; // ± degrees around the point
 
-export async function fetchEcccAlerts(lat: number, lon: number): Promise<EcccAlert[]> {
+export type EcccAlert = WeatherAlert;
+
+export async function fetchEcccAlerts(lat: number, lon: number): Promise<WeatherAlert[]> {
   const u = new URL('https://api.weather.gc.ca/collections/weather-alerts/items');
   u.search = new URLSearchParams({
     f: 'json',

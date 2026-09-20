@@ -1,10 +1,13 @@
 import { useT } from '../../hooks';
+import { Capacitor } from '@capacitor/core';
 import type { Lang } from '../../i18n';
 import { useSettings, type ThemeChoice } from '../../state/settings';
 import type { ClockFormat, UnitSystem } from '../../core/units';
 import { Card, Field, Segmented } from '../../ui/primitives';
 
 const APP_VERSION = '2.0.0';
+
+const APP_STORE_URL = 'https://apps.apple.com/ca/app/blockcast-sport-weather/id6796484224';
 
 export function SettingsView() {
   const t = useT();
@@ -87,6 +90,15 @@ export function SettingsView() {
           <a href="/privacy.html" target="_blank" rel="noreferrer">
             {t.settings.privacy}
           </a>
+          {!Capacitor.isNativePlatform() && (
+            <>
+              {' '}
+              ·{' '}
+              <a href={APP_STORE_URL} target="_blank" rel="noreferrer">
+                {t.settings.getApp}
+              </a>
+            </>
+          )}
         </p>
       </Card>
     </div>

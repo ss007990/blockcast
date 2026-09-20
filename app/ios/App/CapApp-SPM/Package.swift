@@ -12,6 +12,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "8.4.2"),
+        .package(name: "CapacitorCommunityInAppReview", path: "../../../../node_modules/@capacitor-community/in-app-review"),
         .package(name: "CapacitorFilesystem", path: "../../../../node_modules/@capacitor/filesystem"),
         .package(name: "CapacitorGeolocation", path: "../../../../node_modules/@capacitor/geolocation"),
         .package(name: "CapacitorPushNotifications", path: "../../../../node_modules/@capacitor/push-notifications"),
@@ -23,6 +24,7 @@ let package = Package(
             dependencies: [
                 .product(name: "Capacitor", package: "capacitor-swift-pm"),
                 .product(name: "Cordova", package: "capacitor-swift-pm"),
+                .product(name: "CapacitorCommunityInAppReview", package: "CapacitorCommunityInAppReview"),
                 .product(name: "CapacitorFilesystem", package: "CapacitorFilesystem"),
                 .product(name: "CapacitorGeolocation", package: "CapacitorGeolocation"),
                 .product(name: "CapacitorPushNotifications", package: "CapacitorPushNotifications"),

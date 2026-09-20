@@ -113,6 +113,16 @@ export const fr: Dict = {
     aqhiSub1: 'CAS : groupes sensibles, allez-y doucement',
     aqhiSub2: 'CAS : réduisez l’effort à l’extérieur',
     aqhiSub3: 'CAS : évitez l’effort à l’extérieur',
+    aqi0: 'Bon',
+    aqi1: 'Modéré',
+    aqi2: 'Malsain pour les groupes sensibles',
+    aqi3: 'Malsain',
+    aqi4: 'Très malsain',
+    aqi5: 'Dangereux',
+    aqiSub0: 'IQA : air idéal pour être dehors',
+    aqiSub1: 'IQA : groupes sensibles, allez-y doucement',
+    aqiSub2: 'IQA : réduisez l’effort à l’extérieur',
+    aqiSub3: 'IQA : évitez l’effort à l’extérieur',
     alertUntil: 'jusqu’à {time}',
   },
 
@@ -363,6 +373,7 @@ export const fr: Dict = {
       'BlockCast note chaque bloc de votre semaine pour votre sport : vert = allez-y. Données en direct d’Open-Meteo; radar par ECCC SMC; webcams par Windy.com; cartes par MapLibre, Leaflet, OpenFreeMap et les contributeurs OpenStreetMap. Réglages et séances restent sur votre appareil.',
     version: 'Version',
     privacy: 'Politique de confidentialité',
+    getApp: 'Obtenir l’app iPhone',
   },
 
   intro:

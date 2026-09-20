@@ -11,6 +11,7 @@ import {
   type Tolerance,
   type Weights,
 } from '../core/activities';
+import { detectClock, detectUnits } from '../core/region';
 import type { ClockFormat, UnitSystem } from '../core/units';
 import { detectLang, type Lang } from '../i18n';
 import { importV1, KEYS } from '../services/storage';
@@ -64,6 +65,8 @@ export interface SettingsState {
   /** Push alerts enabled: the planner is mirrored to the worker on every
    * change, on the transport registered when the user opted in. */
   pushOn: boolean;
+  /** The one-time App Store rating prompt has been requested. */
+  reviewAsked: boolean;
 
   setActivity: (a: ActivityId) => void;
   /** Dismiss an activity from the quick-access chips. */
@@ -87,6 +90,7 @@ export interface SettingsState {
   toggleSavedPlace: (p: Place) => void;
   setCalFeedToken: (t: string | null) => void;
   setPushOn: (on: boolean) => void;
+  setReviewAsked: () => void;
 }
 
 const samePlace = (a: Place, b: Place) => a.lat === b.lat && a.lon === b.lon;
@@ -108,8 +112,9 @@ const defaults = {
   tune: v1.tune ?? {},
   customActivities: [] as CustomActivity[],
   lang: v1.lang ?? detectLang(navigator.language),
-  units: 'metric' as UnitSystem,
-  clock: '24h' as ClockFormat,
+  // first run follows the device locale: an American sees °F, mph and 3 PM
+  units: detectUnits(navigator.language) as UnitSystem,
+  clock: detectClock(navigator.language) as ClockFormat,
   theme: 'system' as ThemeChoice,
   loc: v1.loc ?? { name: 'Québec', lat: 46.8131, lon: -71.2075 },
   locChosen: v1.loc != null,
@@ -117,6 +122,7 @@ const defaults = {
   savedPlaces: [] as Place[],
   calFeedToken: null as string | null,
   pushOn: false,
+  reviewAsked: false,
 };
 
 export const useSettings = create<SettingsState>()(
@@ -197,6 +203,7 @@ export const useSettings = create<SettingsState>()(
         ),
       setCalFeedToken: (calFeedToken) => set({ calFeedToken }),
       setPushOn: (pushOn) => set({ pushOn }),
+      setReviewAsked: () => set({ reviewAsked: true }),
     }),
     {
       name: KEYS.settings,

@@ -78,16 +78,23 @@ export function TilesGrid({ daySlices, nowH, nowTime, sunrise, sunset, aqhi }: P
       ? `${fmtIsoTime(sunrise, locale, clock)} → ${fmtIsoTime(sunset, locale, clock)}`
       : '';
 
-  // AQHI (Canadian 1–10+ scale): promoted to a full-width alert tile when
-  // high; otherwise it takes the daylight tile's slot (sun times already
-  // live in the hero footer)
+  // Air quality (Canadian AQHI 1–10+, or the EPA AQI in the US): promoted
+  // to a full-width alert tile when high; otherwise it takes the daylight
+  // tile's slot (sun times already live in the hero footer)
   const aqhiTile = aqhi
-    ? {
-        lbl: t.home.tileAqhi,
-        val: `${aqhi.aqhi >= 11 ? '11+' : aqhi.aqhi} · ${[t.home.aqhi0, t.home.aqhi1, t.home.aqhi2, t.home.aqhi3][aqhi.risk]}`,
-        sub: [t.home.aqhiSub0, t.home.aqhiSub1, t.home.aqhiSub2, t.home.aqhiSub3][aqhi.risk],
-        alert: aqhi.risk >= 2,
-      }
+    ? aqhi.scale === 'aqi'
+      ? {
+          lbl: t.home.tileAqhi,
+          val: `${aqhi.value} · ${[t.home.aqi0, t.home.aqi1, t.home.aqi2, t.home.aqi3, t.home.aqi4, t.home.aqi5][aqhi.category ?? 0]}`,
+          sub: [t.home.aqiSub0, t.home.aqiSub1, t.home.aqiSub2, t.home.aqiSub3][aqhi.risk],
+          alert: aqhi.risk >= 2,
+        }
+      : {
+          lbl: t.home.tileAqhi,
+          val: `${aqhi.value >= 11 ? '11+' : aqhi.value} · ${[t.home.aqhi0, t.home.aqhi1, t.home.aqhi2, t.home.aqhi3][aqhi.risk]}`,
+          sub: [t.home.aqhiSub0, t.home.aqhiSub1, t.home.aqhiSub2, t.home.aqhiSub3][aqhi.risk],
+          alert: aqhi.risk >= 2,
+        }
     : null;
 
   const sunTile = {
