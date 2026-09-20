@@ -7,14 +7,19 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { useIsMobile } from '../hooks';
 import s from './ui.module.css';
 
-/** Lock body scroll while any sheet is open. */
+/** Lock body scroll while any sheet is open, and put the page back where it
+ * was on close: iOS scrolls the document to lift a focused field inside the
+ * sheet above the keyboard (overflow: hidden does not stop it) and leaves
+ * it there, so the masthead ends up under the status bar. */
 function useScrollLock(active: boolean) {
   useEffect(() => {
     if (!active) return;
+    const y = window.scrollY;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = prev;
+      if (window.scrollY !== y) window.scrollTo(0, y);
     };
   }, [active]);
 }

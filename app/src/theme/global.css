@@ -56,6 +56,17 @@ select {
   color: var(--ink);
 }
 
+/* iOS zooms the page when a focused text field is smaller than 16px, and
+   the zoom outlives the keyboard. Only WebKit on iOS supports touch-callout,
+   so this leaves desktop and Android at the inherited size. */
+@supports (-webkit-touch-callout: none) {
+  input:not([type='range']):not([type='checkbox']):not([type='radio']),
+  textarea,
+  select {
+    font-size: max(16px, 1em);
+  }
+}
+
 a {
   color: inherit;
   text-decoration: underline;

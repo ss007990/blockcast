@@ -124,7 +124,10 @@ function HeatBoard() {
   return (
     <Card className={s.board}>
       <div className={s.boardHead}>
-        <h2>
+        {/* keyed on the activity: WKWebView sometimes kept painting the previous
+            sport's name when only the text node changed (same box width, variable
+            font), so a fresh element forces a real repaint */}
+        <h2 key={st.activity}>
           {st.actChosen ? `${nameOf(st.activity)} ${t.board.weekGlance}` : t.board.weekGlanceSolo}
         </h2>
         <button
