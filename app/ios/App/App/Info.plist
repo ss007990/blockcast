@@ -24,6 +24,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>BlockCast uses your location to score the weather for your sport where you are. You can always pick a location manually instead.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>BlockCast uses your location to score the weather for your sport where you are. You can always pick a location manually instead.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
