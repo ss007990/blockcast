@@ -2,6 +2,7 @@
 // masthead switcher, the location sheet — asks the same way, reports the same
 // failure, and keeps `follow` mode honest.
 
+import { Capacitor } from '@capacitor/core';
 import { create } from 'zustand';
 import { distKm } from '../core/geo';
 import { DICTS } from '../i18n';
@@ -30,10 +31,26 @@ const OK_THROTTLE = 5 * 60_000;
  * not sit out the full success throttle. */
 const FAIL_THROTTLE = 45_000;
 
+/** The slice of a position both sources agree on. */
+interface Fix {
+  coords: { latitude: number; longitude: number };
+}
+
+/** A denied permission, whichever source reported it. The browser API uses
+ * numeric code 1; the Capacitor plugin rejects with its own string codes. */
+interface GeoError {
+  code?: number | string;
+  message?: string;
+}
+
 /** Wait for the first fix, however long the radio takes to warm up.
  * `watchPosition` keeps trying where `getCurrentPosition` gives up at its
  * timeout — the difference between locating on landing and not. */
-function firstFix(maxWait: number): Promise<GeolocationPosition> {
+function firstFix(maxWait: number): Promise<Fix> {
+  return Capacitor.isNativePlatform() ? firstNativeFix(maxWait) : firstWebFix(maxWait);
+}
+
+function firstWebFix(maxWait: number): Promise<Fix> {
   return new Promise((resolve, reject) => {
     let watch: number | null = null;
     // a callback can land before watchPosition() has returned its id, so
@@ -63,7 +80,48 @@ function firstFix(maxWait: number): Promise<GeolocationPosition> {
   });
 }
 
-const coordsOf = (pos: GeolocationPosition) => ({
+/** In the Capacitor shell, go through CLLocationManager instead of the
+ * WebView's geolocation. The WebView API would show a second, per-origin
+ * prompt naming "localhost" on top of the app's own iOS permission, and
+ * WebKit never persists that answer for the capacitor:// origin. The plugin
+ * asks once, with the app's name and purpose string, and remembers it. The
+ * dynamic import keeps the plugin out of the web bundle. */
+async function firstNativeFix(maxWait: number): Promise<Fix> {
+  const { Geolocation } = await import('@capacitor/geolocation');
+  return new Promise((resolve, reject) => {
+    let watch: string | null = null;
+    let done = false;
+    const stop = () => {
+      done = true;
+      clearTimeout(timer);
+      if (watch !== null) void Geolocation.clearWatch({ id: watch });
+    };
+    const timer = setTimeout(() => {
+      stop();
+      reject(new Error('timeout'));
+    }, maxWait);
+    Geolocation.watchPosition(
+      { enableHighAccuracy: false, maximumAge: 60_000, timeout: maxWait },
+      (pos, err) => {
+        if (done) return;
+        stop();
+        if (pos) resolve(pos);
+        else reject(err ?? new Error('unavailable'));
+      },
+    ).then(
+      (id) => {
+        watch = id;
+        if (done) void Geolocation.clearWatch({ id });
+      },
+      (err: unknown) => {
+        stop();
+        reject(err);
+      },
+    );
+  });
+}
+
+const coordsOf = (pos: Fix) => ({
   lat: +pos.coords.latitude.toFixed(3),
   lon: +pos.coords.longitude.toFixed(3),
 });
@@ -76,10 +134,17 @@ async function nameOf(lat: number, lon: number): Promise<string> {
   return name || fallbackName();
 }
 
-const statusFor = (err: unknown): GeoStatus =>
-  typeof err === 'object' && err !== null && (err as GeolocationPositionError).code === 1
-    ? 'denied'
-    : 'unavailable';
+/** Plugin codes for "denied" and "restricted" (parental controls, MDM):
+ * both mean the user can't be located until Settings changes. */
+const NATIVE_DENIED = new Set(['OS-PLUG-GLOC-0003', 'OS-PLUG-GLOC-0008']);
+
+const statusFor = (err: unknown): GeoStatus => {
+  if (typeof err !== 'object' || err === null) return 'unavailable';
+  const { code } = err as GeoError;
+  if (code === 1) return 'denied';
+  if (typeof code === 'string' && NATIVE_DENIED.has(code)) return 'denied';
+  return 'unavailable';
+};
 
 let inFlight = false;
 let lastTry = 0;
@@ -87,7 +152,9 @@ let lastTry = 0;
 export const useGeo = create<GeoState>()((set, get) => ({
   status: 'idle',
   fixedAt: null,
-  supported: typeof navigator !== 'undefined' && 'geolocation' in navigator,
+  supported:
+    (typeof navigator !== 'undefined' && 'geolocation' in navigator) ||
+    Capacitor.isNativePlatform(),
 
   follow: async () => {
     if (!get().supported || inFlight) return false;
