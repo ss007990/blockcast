@@ -43,7 +43,28 @@ function markInland(lat: number, lon: number): void {
   }
 }
 
-const anyNumber = (a: unknown): boolean => Array.isArray(a) && a.some((v) => v != null);
+// Open-Meteo sheds load with brief 503s; one or two spaced retries ride those
+// out instead of dropping the user onto the error screen. A 4xx is our own
+// request being wrong and would fail the same way again, so it is not retried.
+const RETRY_DELAYS_MS = [1000, 3000];
+
+export async function fetchRetrying(
+  url: URL,
+  delays: readonly number[] = RETRY_DELAYS_MS,
+): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    const last = attempt >= delays.length;
+    try {
+      const res = await fetch(url);
+      if (res.status < 500 || last) return res;
+    } catch (err) {
+      if (last) throw err;
+    }
+    await new Promise((r) => setTimeout(r, delays[attempt]));
+  }
+}
+
+const anyNumber =(a: unknown): boolean => Array.isArray(a) && a.some((v) => v != null);
 
 /**
  * What a marine response tells us about the place. Only a well-formed answer
@@ -127,7 +148,7 @@ export async function fetchForecast(lat: number, lon: number): Promise<ForecastD
   }).toString();
   const skipMarine = readInland().includes(cellKey(lat, lon));
   const [res, marine, blend] = await Promise.all([
-    fetch(u),
+    fetchRetrying(u),
     skipMarine ? Promise.resolve({ data: null, failed: false }) : fetchMarine(lat, lon),
     fetchRainBlend(lat, lon),
   ]);
