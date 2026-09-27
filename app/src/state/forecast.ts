@@ -12,6 +12,9 @@ export interface ForecastState {
   status: 'idle' | 'loading' | 'ready' | 'stale' | 'error';
   error: string | null;
   load: (loc: Place) => Promise<void>;
+  /** Whether a foreground wake should reload: the app can sit suspended in
+   * memory for days, and `load` otherwise only runs when the place changes. */
+  isDue: () => boolean;
 }
 
 let generation = 0; // drop out-of-date responses when the location changes mid-fetch
@@ -58,12 +61,20 @@ function readCache(loc: Place): CachedForecast | null {
   }
 }
 
-export const useForecast = create<ForecastState>()((set) => ({
+export const useForecast = create<ForecastState>()((set, get) => ({
   data: null,
   dataFor: null,
   updatedAt: null,
   status: 'idle',
   error: null,
+
+  // 'stale' and 'error' are due too, so coming back to the app retries a
+  // failed fetch; 'loading' is not, as one wake fires several events at once
+  isDue: () => {
+    const { status, updatedAt } = get();
+    if (status === 'loading') return false;
+    return status !== 'ready' || updatedAt == null || Date.now() - updatedAt >= CACHE_FRESH_MS;
+  },
 
   load: async (loc) => {
     const gen = ++generation;

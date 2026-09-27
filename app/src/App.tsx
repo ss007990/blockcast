@@ -56,9 +56,17 @@ export function App() {
   // ride along with `visibilitychange` because a WKWebView restored from the
   // background doesn't reliably fire all three. The pin only moves past 2 km
   // so GPS jitter never triggers a refetch; pinning a spot stops the tracking.
+  // The same wake reloads a forecast gone old in place: iOS can keep the app
+  // suspended for days, and the effect above only fires when the place moves.
   useEffect(() => {
     const wake = () => {
-      if (document.visibilityState === 'visible') useGeo.getState().refresh();
+      if (document.visibilityState !== 'visible') return;
+      useGeo.getState().refresh();
+      if (useForecast.getState().isDue()) {
+        const place = useSettings.getState().loc;
+        void useForecast.getState().load(place);
+        void useExtras.getState().load(place);
+      }
     };
     wake();
     document.addEventListener('visibilitychange', wake);

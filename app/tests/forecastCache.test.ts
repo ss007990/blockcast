@@ -87,3 +87,33 @@ describe('forecast cache fallback', () => {
     expect(useForecast.getState().status).toBe('error');
   });
 });
+
+// A suspended iOS app keeps its forecast in memory for days; waking it must
+// reload once the data is past the 20-minute freshness window.
+describe('forecast isDue on wake', () => {
+  const MIN = 60 * 1000;
+  const setAt = (status: 'ready' | 'stale' | 'error' | 'loading', ageMs: number | null) =>
+    useForecast.setState({ status, updatedAt: ageMs == null ? null : Date.now() - ageMs });
+
+  it('is not due while the data is fresh', () => {
+    setAt('ready', 5 * MIN);
+    expect(useForecast.getState().isDue()).toBe(false);
+  });
+
+  it('is due once the data is older than 20 minutes', () => {
+    setAt('ready', 21 * MIN);
+    expect(useForecast.getState().isDue()).toBe(true);
+  });
+
+  it('is due after a failed fetch, so a wake retries it', () => {
+    setAt('stale', 1 * MIN);
+    expect(useForecast.getState().isDue()).toBe(true);
+    setAt('error', null);
+    expect(useForecast.getState().isDue()).toBe(true);
+  });
+
+  it('is not due while a fetch is in flight', () => {
+    setAt('loading', 3 * 24 * 60 * MIN);
+    expect(useForecast.getState().isDue()).toBe(false);
+  });
+});
