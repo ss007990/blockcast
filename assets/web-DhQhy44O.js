@@ -1,0 +1,2 @@
+import{t as e}from"./index-DqVkoUPl.js";var t=class extends e{async requestReview(){throw this.unimplemented(`Not implemented on web.`)}};export{t as InAppReviewWeb};
+//# sourceMappingURL=web-DhQhy44O.js.map
