@@ -31,3 +31,13 @@ so the location label matches the audience.
 If the Week heading shows the previous sport's name after a switch, bounce
 Today then Week to force a repaint. If the layout looks zoomed after using
 the location search, relaunch the app.
+
+## Headless captures (Oct 23, 2026)
+
+The landing-page shots (`app/public/img/sports/`), link previews
+(`app/public/img/og/`), captioned App Store frames
+(`docs/appstore/captioned-6.9-*/`) and event art (`docs/appstore/events/`)
+were rendered with `app/scripts/capture.mjs` against the dev server, which
+needs no simulator. Its header documents the job format. Re-capture the ski
+and snowmobile shots from a Québec hill once there is a base (they use Valle
+Nevado, Chile), then rerun `node app/scripts/landing/build.mjs` if copy changed.
