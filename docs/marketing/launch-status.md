@@ -23,6 +23,7 @@ date or a broken link, needs a new yes from Sandy.
 | S4b | Cloudflare Workers Paid confirmed by Sandy | done Oct 23 |
 | S5 | Apple Developer Program License Agreement update accepted | done Oct 23 |
 | S6 | GoatCounter API token (read statistics) in `~/.goatcounter-token` | done Oct 23; baseline 18 visits Sept 1 to Oct 23, all direct |
+| S8 | Sales-role API key KLQY9X522S (read-only) + vendor number 94624929, for download counts | done Oct 23 |
 | S7 | Sandy's town, for the local press pitch (launch kit 5d) | not yet asked |
 
 ## Calendar
@@ -75,3 +76,5 @@ is connected.
 - Oct 23 (late afternoon): HN and Product Hunt signed in; Product Hunt launch
   scheduled for Nov 3 (my/products shows it). PH's own buttons needed their React
   onClick called directly while the pane was covered.
+- Oct 23: download baseline from sales reports: 15 first-time downloads since
+  launch (11 CA, 4 US; 12 in Sept 17 to 23, 3 in October), 2 redownloads, 11 updates.
