@@ -16,7 +16,7 @@ date or a broken link, needs a new yes from Sandy.
 | ID | What | Status |
 | --- | --- | --- |
 | S1 | Xcode license accepted | done Oct 23 |
-| S2 | App Store Connect API key (App Manager) in `~/.appstoreconnect/private_keys/`, Key ID and Issuer ID in `~/.appstoreconnect/blockcast.json` | waiting on Sandy |
+| S2 | App Store Connect API key (App Manager) in `~/.appstoreconnect/private_keys/`, Key ID and Issuer ID in `~/.appstoreconnect/blockcast.json`; client: `app/scripts/asc.mjs` | done Oct 23 |
 | S3a | Hacker News signed in, Claude browser pane | waiting on Sandy |
 | S3b | Product Hunt signed in, Claude browser pane | waiting on Sandy |
 | S4a | `wrangler login` | done Oct 23 |
@@ -39,11 +39,11 @@ is connected.
 | --- | --- | --- | --- | --- | --- |
 | Oct 23 | Website: share links, landing pages, previews | Claude | | | done, live |
 | Oct 23 | iOS 1.2 (14) archived and uploaded to App Store Connect | Claude | | | done, processing |
-| asap | 1.2 upload, metadata, screenshots, en-US + es-MX localizations, promo text, submit for review, featuring nomination | Claude | appstore-1.2.md | S2, S5 | pending |
+| Oct 23 | 1.2 (15) with blockcast:// deep links: new subtitles, keywords, descriptions, promo text, en-US + es-MX localizations, captioned screenshots (EN 5, FR 4), submitted for review; featuring nomination filed | Claude | appstore-1.2.md | | done, Waiting for Review |
 | Oct 27 9:00 ET | Show HN | Claude | kit 1 | S3a, S4b | pending |
 | Oct 28 | r/iosapps | Sandy | kit 3d | | pending |
 | Oct 31 | r/pickleball | Sandy | kit 3a | | pending |
-| by Oct 30 | Create In-App Event "Snowbird" (starts Nov 2) | Claude | appstore-1.2.md | S2 | pending |
+| Oct 23 | In-App Event "Snowbird" (id 6826335361, Nov 2 to Dec 2, deep link blockcast://open?a=pickleball) submitted with 1.2 | Claude | appstore-1.2.md | | done, Waiting for Review |
 | Nov 2 | Facebook snowbird groups | Sandy | kit 4a | | pending |
 | Nov 2 | Email Le Courrier des Amériques | Claude via Sandy's Gmail in the pane, else Sandy | kit 5b | Gmail signed in | pending |
 | by Nov 1 | Schedule Product Hunt launch for Nov 3 | Claude | kit 2 | S3b | pending |
@@ -54,11 +54,11 @@ is connected.
 | Nov 9 | Clubs batch 1: research 10 to 15 clubs, write each email, send the batch to Sandy for approval | Claude | kit 7 | | pending |
 | Nov 10 | r/golf (only if its rules allow; else its weekly thread) | Sandy | kit 3c | | pending |
 | Nov 10 | MobileSyrup tips form (only once 1.2 is live, the pitch mentions it) | Claude | kit 5a | 1.2 live | pending |
-| by Nov 13 | Create In-App Event "Ski Season Opener" (starts Nov 27) | Claude | appstore-1.2.md | S2 | pending |
+| by Nov 13 | Create In-App Event "Ski Season Opener" (starts Nov 27; deep link blockcast://open?a=skiing; recapture art on a Québec base first) | Claude | appstore-1.2.md | | pending |
 | Nov 16 | Clubs batch 2; local press pitch | Claude drafts | kit 5d, 7 | S7 | pending |
 | Nov 23 | Clubs batch 3; recapture ski and snowmobile shots if a Québec hill has a base | Claude | | | pending |
 | Nov 30 | r/skiing | Sandy | kit 3f | | pending |
-| by Dec 1 | Create In-App Event "Sled Season" (starts Dec 15) | Claude | appstore-1.2.md | S2 | pending |
+| by Dec 1 | Create In-App Event "Sled Season" (starts Dec 15; deep link blockcast://open?a=snowmob) | Claude | appstore-1.2.md | | pending |
 | Dec 14 | r/snowmobiling | Sandy | kit 3g | | pending |
 | Dec 15 | Facebook motoneige groups; snowmobile clubs batch | Sandy / Claude drafts | kit 4c, 7 | | pending |
 | Dec 20 | Final count against the 1,000 target | Claude | | | pending |
@@ -69,3 +69,6 @@ is connected.
   blockcast.ca); Share button verified in the native app on the simulator;
   1.2 (14) archived, upload refused with "PLA Update available"; Sandy
   accepted the agreement and the upload succeeded at 13:13.
+- Oct 23 (afternoon): ASC API key installed. Added blockcast:// deep links (In-App
+  Events require one), uploaded 1.2 (15), set all 1.2 metadata through the API,
+  submitted 1.2 + Snowbird event for review, filed the featuring nomination.
