@@ -262,6 +262,9 @@ export const en = {
     mostly: 'mostly {factor}',
     scoredFor: 'Scored for {activity} with your criteria',
     adjust: 'Adjust',
+    share: 'Share',
+    shareText: '{activity} in {place}, {when}: {verdict}.',
+    shareCopied: 'Link copied',
   },
 
   planner: {

@@ -25,12 +25,41 @@
     />
     <meta property="og:url" content="https://blockcast.ca/" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://blockcast.ca/icon-512.png" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content="https://blockcast.ca/img/og/en-home.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="canonical" href="https://blockcast.ca/" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "BlockCast: Sport Weather",
+        "operatingSystem": "iOS, Web",
+        "applicationCategory": "WeatherApplication",
+        "url": "https://blockcast.ca/",
+        "downloadUrl": "https://apps.apple.com/app/id6796484224",
+        "inLanguage": ["en", "fr"],
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CAD" },
+        "description": "BlockCast scores every block of your week green, yellow or red for your outdoor sport (golf, tennis, pickleball, cycling, running, fishing, sailing, skiing, snowmobiling and more) from live weather data."
+      }
+    </script>
     <link rel="preconnect" href="https://api.open-meteo.com" crossorigin />
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <p>
+        BlockCast needs JavaScript to score your week. Sport forecasts:
+        <a href="/golf-weather/">golf</a>, <a href="/tennis-weather/">tennis</a>,
+        <a href="/pickleball-weather/">pickleball</a>, <a href="/cycling-weather/">cycling</a>,
+        <a href="/running-weather/">running</a>, <a href="/hiking-weather/">hiking</a>,
+        <a href="/fishing-weather/">fishing</a>, <a href="/sailing-weather/">sailing</a>,
+        <a href="/ski-weather/">skiing</a>, <a href="/snowmobile-weather/">snowmobiling</a>. En
+        français : <a href="/fr/meteo-golf/">golf</a>, <a href="/fr/meteo-velo/">vélo</a>,
+        <a href="/fr/meteo-ski/">ski</a>, <a href="/fr/meteo-motoneige/">motoneige</a>.
+      </p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
     <script>
       // GoatCounter analytics (privacy-friendly, no cookies) — website only.
@@ -39,7 +68,20 @@
       // Visit the site once with #skipgc in the URL to exclude your own device.
       if (window.location.hash === '#skipgc') localStorage.setItem('skipgc', 't');
       if (window.location.protocol.startsWith('http')) {
-        window.goatcounter = { no_onload: localStorage.getItem('skipgc') === 't' };
+        // Forecast links count as /shared/<sport> (a person shared a place)
+        // or /sport/<sport> (a post or landing page). The app strips the
+        // link's keys on load (services/share.ts) and leaves window.__bcShared
+        // behind, so the count survives whichever script runs first.
+        window.goatcounter = {
+          no_onload: localStorage.getItem('skipgc') === 't',
+          path: function (p) {
+            if (window.__bcShared) return '/' + window.__bcShared;
+            var q = window.location.search;
+            var m = /[?&]a=([a-z]+)/.exec(q);
+            if (!m && !/[?&]at=/.test(q)) return p;
+            return '/' + (/[?&]at=/.test(q) ? 'shared' : 'sport') + '/' + (m ? m[1] : 'any');
+          },
+        };
         var gc = document.createElement('script');
         gc.async = true;
         gc.src = 'https://gc.zgo.at/count.js';

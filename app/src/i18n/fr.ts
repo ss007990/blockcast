@@ -263,6 +263,9 @@ export const fr: Dict = {
     mostly: 'surtout {factor}',
     scoredFor: 'Noté pour {activity} selon vos critères',
     adjust: 'Ajuster',
+    share: 'Partager',
+    shareText: '{activity} à {place}, {when} : {verdict}.',
+    shareCopied: 'Lien copié',
   },
 
   planner: {

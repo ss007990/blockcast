@@ -1,15 +1,23 @@
 import { useMemo, useState } from 'react';
-import { FACTOR_KEYS, TOL_MULT, type FactorKey } from '../../core/activities';
+import {
+  ACTIVITY_IDS,
+  FACTOR_KEYS,
+  TOL_MULT,
+  type FactorKey,
+  type PresetActivityId,
+} from '../../core/activities';
 import { type PlannedSession } from '../../core/alerts';
 import { ActivityIcon } from '../../ui/ActivityIcon';
 import { AddToCalendar } from '../../ui/AddToCalendar';
 import { getBlock } from '../../core/forecast';
+import { buildShareUrl } from '../../core/shareLink';
 import type { HourSlice } from '../../core/scoring';
 import { formatHour } from '../../core/units';
 import { useActivityName, useLocale, useT } from '../../hooks';
 import { fill } from '../../i18n';
 import { sessionToIcsEvent } from '../../lib/download';
 import { maybeAskForReview } from '../../services/review';
+import { shareLink } from '../../services/share';
 import { fmtFull, fmtIsoTime } from '../../lib/format';
 import { useForecast } from '../../state/forecast';
 import { usePlanner } from '../../state/planner';
@@ -40,11 +48,13 @@ export function DetailSheet() {
   const tolMult = TOL_MULT[st.tolerance];
 
   const [note, setNote] = useState('');
+  const [copied, setCopied] = useState(false);
   // the note belongs to one block: reset it when the selection moves
   const [prevSel, setPrevSel] = useState(selected);
   if (selected !== prevSel) {
     setPrevSel(selected);
     setNote('');
+    setCopied(false);
   }
 
   const block = useMemo(() => {
@@ -93,6 +103,23 @@ export function DetailSheet() {
   const addToPlanner = () => {
     planner.add(session(Date.now()));
     void maybeAskForReview(usePlanner.getState().sessions.length);
+  };
+
+  // a link opens the same sport, place and block for whoever receives it;
+  // custom activities exist on this device only, so they share the place alone
+  const share = async () => {
+    const preset = (ACTIVITY_IDS as readonly string[]).includes(st.activity)
+      ? (st.activity as PresetActivityId)
+      : undefined;
+    const url = buildShareUrl({ activity: preset, place: st.loc, day, h });
+    const text = fill(t.detail.shareText, {
+      activity: nameOf(st.activity),
+      when: `${fmtFull(day, locale)}, ${formatHour(h, st.clock)}–${formatHour(end, st.clock)}`,
+      place: st.loc.name,
+      verdict: t.risk[`${b.band}Short`],
+    });
+    const outcome = await shareLink(`${nameOf(st.activity)} · BlockCast`, text, url);
+    if (outcome === 'copied') setCopied(true);
   };
 
   // which weighted factor drives the score — same maths as riskScore's "worst"
@@ -168,6 +195,9 @@ export function DetailSheet() {
           {already ? `✓ ${t.detail.inPlanner}` : `➕ ${t.detail.addPlanner}`}
         </Button>
         <AddToCalendar dropUp items={[{ event: sessionToIcsEvent(session(0), b, t, nameOf) }]} />
+        <Button variant="ghost" onClick={() => void share()}>
+          {copied ? `✓ ${t.detail.shareCopied}` : `↗ ${t.detail.share}`}
+        </Button>
       </div>
     </Sheet>
   );

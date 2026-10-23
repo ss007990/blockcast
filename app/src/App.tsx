@@ -18,6 +18,7 @@ import { Masthead, TabBar } from './shell/Header';
 import s from './shell/shell.module.css';
 import { syncFeed } from './services/calendarFeed';
 import { resyncPush } from './services/push';
+import { takePendingBlock } from './services/share';
 import { useAlerts } from './state/alerts';
 import { useExtras } from './state/extras';
 import { useForecast } from './state/forecast';
@@ -112,6 +113,13 @@ export function App() {
     if (baselines.length) usePlanner.getState().baseline(baselines);
     useAlerts.getState().clearExpired(isoDate(nowLoc));
   }, [data, dataFor]);
+
+  // a shared link named one block: open it once its place's forecast is in
+  useEffect(() => {
+    if (!data || !dataFor || dataFor.lat !== lat || dataFor.lon !== lon) return;
+    const b = takePendingBlock((day) => data.days[day] != null);
+    if (b) useUi.getState().select(b);
+  }, [data, dataFor, lat, lon]);
 
   // document language follows the setting
   useEffect(() => {
