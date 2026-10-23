@@ -17,10 +17,10 @@ date or a broken link, needs a new yes from Sandy.
 | --- | --- | --- |
 | S1 | Xcode license accepted | done Oct 23 |
 | S2 | App Store Connect API key (App Manager) in `~/.appstoreconnect/private_keys/`, Key ID and Issuer ID in `~/.appstoreconnect/blockcast.json`; client: `app/scripts/asc.mjs` | done Oct 23 |
-| S3a | Hacker News signed in, Claude browser pane | waiting on Sandy |
-| S3b | Product Hunt signed in, Claude browser pane | waiting on Sandy |
+| S3a | Hacker News signed in, Claude browser pane | done Oct 23 (user sandypscullion, new account, karma 1) |
+| S3b | Product Hunt signed in, Claude browser pane | done Oct 23 (@sandy_scullion) |
 | S4a | `wrangler login` | done Oct 23 |
-| S4b | Cloudflare Workers Paid plan confirmed | waiting on Sandy |
+| S4b | Cloudflare Workers plan checked by Sandy Oct 23 (tier not yet confirmed: Free caps at 100k requests/day) | checked |
 | S5 | Apple Developer Program License Agreement update accepted | done Oct 23 |
 | S6 | GoatCounter API token (read statistics) in `~/.goatcounter-token`, for the weekly numbers | not yet asked |
 | S7 | Sandy's town, for the local press pitch (launch kit 5d) | not yet asked |
@@ -46,7 +46,7 @@ is connected.
 | Oct 23 | In-App Event "Snowbird" (id 6826335361, Nov 2 to Dec 2, deep link blockcast://open?a=pickleball) submitted with 1.2 | Claude | appstore-1.2.md | | done, Waiting for Review |
 | Nov 2 | Facebook snowbird groups | Sandy | kit 4a | | pending |
 | Nov 2 | Email Le Courrier des Amériques | Claude via Sandy's Gmail in the pane, else Sandy | kit 5b | Gmail signed in | pending |
-| by Nov 1 | Schedule Product Hunt launch for Nov 3 | Claude | kit 2 | S3b | pending |
+| Oct 23 | Product Hunt launch scheduled for Nov 3, 12:01 AM PT (name, tagline, description, App Store link, 6 gallery images, Free, tags Sports/Weather/Outdoors, categories Weather apps/Outdoors platforms/Fitness, maker comment) | Claude | kit 2 | | done, scheduled |
 | Nov 3 | Product Hunt launch day: draft replies to comments for Sandy | Claude | | S3b | pending |
 | Nov 4 | r/10s | Sandy | kit 3b | | pending |
 | Nov 5 | r/Quebec | Sandy | kit 3e | | pending |
@@ -72,3 +72,6 @@ is connected.
 - Oct 23 (afternoon): ASC API key installed. Added blockcast:// deep links (In-App
   Events require one), uploaded 1.2 (15), set all 1.2 metadata through the API,
   submitted 1.2 + Snowbird event for review, filed the featuring nomination.
+- Oct 23 (late afternoon): HN and Product Hunt signed in; Product Hunt launch
+  scheduled for Nov 3 (my/products shows it). PH's own buttons needed their React
+  onClick called directly while the pane was covered.
