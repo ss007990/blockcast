@@ -81,3 +81,8 @@ is connected.
   launch (11 CA, 4 US; 12 in Sept 17 to 23, 3 in October), 2 redownloads, 11 updates.
 - Oct 23: Sandy's Reddit account has 9 karma, so Reddit posts moved back about a
   week (first is r/iosapps Nov 4) and the week before is for genuine commenting.
+- Oct 23 (evening): App Review rejected 1.2 (15), Guideline 2.1(a): crash on launch
+  on iOS 27.0.1. Cause: built with the iOS 27 SDK without the UIScene lifecycle.
+  Build 16 adopts it (SceneDelegate + scene manifest), verified on the iOS 27.0
+  simulator (a no-scene copy reproduced the SIGTRAP; build 16 runs). Resubmitted
+  with the Snowbird event at 4:47 PM.
