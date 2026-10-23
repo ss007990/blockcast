@@ -42,18 +42,19 @@ is connected.
 | Oct 23 | iOS 1.2 (14) archived and uploaded to App Store Connect | Claude | | | done, processing |
 | Oct 23 | 1.2 (15) with blockcast:// deep links: new subtitles, keywords, descriptions, promo text, en-US + es-MX localizations, captioned screenshots (EN 5, FR 4), submitted for review; featuring nomination filed | Claude | appstore-1.2.md | | done, Waiting for Review |
 | Oct 27 9:00 ET | Show HN | Claude | kit 1 | S3a, S4b | pending |
-| Oct 28 | r/iosapps | Sandy | kit 3d | | pending |
-| Oct 31 | r/pickleball | Sandy | kit 3a | | pending |
+| Oct 24 to Nov 3 | Build Reddit karma: 2 or 3 genuine comments a day in r/pickleball, r/10s, r/golf, r/Quebec, never mentioning BlockCast (account had 9 karma on Oct 23; target 50+) | Sandy | | | pending |
 | Oct 23 | In-App Event "Snowbird" (id 6826335361, Nov 2 to Dec 2, deep link blockcast://open?a=pickleball) submitted with 1.2 | Claude | appstore-1.2.md | | done, Waiting for Review |
 | Nov 2 | Facebook snowbird groups | Sandy | kit 4a | | pending |
 | Nov 2 | Email Le Courrier des Amériques | Claude via Sandy's Gmail in the pane, else Sandy | kit 5b | Gmail signed in | pending |
 | Oct 23 | Product Hunt launch scheduled for Nov 3, 12:01 AM PT (name, tagline, description, App Store link, 6 gallery images, Free, tags Sports/Weather/Outdoors, categories Weather apps/Outdoors platforms/Fitness, maker comment) | Claude | kit 2 | | done, scheduled |
 | Nov 3 | Product Hunt launch day: draft replies to comments for Sandy | Claude | | S3b | pending |
-| Nov 4 | r/10s | Sandy | kit 3b | | pending |
-| Nov 5 | r/Quebec | Sandy | kit 3e | | pending |
+| Nov 4 | r/iosapps | Sandy | kit 3d | karma 50+ | pending |
+| Nov 7 | r/pickleball | Sandy | kit 3a | karma 50+ | pending |
 | Nov 9 | Email The Dink | Claude via Gmail, else Sandy | kit 5c | | pending |
 | Nov 9 | Clubs batch 1: research 10 to 15 clubs, write each email, send the batch to Sandy for approval | Claude | kit 7 | | pending |
-| Nov 10 | r/golf (only if its rules allow; else its weekly thread) | Sandy | kit 3c | | pending |
+| Nov 10 | r/10s | Sandy | kit 3b | karma 50+ | pending |
+| Nov 12 | r/Quebec | Sandy | kit 3e | karma 50+ | pending |
+| Nov 17 | r/golf (only if its rules allow; else its weekly thread) | Sandy | kit 3c | karma 50+ | pending |
 | Nov 10 | MobileSyrup tips form (only once 1.2 is live, the pitch mentions it) | Claude | kit 5a | 1.2 live | pending |
 | by Nov 13 | Create In-App Event "Ski Season Opener" (starts Nov 27; deep link blockcast://open?a=skiing; recapture art on a Québec base first) | Claude | appstore-1.2.md | | pending |
 | Nov 16 | Clubs batch 2; local press pitch | Claude drafts | kit 5d, 7 | S7 | pending |
@@ -78,3 +79,5 @@ is connected.
   onClick called directly while the pane was covered.
 - Oct 23: download baseline from sales reports: 15 first-time downloads since
   launch (11 CA, 4 US; 12 in Sept 17 to 23, 3 in October), 2 redownloads, 11 updates.
+- Oct 23: Sandy's Reddit account has 9 karma, so Reddit posts moved back about a
+  week (first is r/iosapps Nov 4) and the week before is for genuine commenting.
