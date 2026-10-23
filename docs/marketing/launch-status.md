@@ -20,7 +20,7 @@ date or a broken link, needs a new yes from Sandy.
 | S3a | Hacker News signed in, Claude browser pane | done Oct 23 (user sandypscullion, new account, karma 1) |
 | S3b | Product Hunt signed in, Claude browser pane | done Oct 23 (@sandy_scullion) |
 | S4a | `wrangler login` | done Oct 23 |
-| S4b | Cloudflare Workers plan checked by Sandy Oct 23 (tier not yet confirmed: Free caps at 100k requests/day) | checked |
+| S4b | Cloudflare Workers Paid confirmed by Sandy | done Oct 23 |
 | S5 | Apple Developer Program License Agreement update accepted | done Oct 23 |
 | S6 | GoatCounter API token (read statistics) in `~/.goatcounter-token`, for the weekly numbers | not yet asked |
 | S7 | Sandy's town, for the local press pitch (launch kit 5d) | not yet asked |
