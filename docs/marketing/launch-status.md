@@ -22,7 +22,7 @@ date or a broken link, needs a new yes from Sandy.
 | S4a | `wrangler login` | done Oct 23 |
 | S4b | Cloudflare Workers Paid confirmed by Sandy | done Oct 23 |
 | S5 | Apple Developer Program License Agreement update accepted | done Oct 23 |
-| S6 | GoatCounter API token (read statistics) in `~/.goatcounter-token`, for the weekly numbers | not yet asked |
+| S6 | GoatCounter API token (read statistics) in `~/.goatcounter-token` | done Oct 23; baseline 18 visits Sept 1 to Oct 23, all direct |
 | S7 | Sandy's town, for the local press pitch (launch kit 5d) | not yet asked |
 
 ## Calendar
