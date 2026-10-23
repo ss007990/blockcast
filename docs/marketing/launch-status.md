@@ -21,7 +21,7 @@ date or a broken link, needs a new yes from Sandy.
 | S3b | Product Hunt signed in, Claude browser pane | waiting on Sandy |
 | S4a | `wrangler login` | done Oct 23 |
 | S4b | Cloudflare Workers Paid plan confirmed | waiting on Sandy |
-| S5 | Apple Developer Program License Agreement update accepted (blocks the 1.2 upload) | waiting on Sandy |
+| S5 | Apple Developer Program License Agreement update accepted | done Oct 23 |
 | S6 | GoatCounter API token (read statistics) in `~/.goatcounter-token`, for the weekly numbers | not yet asked |
 | S7 | Sandy's town, for the local press pitch (launch kit 5d) | not yet asked |
 
@@ -38,7 +38,7 @@ is connected.
 | Date | Item | Owner | Copy | Needs | Status |
 | --- | --- | --- | --- | --- | --- |
 | Oct 23 | Website: share links, landing pages, previews | Claude | | | done, live |
-| Oct 23 | iOS 1.2 (14) archived | Claude | | | archived; upload blocked on S5 |
+| Oct 23 | iOS 1.2 (14) archived and uploaded to App Store Connect | Claude | | | done, processing |
 | asap | 1.2 upload, metadata, screenshots, en-US + es-MX localizations, promo text, submit for review, featuring nomination | Claude | appstore-1.2.md | S2, S5 | pending |
 | Oct 27 9:00 ET | Show HN | Claude | kit 1 | S3a, S4b | pending |
 | Oct 28 | r/iosapps | Sandy | kit 3d | | pending |
@@ -67,4 +67,5 @@ is connected.
 
 - Oct 23: site deployed and verified (share links open the right block on
   blockcast.ca); Share button verified in the native app on the simulator;
-  1.2 (14) archived, upload refused with "PLA Update available".
+  1.2 (14) archived, upload refused with "PLA Update available"; Sandy
+  accepted the agreement and the upload succeeded at 13:13.
