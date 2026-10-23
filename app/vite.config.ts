@@ -29,6 +29,16 @@ export default defineConfig({
         // Precache the built shell; live data must never be cached — a stale
         // forecast is worse than none, so no runtime caching for API hosts.
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
+        // The static landing pages (scripts/landing) are for search engines and
+        // link previews; app users never need them offline.
+        globIgnores: [
+          '**/*-weather/**',
+          'fr/**',
+          'img/**',
+          'fonts/**',
+          'landing.css',
+          'favicon.svg',
+        ],
         // Fonts ship as many unicode-range subsets; cache the few a client
         // actually requests instead of precaching all of them.
         runtimeCaching: [
@@ -42,7 +52,9 @@ export default defineConfig({
           },
         ],
         navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/api\//, /^\/privacy/],
+        // only the app's own entry falls back to the shell; every other path
+        // (privacy, the landing pages, sitemap) is a real file on the server
+        navigateFallbackAllowlist: [/^\/(index\.html)?(\?.*)?$/],
         importScripts: ['push-sw.js'],
       },
     }),
