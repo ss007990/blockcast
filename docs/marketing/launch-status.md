@@ -19,7 +19,7 @@ date or a broken link, needs a new yes from Sandy.
 | S2 | App Store Connect API key (App Manager) in `~/.appstoreconnect/private_keys/`, Key ID and Issuer ID in `~/.appstoreconnect/blockcast.json` | waiting on Sandy |
 | S3a | Hacker News signed in, Claude browser pane | waiting on Sandy |
 | S3b | Product Hunt signed in, Claude browser pane | waiting on Sandy |
-| S4a | `wrangler login` | waiting on Sandy (OAuth page opened Oct 23) |
+| S4a | `wrangler login` | done Oct 23 |
 | S4b | Cloudflare Workers Paid plan confirmed | waiting on Sandy |
 | S5 | Apple Developer Program License Agreement update accepted (blocks the 1.2 upload) | waiting on Sandy |
 | S6 | GoatCounter API token (read statistics) in `~/.goatcounter-token`, for the weekly numbers | not yet asked |
@@ -27,9 +27,10 @@ date or a broken link, needs a new yes from Sandy.
 
 ## Calendar
 
-Owner "Claude" means Claude does it in the built-in browser pane once its
-setup item is done; if the precondition is missing on the day, Claude notifies
-Sandy instead and retries the next day. Owner "Sandy" means Claude sends
+Owner "Claude" means Claude does it in the built-in browser pane, in a
+session, once its setup item is done and Sandy says go that day (the daily
+8:30 task prepares the item and tells Sandy what to say; unattended public
+posting was refused by the scheduler's safety check, which is fine). Owner "Sandy" means Claude sends
 Sandy the exact text, image path and link that morning. Reddit is blocked in
 the browser pane, so Reddit is Sandy's unless the Claude in Chrome extension
 is connected.
